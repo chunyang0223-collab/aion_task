@@ -1413,19 +1413,22 @@ function renderDetail(char) {
     <div class="card-title"><div class="card-title-icon icon-info">ℹ</div>기본 정보</div>
     <div class="stat-row">
       <span class="stat-label">캐릭터명</span>
-      <input class="text-input" style="width:130px" value="${char.name||''}"
+      <input class="text-input" style="width:130px" tabindex="1" value="${char.name||''}"
+        onfocus="this.select()"
         onchange="updateCharField('${char.id}','name',this.value)">
     </div>
     <div class="stat-row">
       <span class="stat-label">템레벨</span>
-      <input class="text-input" style="width:80px" type="number" value="${char.item_level||0}"
+      <input class="text-input" style="width:80px" type="number" tabindex="2" value="${char.item_level||0}"
+        onfocus="this.select()"
         onchange="updateCharField('${char.id}','item_level',parseInt(this.value)||0)">
     </div>
     <div class="stat-row">
       <span class="stat-label">전투력</span>
       <div class="cp-input-wrap" id="cpwrap-${char.id}">
         <input class="text-input cp-input" id="cp-${char.id}" style="width:90px"
-          type="text" inputmode="decimal" value="${(char.combat_power||0)/10}"
+          type="text" inputmode="decimal" tabindex="3" value="${(char.combat_power||0)/10}"
+          onfocus="this.select()"
           oninput="validateCpInput(this)"
           onblur="commitCpInput('${char.id}',this)">
         <span class="cp-k">k</span>
@@ -1434,9 +1437,9 @@ function renderDetail(char) {
     <div class="stat-row">
       <span class="stat-label">오드에너지<span class="stat-sublabel">기본 / 충전</span></span>
       <div class="stat-inputs">
-        ${numInput(`odd_energy_base`, char.odd_energy_base||0, char.id, 0, 840)}
+        ${numInput(`odd_energy_base`, char.odd_energy_base||0, char.id, 0, 840, 4)}
         <span style="color:var(--text-sub);font-size:0.8rem">+</span>
-        ${numInput(`odd_energy_charged`, char.odd_energy_charged||0, char.id, 0, 9999)}
+        ${numInput(`odd_energy_charged`, char.odd_energy_charged||0, char.id, 0, 9999, 5)}
       </div>
     </div>
     <div class="stat-row" id="odd-estimate-row-${char.id}">
@@ -1700,6 +1703,7 @@ function accModalNumInput(field, val, owner, min, max) {
   return `<div class="num-input-wrap">
     <button class="num-btn" onclick="stepAccModal('${owner}','${field}','${id}',-1,${min},${max})">−</button>
     <input class="num-val-input" id="${id}" type="number" value="${val}" min="${min}" max="${max}"
+      onfocus="this.select()"
       oninput="liveAccModal('${owner}','${field}','${id}',${min},${max})">
     <button class="num-btn" onclick="stepAccModal('${owner}','${field}','${id}',1,${min},${max})">+</button>
   </div>`;
