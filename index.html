@@ -113,6 +113,7 @@ body {
 
 /* ── PAGES ── */
 .page { display: none; padding: 16px; }
+#detail-page { padding-top: 0; }
 .page.active { display: block; }
 
 /* ── OVERVIEW PAGE ── */
@@ -833,7 +834,7 @@ body {
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:7px;flex-shrink:0">
     <div class="realtime-dot" id="rt-dot" title="실시간 연결"></div>
-    <div class="topbar-title">Aion2 <span>츄냥이숙제</span></div>
+    <div class="topbar-title" id="topbar-title-area">Aion2 <span>츄냥이숙제</span></div>
   </div>
   <div class="tab-pills">
     <button class="tab-pill active" id="tab-overview" onclick="showPage('overview')">전체</button>
@@ -841,6 +842,17 @@ body {
     <button class="tab-pill" id="tab-log" onclick="showPage('log-page')">로그</button>
   </div>
   <div id="reset-info" style="text-align:right;flex-shrink:0;line-height:1.5"></div>
+</div>
+<!-- 상세뷰 전용 서브바 -->
+<div id="detail-subbar" style="display:none;position:sticky;top:52px;z-index:99;background:rgba(249,246,240,0.95);backdrop-filter:blur(12px);padding:10px 16px 0;">
+  <div class="detail-header" style="margin-bottom:10px">
+    <div class="back-btn" onclick="goBack()">←</div>
+    <div class="detail-name-block">
+      <div class="detail-char-name" id="subbar-char-name">—</div>
+      <div class="detail-char-meta" id="subbar-char-meta">—</div>
+    </div>
+    <div id="subbar-owner-badge" class="detail-owner-badge"></div>
+  </div>
 </div>
 
 <div id="toast" class="toast"></div>
@@ -854,14 +866,6 @@ body {
 
 <!-- ═══════════════════════════════ DETAIL PAGE ═══════════════════════════════ -->
 <div id="detail-page" class="page">
-  <div class="detail-header">
-    <div class="back-btn" onclick="goBack()">←</div>
-    <div class="detail-name-block">
-      <div class="detail-char-name" id="detail-char-name">—</div>
-      <div class="detail-char-meta" id="detail-char-meta">—</div>
-    </div>
-    <div class="detail-owner-badge" id="detail-owner-badge"></div>
-  </div>
   <div id="detail-content"></div>
 </div>
 
@@ -1123,6 +1127,7 @@ function showPage(id) {
 
 function goBack() {
   document.getElementById('detail-tab').style.display = 'none';
+  document.getElementById('detail-subbar').style.display = 'none';
   showPage('overview');
 }
 
@@ -1376,11 +1381,12 @@ async function openDetail(charId) {
   const char = allChars.find(c => c.id === charId);
   if (!char) return;
 
-  document.getElementById('detail-char-name').textContent = char.name || '(이름없음)';
-  document.getElementById('detail-char-meta').textContent = `템 ${char.item_level||0} · ${formatCp(char.combat_power||0)}`;
-  const badge = document.getElementById('detail-owner-badge');
+  document.getElementById('subbar-char-name').textContent = char.name || '(이름없음)';
+  document.getElementById('subbar-char-meta').textContent = `템 ${char.item_level||0} · ${formatCp(char.combat_power||0)}`;
+  const badge = document.getElementById('subbar-owner-badge');
   badge.textContent = char.owner;
   badge.className = `detail-owner-badge badge-${char.owner}`;
+  document.getElementById('detail-subbar').style.display = 'flex';
 
   document.getElementById('detail-tab').style.display = '';
   showPage('detail-page');
@@ -1597,7 +1603,7 @@ async function commitCpInput(charId, input) {
   const char = allChars.find(c => c.id === charId);
   if (char) {
     char.combat_power = stored;
-    document.getElementById('detail-char-meta').textContent =
+    document.getElementById('subbar-char-meta').textContent =
       `템 ${char.item_level||0} · ${formatCp(stored)}`;
   }
   const { error } = await sb.from('characters').update({combat_power: stored}).eq('id', charId);
@@ -2144,12 +2150,34 @@ function updateOddEstimateUI(charId) {
   if (el) el.textContent = estimated;
 }
 
+function getNextChargeMs() {
+  // 다음 충전 시각까지 남은 ms
+  // KST 05시 기준 3시간마다: 05,08,11,14,17,20,23,02
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9*3600*1000);
+  const h = kst.getUTCHours();
+  const m = kst.getUTCMinutes();
+  const s = kst.getUTCSeconds();
+  const ms = kst.getUTCMilliseconds();
+  // 05:00 기준으로 몇 분 지났는지
+  const minutesSince5 = ((h - 5 + 24) % 24) * 60 + m;
+  const minutesInCycle = minutesSince5 % 180; // 3시간 = 180분
+  const minutesLeft = 180 - minutesInCycle;
+  return (minutesLeft * 60 - s) * 1000 - ms;
+}
+
 function startOddTimer(charId) {
-  // 기존 타이머 제거
-  if (_oddTimers[charId]) clearInterval(_oddTimers[charId]);
-  // 즉시 한번 + 3시간마다 갱신
+  if (_oddTimers[charId]) clearTimeout(_oddTimers[charId]);
   updateOddEstimateUI(charId);
-  _oddTimers[charId] = setInterval(() => updateOddEstimateUI(charId), 3*3600*1000);
+
+  function scheduleNext() {
+    const delay = getNextChargeMs();
+    _oddTimers[charId] = setTimeout(() => {
+      updateOddEstimateUI(charId);
+      scheduleNext(); // 다음 충전 시각 예약
+    }, delay);
+  }
+  scheduleNext();
 }
 
 async function recordOddNow(charId) {
