@@ -849,6 +849,49 @@ function getLastWarDate() {
   return getTodayKST();
 }
 
+// 다음 전쟁 시각 (KST) 반환 - UTC Date 객체
+function getNextWarTime() {
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9*3600*1000);
+  const warDays = [2,4,6]; // 화/목/토
+  for (let i=1; i<=7; i++) {
+    const d = new Date(kst);
+    d.setUTCDate(kst.getUTCDate() + i);
+    const wd = d.getUTCDay();
+    if (warDays.includes(wd)) {
+      // KST 21:00 = UTC 12:00 당일
+      d.setUTCHours(12, 0, 0, 0);
+      return d; // UTC 기준 Date
+    }
+  }
+  return null;
+}
+
+function formatWarDate(dateStr) {
+  const days = ['일','월','화','수','목','금','토'];
+  const d = new Date(dateStr + 'T00:00:00+09:00');
+  const m = d.getMonth()+1;
+  const day = d.getDate();
+  const wd = days[d.getDay()];
+  return `${m}/${day} (${wd})`;
+}
+
+function getCountdown() {
+  const next = getNextWarTime();
+  if (!next) return { text: '—', urgent: false };
+  const diff = next - new Date();
+  if (diff <= 0) return { text: '전쟁 중!', urgent: true };
+  const totalMin = Math.floor(diff / 60000);
+  const days = Math.floor(totalMin / 1440);
+  const hours = Math.floor((totalMin % 1440) / 60);
+  const mins = totalMin % 60;
+  let text = '';
+  if (days > 0) text += `${days}일 `;
+  text += `${hours}시간 ${mins}분`;
+  const urgent = diff < 12 * 3600 * 1000; // 12시간 미만
+  return { text, urgent };
+}
+
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -1013,10 +1056,14 @@ function calcCompletionPct(char, dt, wt) {
 
 function renderAbyssSection() {
   const warDate = getLastWarDate();
+  const { text: cdText, urgent: cdUrgent } = getCountdown();
+  const warLabel = formatWarDate(warDate);
   let html = `<div class="abyss-section">
     <div class="section-title">
       어비스 회랑
-      <span style="font-size:0.72rem;color:var(--text-sub)">${warDate} 전쟁</span>
+      <span style="font-size:0.72rem;color:var(--text-sub)">${warLabel} 전쟁 결과 ·
+        <span id="abyss-countdown" style="color:${cdUrgent?'#b85050':'var(--text-sub)'}">다음 전쟁까지 ${cdText}</span>
+      </span>
     </div>
     <div class="abyss-grid">`;
 
@@ -1584,6 +1631,15 @@ async function reloadTable(table) {
 
 // ── START ──
 init();
+
+// 카운트다운 1분마다 갱신
+setInterval(() => {
+  const el = document.getElementById('abyss-countdown');
+  if (!el) return;
+  const { text, urgent } = getCountdown();
+  el.textContent = `다음 전쟁까지 ${text}`;
+  el.style.color = urgent ? '#b85050' : 'var(--text-sub)';
+}, 60000);
 </script>
 <!-- ── 계정 모달 ── -->
 <div id="acc-modal-overlay" style="
