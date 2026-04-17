@@ -30,6 +30,15 @@
   --radius: 18px;
   --radius-sm: 10px;
   --radius-xs: 7px;
+
+  /* ── Expedition tokens ── */
+  --odd-empty: #ede6d8;
+  --odd-low:   #d4e2c4;
+  --odd-mid:   #a3b18a;
+  --odd-full:  #c47a8a;
+  --owner-설냥: #a3b18a;
+  --owner-츄츄: #e2b49a;
+  --shadow-inset: inset 0 1px 2px rgba(160,150,140,0.05);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -844,6 +853,359 @@ body.guest-mode .page input {
   user-select: none !important;
   -webkit-user-select: none !important;
 }
+
+/* ═══════════════════════════════════════════════════
+   EXPEDITION TAB
+   ═══════════════════════════════════════════════════ */
+
+.exp-supply-card {
+  background: linear-gradient(180deg, #fff 0%, var(--peach-light) 230%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 14px 12px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.exp-supply-card::before {
+  content: ''; position: absolute;
+  top: -24px; right: -24px;
+  width: 80px; height: 80px; border-radius: 50%;
+  background: var(--peach-light); opacity: 0.4;
+}
+
+.exp-party-card {
+  background: linear-gradient(180deg, #fff 0%, var(--sage-light) 250%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.exp-party-card::before {
+  content: ''; position: absolute;
+  top: -24px; right: -24px;
+  width: 80px; height: 80px; border-radius: 50%;
+  background: var(--sage-light); opacity: 0.35;
+}
+
+.exp-card-title {
+  font-size: 0.92rem;
+  color: var(--text);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  position: relative;
+  z-index: 1;
+}
+.exp-card-icon {
+  width: 22px; height: 22px; border-radius: 7px;
+  background: var(--peach);
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem;
+}
+.exp-card-icon.sage { background: var(--sage); }
+.exp-card-body { position: relative; z-index: 1; }
+
+/* ── Supply board: 9 dungeons × 3 modes grid ── */
+.exp-supply-legend {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2px 8px;
+  font-size: 0.7rem; color: var(--text-sub);
+}
+.exp-supply-legend-group {
+  display: flex; gap: 10px; flex-wrap: wrap;
+}
+.exp-supply-legend-item {
+  display: flex; align-items: center; gap: 4px;
+}
+.exp-supply-legend-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+}
+
+.exp-clear-btn {
+  padding: 3px 10px; border-radius: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.72rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer; transition: all 0.15s;
+}
+.exp-clear-btn:hover:not(:disabled) { background: var(--hover); color: var(--text); }
+.exp-clear-btn:disabled { opacity: 0.3; cursor: default; }
+
+.exp-supply-table {
+  display: grid;
+  grid-template-columns: minmax(95px, 1fr) repeat(3, minmax(62px, 1fr));
+  gap: 4px;
+  font-size: 0.75rem;
+}
+.exp-supply-col-head {
+  font-size: 0.66rem;
+  color: var(--text-sub);
+  text-align: center;
+  padding: 4px 2px 2px;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  opacity: 0.85;
+}
+.exp-supply-col-head:first-child { text-align: left; padding-left: 4px; justify-content: flex-start; }
+.exp-supply-col-head-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+}
+.exp-supply-col-head-dot.explo { background: var(--sky); }
+.exp-supply-col-head-dot.normal { background: var(--sage); }
+.exp-supply-col-head-dot.hard { background: var(--odd-full); }
+
+.exp-supply-row-name {
+  display: flex; align-items: center;
+  padding: 6px 4px;
+  font-size: 0.78rem;
+  color: var(--text);
+  gap: 4px;
+}
+
+.exp-supply-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 4px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  cursor: pointer;
+  transition: all 0.15s;
+  gap: 2px;
+  min-height: 46px;
+}
+.exp-supply-cell:hover { background: var(--hover); }
+.exp-supply-cell.empty {
+  background: transparent; border: 1px dashed var(--border);
+  opacity: 0.3; cursor: default;
+}
+.exp-supply-cell.checked {
+  background: var(--peach);
+  border-color: var(--peach);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+.exp-supply-cell.checked .exp-supply-cell-ilvl { color: rgba(255,255,255,0.85); }
+
+.exp-supply-cell-check {
+  font-size: 0.8rem;
+  line-height: 1;
+  height: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+.exp-supply-cell-ilvl {
+  font-size: 0.72rem;
+  color: var(--text);
+  line-height: 1;
+}
+
+.exp-supply-selected {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: var(--surface2);
+  border-radius: var(--radius-xs);
+  font-size: 0.76rem;
+  color: var(--text-sub);
+  line-height: 1.5;
+}
+.exp-supply-selected strong {
+  color: var(--text);
+  font-weight: normal;
+}
+
+/* ── Party finder ── */
+.exp-party-empty-hint {
+  text-align: center;
+  padding: 18px 10px;
+  color: var(--text-sub);
+  font-size: 0.82rem;
+}
+.exp-party-req {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px 10px;
+  font-size: 0.76rem;
+  color: var(--text-sub);
+}
+.exp-party-req strong { color: var(--text); font-weight: normal; }
+
+.exp-party-pills {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 2px 0 4px;
+}
+.exp-party-pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-sub);
+  font-size: 0.8rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.exp-party-pill:hover { background: var(--hover); color: var(--text); }
+.exp-party-pill.active {
+  background: var(--sage); color: white; border-color: var(--sage);
+  box-shadow: var(--shadow-sm);
+}
+.exp-party-pill-check { display: none; font-size: 0.7rem; }
+.exp-party-pill.active .exp-party-pill-check { display: inline; }
+
+.exp-party-label {
+  font-size: 0.74rem;
+  color: var(--text-sub);
+  margin: 10px 0 5px 2px;
+  opacity: 0.85;
+}
+
+/* Results toggle */
+.exp-result-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 4px 8px;
+  margin-top: 8px;
+  border-top: 1px dashed var(--border);
+  cursor: pointer; user-select: none;
+  transition: background 0.15s;
+  border-radius: var(--radius-xs);
+}
+.exp-result-toggle:hover { background: rgba(255,255,255,0.4); }
+.exp-result-toggle-label {
+  font-size: 0.82rem; color: var(--text);
+  display: flex; align-items: center; gap: 6px;
+}
+.exp-count-badge-ok {
+  background: var(--sage-light); color: #5a7a42;
+  padding: 2px 9px; border-radius: 10px;
+  font-size: 0.72rem;
+}
+.exp-count-badge-excl {
+  background: var(--peach-light); color: #9a5a3a;
+  padding: 2px 9px; border-radius: 10px;
+  font-size: 0.72rem;
+}
+.exp-result-chevron {
+  color: var(--text-sub); font-size: 0.72rem;
+  transition: transform 0.25s; flex-shrink: 0;
+}
+.exp-result-chevron.collapsed { transform: rotate(-90deg); }
+
+.exp-result-wrap {
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  max-height: 4000px;
+}
+.exp-result-wrap.collapsed { max-height: 0; }
+
+.exp-result-list {
+  margin-top: 6px;
+  display: flex; flex-direction: column;
+  gap: 5px;
+}
+
+.exp-result-item {
+  display: flex; align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  transition: all 0.2s;
+}
+.exp-result-item.excluded { opacity: 0.45; background: var(--surface2); }
+.exp-result-item.excluded .exp-result-name { text-decoration: line-through; color: var(--text-sub); }
+
+.exp-result-rank {
+  width: 19px; height: 19px; border-radius: 50%;
+  background: var(--surface2); color: var(--text-sub);
+  font-size: 0.68rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.exp-result-rank-1 { background: #f7d77a; color: #7a5a00; }
+.exp-result-rank-2 { background: #d8d8d8; color: #555; }
+.exp-result-rank-3 { background: #d9a888; color: #6a3a1a; }
+
+.exp-result-owner-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+
+.exp-result-name {
+  color: var(--text);
+  flex: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-width: 30px;
+}
+.exp-result-stats {
+  font-size: 0.66rem; color: var(--text-sub);
+  white-space: nowrap;
+}
+.exp-result-bar {
+  width: 32px; height: 7px;
+  border-radius: 4px;
+  background: var(--border);
+  overflow: hidden; flex-shrink: 0;
+}
+.exp-result-bar-fill { height: 100%; transition: width 0.4s; }
+.exp-result-odd {
+  font-size: 0.64rem; color: var(--text-sub);
+  width: 26px; text-align: right;
+}
+
+.exp-exclude-btn {
+  width: 21px; height: 21px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-sub);
+  font-size: 0.85rem; line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; flex-shrink: 0;
+  padding: 0 0 1px 0;
+  font-family: inherit;
+}
+.exp-exclude-btn:hover {
+  background: var(--peach-light); border-color: var(--peach); color: #9a5a3a;
+}
+.exp-exclude-btn.excluded {
+  background: var(--peach-light); border-color: var(--peach); color: #9a5a3a;
+}
+.exp-exclude-btn.excluded:hover {
+  background: var(--sage-light); border-color: var(--sage); color: #5a7a42;
+}
+
+.exp-legend {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 8px 14px;
+  font-size: 0.68rem; color: var(--text-sub);
+  padding: 10px 6px 0;
+}
+.exp-legend-item { display: flex; align-items: center; gap: 5px; }
+.exp-legend-dot { width: 9px; height: 9px; border-radius: 3px; }
+
+@media (max-width: 600px) {
+  .exp-result-stats { display: none; }
+  .exp-supply-table {
+    grid-template-columns: minmax(80px, 1fr) repeat(3, minmax(54px, 1fr));
+    gap: 3px;
+  }
+  .exp-supply-row-name { font-size: 0.72rem; }
+  .exp-supply-cell { min-height: 40px; }
+  .exp-supply-cell-ilvl { font-size: 0.68rem; }
+}
 </style>
 </head>
 <body>
@@ -857,6 +1219,7 @@ body.guest-mode .page input {
   <div class="tab-pills">
     <button class="tab-pill active" id="tab-overview" onclick="showPage('overview')">전체</button>
     <button class="tab-pill" onclick="showPage('detail-page')" id="detail-tab" style="display:none">상세</button>
+    <button class="tab-pill" id="tab-expedition" onclick="showPage('expedition-page')">원정</button>
     <button class="tab-pill" id="tab-log" onclick="showPage('log-page')">로그</button>
   </div>
   <div id="reset-info" style="text-align:right;flex-shrink:0;line-height:1.5"></div>
@@ -889,6 +1252,13 @@ body.guest-mode .page input {
 <!-- ═══════════════════════════════ DETAIL PAGE ═══════════════════════════════ -->
 <div id="detail-page" class="page">
   <div id="detail-content"></div>
+</div>
+
+<!-- ═══════════════════════════════ EXPEDITION PAGE ═══════════════════════════════ -->
+<div id="expedition-page" class="page">
+  <div id="expedition-content">
+    <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
+  </div>
 </div>
 
 <!-- ── 로그 페이지 ── -->
@@ -1148,6 +1518,10 @@ function showPage(id) {
     if (_overviewDirty) { renderOverview(); _overviewDirty = false; }
   }
   if (id === 'detail-page') document.getElementById('detail-tab').classList.add('active');
+  if (id === 'expedition-page') {
+    document.getElementById('tab-expedition').classList.add('active');
+    renderExpeditionPage();
+  }
   if (id === 'log-page') {
     document.getElementById('tab-log').classList.add('active');
     renderLogPage();
@@ -1986,6 +2360,8 @@ async function reloadTable(table) {
   // re-render current view
   if (document.getElementById('overview').classList.contains('active')) {
     renderOverview();
+  } else if (document.getElementById('expedition-page').classList.contains('active')) {
+    renderExpeditionPage();
   } else if (currentCharId) {
     const char = allChars.find(c => c.id === currentCharId);
     if (char) renderDetail(char);
@@ -2347,6 +2723,316 @@ setInterval(() => {
   el.textContent = `다음 전쟁까지 ${text}`;
   el.style.color = urgent ? '#b85050' : 'var(--text-sub)';
 }, 60000);
+
+// ═══════════════════════════════════════════════════════════════
+// EXPEDITION TAB
+// ═══════════════════════════════════════════════════════════════
+const EXP_DUNGEONS = [
+  { name: '크라오동굴',           explo: 200,  normal: 1000, hard: 2400, star: 1 },
+  { name: '드라웁니르',           explo: 900,  normal: 1000, hard: 2400, star: 1 },
+  { name: '우루구구 협곡',        explo: 350,  normal: 1600, hard: 2500, star: 2 },
+  { name: '바크론의 공중섬',      explo: 1600, normal: 1600, hard: 2500, star: 2 },
+  { name: '불의 신전',            explo: 600,  normal: 2200, hard: 2600, star: 3 },
+  { name: '사나운 뿔 암굴',       explo: 2200, normal: 2200, hard: 2600, star: 3 },
+  { name: '죽은 드라마타의 둥지', explo: 2800, normal: 2800, hard: 3000, star: 4 },
+  { name: '무의 요람',            explo: 2800, normal: 2800, hard: 3000, star: 4 },
+  { name: '환영의 회랑',          explo: 3000, normal: 3000, hard: 3500, star: 5 },
+];
+
+// STATE — localStorage로 지속
+function expLoadChecked() {
+  try {
+    const raw = localStorage.getItem('aion2_exp_supply');
+    return new Set(JSON.parse(raw || '[]'));
+  } catch (e) { return new Set(); }
+}
+function expSaveChecked(set) {
+  localStorage.setItem('aion2_exp_supply', JSON.stringify([...set]));
+}
+
+let _expChecked = expLoadChecked();   // 체크된 던전 키들 ('name::mode::ilvl')
+let _expParty = 'both';
+let _expExcluded = new Set();         // 세션 범위(저장 안 함)
+let _expResultExpanded = true;
+
+function expKey(name, mode, ilvl) { return `${name}::${mode}::${ilvl}`; }
+function expParseKey(key) {
+  const [name, mode, ilvlStr] = key.split('::');
+  return { name, mode, ilvl: parseInt(ilvlStr) };
+}
+
+// 오드 4단계
+function expOddLevel(odd) {
+  if (odd <= 0)  return 'empty';
+  if (odd < 420) return 'low';
+  if (odd < 780) return 'mid';
+  return 'full';
+}
+function expOddColor(odd) {
+  return { empty:'var(--odd-empty)', low:'var(--odd-low)',
+           mid:'var(--odd-mid)', full:'var(--odd-full)' }[expOddLevel(odd)];
+}
+// "예상 기본 오드" 가져오기 — calcOddEstimate 있으면 사용, 없으면 base
+function expCurrentOdd(char) {
+  const est = (typeof calcOddEstimate === 'function') ? calcOddEstimate(char.id) : null;
+  if (est !== null && est !== undefined) return est;
+  return char.odd_energy_base || 0;
+}
+
+// 선택된 던전들의 최대 템레벨 (AND 조건)
+function expRequiredIlvl() {
+  if (_expChecked.size === 0) return null;
+  let max = 0;
+  for (const key of _expChecked) {
+    const { ilvl } = expParseKey(key);
+    if (ilvl > max) max = ilvl;
+  }
+  return max;
+}
+
+// EVENTS
+function expToggleCell(name, mode, ilvl) {
+  if (currentActor === 'guest') return;
+  const key = expKey(name, mode, ilvl);
+  if (_expChecked.has(key)) _expChecked.delete(key);
+  else _expChecked.add(key);
+  expSaveChecked(_expChecked);
+  renderExpeditionPage();
+}
+function expClearAll() {
+  if (currentActor === 'guest') return;
+  if (_expChecked.size === 0) return;
+  if (!confirm('체크한 던전을 모두 해제할까요?')) return;
+  _expChecked.clear();
+  expSaveChecked(_expChecked);
+  renderExpeditionPage();
+}
+function expSetParty(party) {
+  _expParty = party;
+  renderExpeditionPage();
+}
+function expToggleExclude(charId) {
+  if (_expExcluded.has(charId)) _expExcluded.delete(charId);
+  else _expExcluded.add(charId);
+  renderExpeditionPage();
+}
+function expToggleResults() {
+  _expResultExpanded = !_expResultExpanded;
+  const wrap = document.querySelector('.exp-result-wrap');
+  const chevron = document.querySelector('.exp-result-chevron');
+  if (wrap) wrap.classList.toggle('collapsed', !_expResultExpanded);
+  if (chevron) chevron.classList.toggle('collapsed', !_expResultExpanded);
+}
+
+// RENDER
+function renderExpeditionPage() {
+  const el = document.getElementById('expedition-content');
+  if (!window.allChars) {
+    el.innerHTML = `<div class="loading"><div class="spinner"></div> 불러오는 중...</div>`;
+    return;
+  }
+
+  // ── 1) Supply board ──
+  const modes = [
+    { key: 'explo',  label: '탐험',       dotCls: 'explo',  column: 'explo'  },
+    { key: 'normal', label: '정복 · 보통', dotCls: 'normal', column: 'normal' },
+    { key: 'hard',   label: '정복 · 어려움', dotCls: 'hard',   column: 'hard'   },
+  ];
+
+  const headerHtml = `
+    <div class="exp-supply-legend">
+      <div class="exp-supply-legend-group">
+        ${modes.map(m => `
+          <div class="exp-supply-legend-item">
+            <div class="exp-supply-legend-dot" style="background:${m.dotCls==='explo'?'var(--sky)':m.dotCls==='normal'?'var(--sage)':'var(--odd-full)'}"></div>
+            ${m.label}
+          </div>
+        `).join('')}
+      </div>
+      <span>${_expChecked.size > 0 ? `<strong style="color:var(--peach)">${_expChecked.size}개</strong> 선택` : '체크해 두세요'}</span>
+    </div>
+  `;
+
+  let tableHtml = `<div class="exp-supply-table">`;
+  // 컬럼 헤더
+  tableHtml += `<div class="exp-supply-col-head">던전</div>`;
+  tableHtml += `<div class="exp-supply-col-head"><span class="exp-supply-col-head-dot explo"></span>탐험</div>`;
+  tableHtml += `<div class="exp-supply-col-head"><span class="exp-supply-col-head-dot normal"></span>보통</div>`;
+  tableHtml += `<div class="exp-supply-col-head"><span class="exp-supply-col-head-dot hard"></span>어려움</div>`;
+
+  EXP_DUNGEONS.forEach(d => {
+    tableHtml += `
+      <div class="exp-supply-row-name">
+        ${'★'.repeat(d.star)} ${d.name}
+      </div>
+    `;
+    modes.forEach(m => {
+      const ilvl = d[m.column];
+      const key = expKey(d.name, m.key, ilvl);
+      const checked = _expChecked.has(key);
+      tableHtml += `
+        <div class="exp-supply-cell ${checked ? 'checked' : ''}"
+             onclick="expToggleCell('${d.name.replace(/'/g,"\\'")}','${m.key}',${ilvl})">
+          <div class="exp-supply-cell-check">${checked ? '✓' : ''}</div>
+          <div class="exp-supply-cell-ilvl">${ilvl}</div>
+        </div>
+      `;
+    });
+  });
+  tableHtml += `</div>`;
+
+  // 선택된 던전 요약 (읽기 쉽게)
+  let selectedSummary = '';
+  if (_expChecked.size > 0) {
+    const items = [..._expChecked].map(k => {
+      const { name, mode, ilvl } = expParseKey(k);
+      const modeLabel = { explo: '탐험', normal: '보통', hard: '어려움' }[mode];
+      return `<strong>${name}</strong>·${modeLabel} <span style="opacity:0.7">${ilvl}</span>`;
+    }).join(' · ');
+    selectedSummary = `<div class="exp-supply-selected">오늘 갈 곳: ${items}</div>`;
+  }
+
+  const clearBtnHtml = `
+    <div style="display:flex;justify-content:flex-end;margin-top:8px">
+      <button class="exp-clear-btn" ${_expChecked.size === 0 ? 'disabled' : ''}
+              onclick="expClearAll()">모두 해제</button>
+    </div>
+  `;
+
+  const supplyCard = `
+    <div class="exp-supply-card">
+      <div class="exp-card-title">
+        <span class="exp-card-icon">📋</span>오늘 보급의뢰 던전
+      </div>
+      <div class="exp-card-body">
+        ${headerHtml}
+        ${tableHtml}
+        ${selectedSummary}
+        ${clearBtnHtml}
+      </div>
+    </div>
+  `;
+
+  // ── 2) Party finder ──
+  const reqIlvl = expRequiredIlvl();
+
+  const partyPillsHtml = `
+    <div class="exp-party-label">파티 구성</div>
+    <div class="exp-party-pills">
+      <button class="exp-party-pill ${_expParty === 'both' ? 'active' : ''}" onclick="expSetParty('both')"><span class="exp-party-pill-check">✓</span>둘다</button>
+      <button class="exp-party-pill ${_expParty === '설냥' ? 'active' : ''}" onclick="expSetParty('설냥')"><span class="exp-party-pill-check">✓</span>설냥혼자</button>
+      <button class="exp-party-pill ${_expParty === '츄츄' ? 'active' : ''}" onclick="expSetParty('츄츄')"><span class="exp-party-pill-check">✓</span>츄츄혼자</button>
+    </div>
+  `;
+
+  let partyBodyHtml;
+  if (reqIlvl === null) {
+    partyBodyHtml = `
+      ${partyPillsHtml}
+      <div class="exp-party-empty-hint">위에서 오늘 갈 던전을 체크해 주세요</div>
+    `;
+  } else {
+    let pool = allChars.filter(c => c.name && (c.item_level || 0) >= reqIlvl);
+    if (_expParty !== 'both') pool = pool.filter(c => c.owner === _expParty);
+    pool.sort((a, b) => (b.combat_power || 0) - (a.combat_power || 0));
+
+    let visibleRank = 0;
+    let includedCount = 0;
+    let excludedCount = 0;
+
+    const itemsHtml = pool.map(c => {
+      const excluded = _expExcluded.has(c.id);
+      let rankCls = '', rankDisplay;
+      if (excluded) {
+        rankDisplay = '—';
+        excludedCount++;
+      } else {
+        visibleRank++;
+        includedCount++;
+        rankDisplay = visibleRank;
+        rankCls = visibleRank <= 3 ? `exp-result-rank-${visibleRank}` : '';
+      }
+      const odd = expCurrentOdd(c);
+      const pct = Math.min(100, (odd / 840) * 100);
+      const cp = c.combat_power || 0;
+      const cpText = (typeof formatCp === 'function') ? formatCp(cp) : cp;
+      return `
+        <div class="exp-result-item ${excluded ? 'excluded' : ''}">
+          <div class="exp-result-rank ${rankCls}">${rankDisplay}</div>
+          <div class="exp-result-owner-dot" style="background:var(--owner-${c.owner})"></div>
+          <div class="exp-result-name">${c.name}</div>
+          <div class="exp-result-stats">템 ${c.item_level||0} · ${cpText}</div>
+          <div class="exp-result-bar">
+            <div class="exp-result-bar-fill" style="width:${pct}%;background:${expOddColor(odd)}"></div>
+          </div>
+          <div class="exp-result-odd">${odd}</div>
+          <button class="exp-exclude-btn ${excluded ? 'excluded' : ''}"
+                  onclick="expToggleExclude(${c.id})"
+                  title="${excluded ? '다시 추가' : '추천에서 제외'}">
+            ${excluded ? '+' : '×'}
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    const reqInfo = `
+      <div class="exp-party-req">
+        <span>선택 <strong>${_expChecked.size}개</strong> 모두 입장 가능해야 함</span>
+        <span>필요 템레벨 <strong>${reqIlvl}</strong>+</span>
+      </div>
+    `;
+
+    let resultArea;
+    if (pool.length === 0) {
+      resultArea = `<div class="exp-party-empty-hint">조건에 맞는 캐릭터가 없어요 🥲</div>`;
+    } else {
+      resultArea = `
+        <div class="exp-result-toggle" onclick="expToggleResults()">
+          <div class="exp-result-toggle-label">
+            <span>입장 가능</span>
+            <span class="exp-count-badge-ok">${includedCount}명</span>
+            ${excludedCount > 0 ? `<span class="exp-count-badge-excl">제외 ${excludedCount}명</span>` : ''}
+          </div>
+          <span class="exp-result-chevron ${!_expResultExpanded ? 'collapsed' : ''}">▼</span>
+        </div>
+        <div class="exp-result-wrap ${!_expResultExpanded ? 'collapsed' : ''}">
+          <div class="exp-result-list">${itemsHtml}</div>
+        </div>
+      `;
+    }
+
+    partyBodyHtml = `
+      ${reqInfo}
+      ${partyPillsHtml}
+      ${resultArea}
+    `;
+  }
+
+  const partyCard = `
+    <div class="exp-party-card">
+      <div class="exp-card-title">
+        <span class="exp-card-icon sage">🎯</span>오늘 던전 찾기
+      </div>
+      <div class="exp-card-body">
+        ${partyBodyHtml}
+      </div>
+    </div>
+  `;
+
+  // ── Legend ──
+  const legend = `
+    <div class="exp-legend">
+      <div class="exp-legend-item"><div class="exp-legend-dot" style="background:var(--odd-empty)"></div>오드 0</div>
+      <div class="exp-legend-item"><div class="exp-legend-dot" style="background:var(--odd-low)"></div>낮음</div>
+      <div class="exp-legend-item"><div class="exp-legend-dot" style="background:var(--odd-mid)"></div>중간</div>
+      <div class="exp-legend-item"><div class="exp-legend-dot" style="background:var(--odd-full)"></div>가득 (빨리 써요)</div>
+      <div class="exp-legend-item"><div class="exp-legend-dot" style="background:var(--owner-설냥);border-radius:50%"></div>설냥</div>
+      <div class="exp-legend-item"><div class="exp-legend-dot" style="background:var(--owner-츄츄);border-radius:50%"></div>츄츄</div>
+    </div>
+  `;
+
+  el.innerHTML = supplyCard + partyCard + legend;
+}
 </script>
 <!-- ── 계정 모달 ── -->
 <div id="acc-modal-overlay" style="
