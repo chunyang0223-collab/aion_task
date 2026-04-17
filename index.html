@@ -1642,7 +1642,10 @@ async function toggleDaily(charId, field, value, today) {
     renderDetail(char);
     lazyRenderOverview();
     const actionMap = { mission_done:'사명 완료', supply_done:'보급 완료' };
-    if (value && actionMap[field]) writeLog(char.owner, char.name, actionMap[field]);
+    if (actionMap[field]) {
+      if (value) writeLog(char.owner, char.name, actionMap[field], char.id, field);
+      else deleteLog(char.id, field);
+    }
   }
 }
 
@@ -1665,7 +1668,10 @@ async function toggleWeekly(charId, field, value, week) {
     renderDetail(char);
     lazyRenderOverview();
     const actionMap = { ludra_done:'성역-루드라 완료', erosion_done:'성역-침식 완료' };
-    if (value && actionMap[field]) writeLog(char.owner, char.name, actionMap[field]);
+    if (actionMap[field]) {
+      if (value) writeLog(char.owner, char.name, actionMap[field], char.id, field);
+      else deleteLog(char.id, field);
+    }
   }
 }
 
@@ -1846,7 +1852,10 @@ async function toggleAbyssChar(corridorId, charId, cleared) {
   if (char) {
     renderDetail(char);
     const cor = abyssCorridors.find(c => c.id === corridorId);
-    if (cleared && cor) writeLog(char.owner, char.name, `어비스 회랑-${cor.zone} 완료`);
+    if (cor) {
+      if (cleared) writeLog(char.owner, char.name, `어비스 회랑-${cor.zone} 완료`, char.id, `abyss_${cor.zone}`);
+      else deleteLog(char.id, `abyss_${cor.zone}`);
+    }
     lazyRenderOverview();
   }
 }
@@ -1971,7 +1980,7 @@ function checkActor() {
 }
 
 // ── ACTIVITY LOG ──
-async function writeLog(owner, characterName, action) {
+async function writeLog(owner, characterName, action, charId=null, field=null) {
   if (!checkActor()) return;
   const gameDate = getTodayKST();
   await sb.from('activity_log').insert({
@@ -1980,7 +1989,18 @@ async function writeLog(owner, characterName, action) {
     owner,
     character_name: characterName,
     action,
+    character_id: charId,
+    field,
   });
+}
+
+async function deleteLog(charId, field) {
+  const gameDate = getTodayKST();
+  await sb.from('activity_log')
+    .delete()
+    .eq('character_id', charId)
+    .eq('field', field)
+    .eq('game_date', gameDate);
 }
 
 // 로그 페이지 날짜 상태
