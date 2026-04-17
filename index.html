@@ -715,7 +715,8 @@ body {
   line-height: 1.6;
 }
 .log-time { font-size: 0.68rem; color: var(--text-sub); margin-top: 2px; }
-.log-actor { color: var(--sage); }
+.log-actor-냥이 { color: #c47a8a; }
+.log-actor-츄츄 { color: #7a9abf; }
 .log-owner-설냥 { color: #5a8a42; }
 .log-owner-츄츄 { color: #b06040; }
 .log-char { color: var(--lavender); }
@@ -1087,6 +1088,7 @@ function showPage(id) {
   document.getElementById(id).classList.add('active');
   document.querySelectorAll('.tab-pill').forEach(p => p.classList.remove('active'));
   if (id === 'overview') document.getElementById('tab-overview').classList.add('active');
+  if (id === 'detail-page') document.getElementById('detail-tab').classList.add('active');
   if (id === 'log-page') {
     document.getElementById('tab-log').classList.add('active');
     renderLogPage();
@@ -1406,9 +1408,6 @@ function renderDetail(char) {
     </div>
   </div>`;
 
-  // 예상 오드 계산 시작 (렌더 후 즉시 + 3시간마다)
-  setTimeout(() => startOddTimer('${char.id}'), 0);
-
   // ── 일일 숙제 ──
   html += `<div class="card">
     <div class="card-title"><div class="card-title-icon icon-daily">일</div>일일 숙제 <span style="margin-left:auto;font-size:0.72rem;color:var(--text-sub)">05:00 리셋</span></div>
@@ -1495,6 +1494,8 @@ function renderDetail(char) {
   }
 
   document.getElementById('detail-content').innerHTML = html;
+  // innerHTML 세팅 후 즉시 오드 예상 타이머 시작
+  startOddTimer(char.id);
 }
 
 // ── NUM INPUT HELPER ──
@@ -1602,6 +1603,7 @@ async function toggleDaily(charId, field, value, today) {
   const char = allChars.find(c => c.id === charId);
   if (char) {
     renderDetail(char);
+    renderOverview();
     const actionMap = { mission_done:'사명 완료', supply_done:'보급 완료' };
     if (value && actionMap[field]) writeLog(char.owner, char.name, actionMap[field]);
   }
@@ -1624,6 +1626,7 @@ async function toggleWeekly(charId, field, value, week) {
   const char = allChars.find(c => c.id === charId);
   if (char) {
     renderDetail(char);
+    renderOverview();
     const actionMap = { ludra_done:'성역-루드라 완료', erosion_done:'성역-침식 완료' };
     if (value && actionMap[field]) writeLog(char.owner, char.name, actionMap[field]);
   }
@@ -1637,6 +1640,7 @@ async function cycleAwakening(charId, cur, pip) {
   if (char) {
     char.awakening_done = newVal;
     renderDetail(char);
+    renderOverview();
     if (newVal > cur) writeLog(char.owner, char.name, `각성 ${newVal}회 완료`);
   }
 }
@@ -1974,10 +1978,11 @@ async function renderLogPage() {
   } else {
     logs.forEach(log => {
       const time = formatLogTime(log.created_at);
-      const actorClass = log.actor === '설냥' ? 'log-owner-설냥' : 'log-owner-츄츄';
+      const actorDisplay = log.actor === '설냥' ? '냥이' : '츄츄';
+      const actorClass = log.actor === '설냥' ? 'log-actor-냥이' : 'log-actor-츄츄';
       const ownerClass = log.owner === '설냥' ? 'log-owner-설냥' : 'log-owner-츄츄';
       html += `<div class="log-card">
-        <span class="${actorClass}">[${log.actor}]</span>이 
+        <span class="${actorClass}">[${actorDisplay}]</span>가 
         <span class="${ownerClass}">[${log.owner}]</span> 계정의 
         <span class="log-char">[${log.character_name || '계정'}]</span>
         <span class="log-action-done"> ${log.action}</span>
