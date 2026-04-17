@@ -1265,21 +1265,15 @@ function renderDetail(char) {
         ${numInput(`odd_energy_charged`, char.odd_energy_charged||0, char.id, 0, 9999)}
       </div>
     </div>
-    <div class="stat-row">
-      <span class="stat-label" style="font-size:0.78rem;color:var(--text-sub)">
-        기록 시각
-        <span class="stat-sublabel" id="odd-recorded-${char.id}">${char.odd_recorded_at ? formatKST(char.odd_recorded_at) : '—'}</span>
-      </span>
-      <button class="toggle-btn" style="font-size:0.75rem;padding:4px 10px"
-        onclick="recordOddNow('${char.id}')">지금 기록</button>
-    </div>
-    <div class="stat-row" id="odd-estimate-row-${char.id}" style="${char.odd_recorded_at?'':'display:none'}">
-      <span class="stat-label" style="font-size:0.78rem;color:var(--text-sub)">
-        예상 기본 오드
-        <span class="stat-sublabel" id="odd-estimate-${char.id}">계산 중...</span>
-      </span>
-      <button class="toggle-btn done" style="font-size:0.75rem;padding:4px 10px"
-        onclick="applyOddEstimate('${char.id}')">적용</button>
+    <div class="stat-row" id="odd-estimate-row-${char.id}">
+      <div style="flex:1;line-height:1.3">
+        <span style="font-size:0.78rem;color:var(--text-sub)">예상 기본 오드 &nbsp;<span id="odd-estimate-${char.id}" style="color:#3d5c2a">${char.odd_recorded_at ? '계산 중...' : '—'}</span> <span style="color:var(--text-sub);font-size:0.72rem">/ 840</span></span>
+        <span style="display:block;font-size:0.62rem;color:#b0a89a;margin-top:2px" id="odd-recorded-${char.id}">${char.odd_recorded_at ? formatKST(char.odd_recorded_at) + ' 기록 기준' : '기록 없음'}</span>
+      </div>
+      <button class="toggle-btn" style="font-size:0.72rem;padding:4px 10px"
+        onclick="recordOddNow('${char.id}')">기록</button>
+      <button class="toggle-btn done" style="font-size:0.72rem;padding:4px 10px"
+        onclick="applyOddEstimate('${char.id}')" ${char.odd_recorded_at?'':'disabled'}>적용</button>
     </div>
   </div>`;
 
@@ -1798,11 +1792,8 @@ function calcOddEstimate(charId) {
 function updateOddEstimateUI(charId) {
   const estimated = calcOddEstimate(charId);
   if (estimated === null) return;
-
   const el = document.getElementById(`odd-estimate-${charId}`);
-  const row = document.getElementById(`odd-estimate-row-${charId}`);
-  if (el) el.textContent = `${estimated} / 840`;
-  if (row) row.style.display = '';
+  if (el) el.textContent = estimated;
 }
 
 function startOddTimer(charId) {
@@ -1821,7 +1812,7 @@ async function recordOddNow(charId) {
   if (char) char.odd_recorded_at = now;
   // UI 갱신
   const recEl = document.getElementById(`odd-recorded-${charId}`);
-  if (recEl) recEl.textContent = formatKST(now);
+  if (recEl) recEl.textContent = formatKST(now) + ' 기록 기준';
   startOddTimer(charId);
   showToast('기록 완료!');
 }
@@ -1841,7 +1832,7 @@ async function applyOddEstimate(charId) {
   const char = allChars.find(c => c.id === charId);
   if (char) { char.odd_energy_base = estimated; char.odd_recorded_at = now; }
   const recEl = document.getElementById(`odd-recorded-${charId}`);
-  if (recEl) recEl.textContent = formatKST(now);
+  if (recEl) recEl.textContent = formatKST(now) + ' 기록 기준';
   startOddTimer(charId);
   renderOverview();
   showToast(`오드 ${estimated} 적용!`);
