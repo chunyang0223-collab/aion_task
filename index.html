@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Aion2츄냥</title>
+<title>Aion2 츄냥이 숙제일기</title>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -71,6 +71,9 @@ body {
 .tab-pills {
   display: flex;
   gap: 6px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .tab-pill {
@@ -898,43 +901,35 @@ function getCountdown() {
   return { text, urgent };
 }
 
-function getLastDailyReset() {
-  const now = new Date();
-  const kst = new Date(now.getTime() + 9*3600*1000);
-  // 오늘 KST 05:00 이전이면 어제가 마지막 리셋
-  const reset = new Date(kst);
-  reset.setUTCHours(20, 0, 0, 0); // KST 05:00 = UTC 전날 20:00
-  if (kst.getUTCHours() < 20) reset.setUTCDate(reset.getUTCDate() - 1);
-  // KST로 표시
-  const kstReset = new Date(reset.getTime());
-  const y = kstReset.getUTCFullYear();
-  const m = kstReset.getUTCMonth()+1;
-  const d = kstReset.getUTCDate()+1; // UTC 20:00 = 다음날 KST 05:00
-  return `${y}년 ${m}월 ${d}일 05시`;
+function formatResetTime(isoStr) {
+  // UTC ISO → KST 표시
+  const d = new Date(isoStr);
+  const kst = new Date(d.getTime() + 9*3600*1000);
+  const y = kst.getUTCFullYear();
+  const m = kst.getUTCMonth()+1;
+  const day = kst.getUTCDate();
+  const h = String(kst.getUTCHours()).padStart(2,'0');
+  return `${y}년 ${m}월 ${day}일 ${h}시`;
 }
 
-function getLastWeeklyReset() {
-  const now = new Date();
-  const kst = new Date(now.getTime() + 9*3600*1000);
-  // 가장 최근 수요일 KST 05:00
-  const day = kst.getUTCDay(); // 0=일 ... 3=수
-  let diff = (day - 3 + 7) % 7;
-  if (diff === 0 && kst.getUTCHours() < 20) diff = 7; // 수요일 05:00 이전이면 저번주
-  const reset = new Date(kst);
-  reset.setUTCDate(kst.getUTCDate() - diff);
-  reset.setUTCHours(20, 0, 0, 0);
-  const y = reset.getUTCFullYear();
-  const m = reset.getUTCMonth()+1;
-  const d = reset.getUTCDate()+1;
-  return `${y}년 ${m}월 ${d}일 05시`;
-}
-
-function renderResetInfo() {
+async function renderResetInfo() {
   const el = document.getElementById('reset-info');
   if (!el) return;
+
+  const { data } = await sb.from('reset_log')
+    .select('reset_type, executed_at')
+    .order('executed_at', { ascending: false })
+    .limit(20);
+
+  const daily = (data||[]).find(r => r.reset_type === 'daily');
+  const weekly = (data||[]).find(r => r.reset_type === 'weekly');
+
+  const dailyStr = daily ? formatResetTime(daily.executed_at) : '—';
+  const weeklyStr = weekly ? formatResetTime(weekly.executed_at) : '—';
+
   el.innerHTML = `
-    <div style="font-size:0.65rem;color:var(--text-sub)">마지막 일일 리셋 : ${getLastDailyReset()}</div>
-    <div style="font-size:0.65rem;color:var(--text-sub)">마지막 주간 리셋 : ${getLastWeeklyReset()}</div>
+    <div style="font-size:0.65rem;color:var(--text-sub)">마지막 일일 리셋 : ${dailyStr}</div>
+    <div style="font-size:0.65rem;color:var(--text-sub)">마지막 주간 리셋 : ${weeklyStr}</div>
   `;
 }
 
