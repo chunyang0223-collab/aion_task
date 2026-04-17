@@ -814,32 +814,41 @@ let abyssClears = {};
 let currentCharId = null;
 
 // ── UTIL ──
-function getWeekStart() {
+// 게임 기준 "오늘" — KST 05:00 이전이면 전날로 취급
+function getTodayKST() {
   const now = new Date();
-  const kst = new Date(now.getTime() + 9*3600*1000);
-  const day = kst.getUTCDay();
-  // 수요일(3) 05:00 KST 기준
-  let diff = day - 3;
-  if (diff < 0) diff += 7;
-  const wed = new Date(kst);
-  wed.setUTCDate(kst.getUTCDate() - diff);
-  wed.setUTCHours(0, 0, 0, 0);
-  const y = wed.getUTCFullYear();
-  const m = String(wed.getUTCMonth()+1).padStart(2,'0');
-  const d = String(wed.getUTCDate()).padStart(2,'0');
+  // KST = UTC+9
+  const kstMs = now.getTime() + 9 * 3600 * 1000;
+  const kst = new Date(kstMs);
+  // KST 시간이 05:00 미만이면 아직 전날 게임일
+  if (kst.getUTCHours() < 5) {
+    kst.setUTCDate(kst.getUTCDate() - 1);
+  }
+  const y = kst.getUTCFullYear();
+  const m = String(kst.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(kst.getUTCDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 }
 
-function getTodayKST() {
+// 게임 기준 "이번 주 시작" — 가장 최근 수요일 KST 05:00 기준
+function getWeekStart() {
   const now = new Date();
-  const kst = new Date(now.getTime() + 9*3600*1000);
-  const h = kst.getUTCHours();
-  // 05:00 이전이면 게임 기준으로 아직 전날
-  if (h < 5) kst.setUTCDate(kst.getUTCDate()-1);
-  // UTC 기준 Date이지만 +9h 된 값이므로 UTC 날짜 필드로 뽑아야 KST 날짜가 맞음
-  const y = kst.getUTCFullYear();
-  const m = String(kst.getUTCMonth()+1).padStart(2,'0');
-  const d = String(kst.getUTCDate()).padStart(2,'0');
+  const kstMs = now.getTime() + 9 * 3600 * 1000;
+  const kst = new Date(kstMs);
+  const dow = kst.getUTCDay();   // 0=일 1=월 2=화 3=수 4=목 5=금 6=토
+  const hour = kst.getUTCHours(); // KST 시각
+
+  // 가장 최근 수요일(3)까지의 거리
+  let diff = (dow - 3 + 7) % 7;
+  // 수요일 당일이지만 KST 05:00 미만 → 아직 저번 주
+  if (diff === 0 && hour < 5) diff = 7;
+
+  const wed = new Date(kstMs);
+  wed.setUTCDate(kst.getUTCDate() - diff);
+  // 수요일 KST 날짜를 그대로 UTC 필드로 읽음 (offset이 이미 더해진 상태)
+  const y = wed.getUTCFullYear();
+  const m = String(wed.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(wed.getUTCDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 }
 
