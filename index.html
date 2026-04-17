@@ -179,9 +179,11 @@ body {
 
 .mini-progress-row {
   display: flex;
-  gap: 3px;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
 }
+.mini-dots-daily { display: flex; gap: 3px; }
+.mini-dots-weekly { display: flex; gap: 3px; }
 
 .mini-dot {
   width: 7px;
@@ -192,6 +194,7 @@ body {
 }
 
 .mini-dot.done { background: var(--sage); }
+.mini-dot.done-weekly { background: #d4956a; }
 .mini-dot.partial { background: var(--peach); }
 .mini-dot.locked { background: var(--border); opacity: 0.4; }
 
@@ -1076,23 +1079,33 @@ function renderOverview() {
 }
 
 function buildMiniDots(char, dt, wt) {
-  const dots = [];
-  // 사명, 보급
-  dots.push(`<div class="mini-dot ${dt.mission_done?'done':''}"></div>`);
-  dots.push(`<div class="mini-dot ${dt.supply_done?'done':''}"></div>`);
-  // 악몽 (12이하면 ok)
-  const nm = char.nightmare_base || 0;
-  dots.push(`<div class="mini-dot ${nm<=12?'done':'partial'}" title="악몽${nm}"></div>`);
-  // 각성
-  const aw = char.awakening_done || 0;
-  dots.push(`<div class="mini-dot ${aw>=3?'done':aw>0?'partial':''}"></div>`);
-  // 루드라/침식
   const ilvl = char.item_level || 0;
-  if (ilvl >= 2700) dots.push(`<div class="mini-dot ${wt.ludra_done?'done':''}"></div>`);
-  else dots.push(`<div class="mini-dot locked" title="템레벨 부족"></div>`);
-  if (ilvl >= 3500) dots.push(`<div class="mini-dot ${wt.erosion_done?'done':''}"></div>`);
-  else dots.push(`<div class="mini-dot locked"></div>`);
-  return dots.join('');
+  const nm = char.nightmare_base || 0;
+  const aw = char.awakening_done || 0;
+  const acc = accountData[char.owner] || {};
+
+  // 일일 (왼쪽): 사명, 보급, 악몽
+  const daily = [
+    `<div class="mini-dot ${dt.mission_done?'done':''}"></div>`,
+    `<div class="mini-dot ${dt.supply_done?'done':''}"></div>`,
+    `<div class="mini-dot ${nm<=12?'done':'partial'}" title="악몽${nm}"></div>`,
+  ].join('');
+
+  // 주간 (오른쪽): 각성, 루드라, 침식, 지령서3
+  const weekly = [
+    `<div class="mini-dot ${aw>=3?'done-weekly':aw>0?'done-weekly':''}"></div>`,
+    ilvl >= 2700
+      ? `<div class="mini-dot ${wt.ludra_done?'done-weekly':''}"></div>`
+      : `<div class="mini-dot locked"></div>`,
+    ilvl >= 3500
+      ? `<div class="mini-dot ${wt.erosion_done?'done-weekly':''}"></div>`
+      : `<div class="mini-dot locked"></div>`,
+    `<div class="mini-dot ${acc.order_lower?'done-weekly':''}"></div>`,
+    `<div class="mini-dot ${acc.order_middle?'done-weekly':''}"></div>`,
+    `<div class="mini-dot ${acc.order_town?'done-weekly':''}"></div>`,
+  ].join('');
+
+  return `<div class="mini-dots-daily">${daily}</div><div class="mini-dots-weekly">${weekly}</div>`;
 }
 
 function calcCompletionPct(char, dt, wt) {
@@ -1103,10 +1116,11 @@ function calcCompletionPct(char, dt, wt) {
   total += 1; if ((char.awakening_done||0) >= 3) done++;
   if (ilvl >= 2700) { total++; if (wt.ludra_done) done++; }
   if (ilvl >= 3500) { total++; if (wt.erosion_done) done++; }
+  const accData = accountData[char.owner] || {};
   total += 3;
-  if (wt.order_lower) done++;
-  if (wt.order_middle) done++;
-  if (wt.order_town) done++;
+  if (accData.order_lower) done++;
+  if (accData.order_middle) done++;
+  if (accData.order_town) done++;
   return total > 0 ? Math.round(done/total*100) : 0;
 }
 
@@ -1323,13 +1337,14 @@ function renderDetail(char) {
       onclick="toggleWeekly('${char.id}','erosion_done',${!wt.erosion_done},'${week}')">${wt.erosion_done?'완료':'미완'}</button>
   </div>`;
 
-  // 지령서
-  html += `<div class="section-sep" style="margin:8px 0 4px">지령서</div>`;
+  // 지령서 (계정 통합)
+  const accForOrder = accountData[char.owner] || {};
+  html += `<div class="section-sep" style="margin:8px 0 4px">지령서 <span style="font-size:0.7rem;color:var(--text-sub)">(계정 통합)</span></div>`;
   [['order_lower','하층'],['order_middle','중층'],['order_town','마을']].forEach(([key,label]) => {
     html += `<div class="stat-row">
       <span class="stat-label">${label} 지령서</span>
-      <button class="toggle-btn ${wt[key]?'done':''}"
-        onclick="toggleWeekly('${char.id}','${key}',${!wt[key]},'${week}')">${wt[key]?'구매':'미구매'}</button>
+      <button class="toggle-btn ${accForOrder[key]?'done':''}"
+        onclick="toggleAccount('${char.owner}','${key}',${!accForOrder[key]})">${accForOrder[key]?'구매':'미구매'}</button>
     </div>`;
   });
 
