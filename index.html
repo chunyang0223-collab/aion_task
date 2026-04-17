@@ -1067,6 +1067,7 @@ function renderOverview() {
       <div class="account-bool-row">
         <span class="toggle-btn ${acc.shop_purchased?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAccount('${owner}','shop_purchased',${!acc.shop_purchased})">상점</span>
         <span class="toggle-btn ${acc.transmutation_done?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAccount('${owner}','transmutation_done',${!acc.transmutation_done})">물질변환</span>
+        <span class="toggle-btn ${(acc.order_lower&&acc.order_middle&&acc.order_town)?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAllOrders('${owner}',${!(acc.order_lower&&acc.order_middle&&acc.order_town)})">지령서</span>
       </div>
     </div>`;
   }
@@ -1570,14 +1571,27 @@ function openAccountModal(owner) {
   overlay.style.display = 'flex';
 }
 
+async function toggleAllOrders(owner, value) {
+  const acc = accountData[owner];
+  if (!acc) return;
+  const { error } = await sb.from('account_data')
+    .update({ order_lower: value, order_middle: value, order_town: value })
+    .eq('owner', owner);
+  if (error) { showToast('저장 실패'); return; }
+  acc.order_lower = value;
+  acc.order_middle = value;
+  acc.order_town = value;
+  renderOverview();
+}
+
 async function toggleAccOrder(owner, field, value) {
   const acc = accountData[owner];
   if (!acc) return;
   const { error } = await sb.from('account_data').update({[field]: value}).eq('owner', owner);
   if (error) { showToast('저장 실패'); return; }
   acc[field] = value;
-  // 모달 버튼 즉시 갱신
-  openAccountModal(owner);
+  openAccountModal(owner); // 모달 버튼 즉시 갱신
+  renderOverview();        // 겉 버튼도 연동
 }
 
 function closeAccountModal() {
