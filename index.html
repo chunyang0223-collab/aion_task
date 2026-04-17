@@ -855,6 +855,10 @@ body {
   </div>
 </div>
 
+<div id="guest-banner" style="
+  display:none;background:#f5ddd0;border-bottom:1px solid var(--peach);
+  padding:6px 16px;font-size:0.75rem;color:#9a5a3a;text-align:center;
+">👁 손님 모드 — 보기만 가능합니다</div>
 <div id="toast" class="toast"></div>
 
 <!-- ═══════════════════════════════ OVERVIEW PAGE ═══════════════════════════════ -->
@@ -902,6 +906,13 @@ body {
           background:var(--peach-light);color:#9a5a3a;font-size:0.9rem;
           font-family:'Gowun Dodum',sans-serif;cursor:pointer;
         ">츄츄</button>
+      </div>
+      <div style="margin-top:16px;text-align:center">
+        <button onclick="setActor('guest')" style="
+          border:none;background:transparent;color:var(--text-sub);
+          font-size:0.75rem;font-family:'Gowun Dodum',sans-serif;
+          cursor:pointer;text-decoration:underline;text-underline-offset:3px;
+        ">손님으로 입장</button>
       </div>
     </div>
     <!-- 2단계: PIN 입력 -->
@@ -1360,6 +1371,8 @@ function closeAddChar() {
 }
 
 async function submitAddChar(owner, slot) {
+  if (currentActor === 'guest') return;
+
   const name = document.getElementById('fc-name').value.trim();
   const ilvl = parseInt(document.getElementById('fc-ilvl').value) || 0;
   const cp = Math.round((parseFloat(document.getElementById('fc-cp').value.replace(',','.')) || 0) * 10);
@@ -1614,6 +1627,8 @@ async function commitCpInput(charId, input) {
 }
 
 async function saveNumInput(charId, field, newVal) {
+  if (currentActor === 'guest') return;
+
   const char = allChars.find(c => c.id === charId);
   if (char) char[field] = newVal;
   const { error } = await sb.from('characters').update({[field]: newVal}).eq('id', charId);
@@ -1623,6 +1638,8 @@ async function saveNumInput(charId, field, newVal) {
 
 // ── DB ACTIONS ──
 async function updateCharField(charId, field, value) {
+  if (currentActor === 'guest') return;
+
   const { error } = await sb.from('characters').update({[field]: value}).eq('id', charId);
   if (error) { showToast('저장 실패'); return; }
   const char = allChars.find(c => c.id === charId);
@@ -1633,6 +1650,8 @@ async function updateCharField(charId, field, value) {
 
 
 async function toggleDaily(charId, field, value, today) {
+  if (currentActor === 'guest') return;
+
   const existing = dailyTasks[charId];
   let error;
   if (existing) {
@@ -1659,6 +1678,8 @@ async function toggleDaily(charId, field, value, today) {
 }
 
 async function toggleWeekly(charId, field, value, week) {
+  if (currentActor === 'guest') return;
+
   const existing = weeklyTasks[charId];
   let error;
   if (existing) {
@@ -1685,6 +1706,8 @@ async function toggleWeekly(charId, field, value, week) {
 }
 
 async function cycleAwakening(charId, cur, pip) {
+  if (currentActor === 'guest') return;
+
   const newVal = cur === pip ? pip - 1 : pip;
   const { error } = await sb.from('characters').update({awakening_done: newVal}).eq('id', charId);
   if (error) { showToast('저장 실패'); return; }
@@ -1784,6 +1807,8 @@ function openAccountModal(owner) {
 }
 
 async function toggleAllOrders(owner, value) {
+  if (currentActor === 'guest') return;
+
   const acc = accountData[owner];
   if (!acc) return;
   const { error } = await sb.from('account_data')
@@ -1797,6 +1822,8 @@ async function toggleAllOrders(owner, value) {
 }
 
 async function toggleAccOrder(owner, field, value) {
+  if (currentActor === 'guest') return;
+
   const acc = accountData[owner];
   if (!acc) return;
   const { error } = await sb.from('account_data').update({[field]: value}).eq('owner', owner);
@@ -1820,6 +1847,8 @@ if (typeof debounce !== 'function') {
 }
 
 async function toggleAccount(owner, field, value) {
+  if (currentActor === 'guest') return;
+
   const acc = accountData[owner];
   if (!acc) return;
   const { error } = await sb.from('account_data').update({[field]: value}).eq('owner', owner);
@@ -1829,6 +1858,8 @@ async function toggleAccount(owner, field, value) {
 }
 
 async function toggleAbyss(zoneName, acquired, warDate) {
+  if (currentActor === 'guest') return;
+
   const existing = abyssCorridors.find(c => c.zone === zoneName);
   if (existing) {
     const { error } = await sb.from('abyss_corridors').update({acquired}).eq('id', existing.id);
@@ -1846,6 +1877,8 @@ async function toggleAbyss(zoneName, acquired, warDate) {
 }
 
 async function toggleAbyssChar(corridorId, charId, cleared) {
+  if (currentActor === 'guest') return;
+
   const k = `${corridorId}_${charId}`;
   const existing = abyssClears[k];
   if (existing) {
@@ -1980,6 +2013,10 @@ function setActor(name) {
   document.getElementById('user-modal-overlay').style.display = 'none';
   document.getElementById('actor-step2').style.display = 'none';
   document.getElementById('actor-step1').style.display = 'block';
+
+  // 손님이면 읽기전용 배너 표시
+  const banner = document.getElementById('guest-banner');
+  if (banner) banner.style.display = name === 'guest' ? 'block' : 'none';
 }
 
 function checkActor() {
@@ -2171,6 +2208,8 @@ function startOddTimer(charId) {
 }
 
 async function recordOddNow(charId) {
+  if (currentActor === 'guest') return;
+
   const now = new Date().toISOString();
   const { error } = await sb.from('characters').update({odd_recorded_at: now}).eq('id', charId);
   if (error) { showToast('저장 실패'); return; }
@@ -2184,6 +2223,8 @@ async function recordOddNow(charId) {
 }
 
 async function applyOddEstimate(charId) {
+  if (currentActor === 'guest') return;
+
   const estimated = calcOddEstimate(charId);
   if (estimated === null) return;
   // 기본량 입력칸에 적용
@@ -2229,6 +2270,8 @@ function dragEnd(e) {
 }
 
 async function dropChar(e, targetOwner, targetSlot) {
+  if (currentActor === 'guest') return;
+
   e.preventDefault();
   document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
 
@@ -2267,6 +2310,9 @@ init();
 // actor 미설정 시 모달 표시
 if (!currentActor) {
   document.getElementById('user-modal-overlay').style.display = 'flex';
+} else if (currentActor === 'guest') {
+  const banner = document.getElementById('guest-banner');
+  if (banner) banner.style.display = 'block';
 }
 
 // 카운트다운 1분마다 갱신
