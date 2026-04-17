@@ -1258,14 +1258,33 @@ function renderDetail(char) {
       </div>
     </div>
     <div class="stat-row">
-      <span class="stat-label">오드에너지<span class="stat-sublabel">기본/충전</span></span>
+      <span class="stat-label">오드에너지<span class="stat-sublabel">기본 / 충전</span></span>
       <div class="stat-inputs">
-        ${numInput(`odd_energy_base`, char.odd_energy_base||0, char.id, 0, 9999)}
+        ${numInput(`odd_energy_base`, char.odd_energy_base||0, char.id, 0, 840)}
         <span style="color:var(--text-sub);font-size:0.8rem">+</span>
         ${numInput(`odd_energy_charged`, char.odd_energy_charged||0, char.id, 0, 9999)}
       </div>
     </div>
+    <div class="stat-row">
+      <span class="stat-label" style="font-size:0.78rem;color:var(--text-sub)">
+        기록 시각
+        <span class="stat-sublabel" id="odd-recorded-${char.id}">${char.odd_recorded_at ? formatKST(char.odd_recorded_at) : '—'}</span>
+      </span>
+      <button class="toggle-btn" style="font-size:0.75rem;padding:4px 10px"
+        onclick="recordOddNow('${char.id}')">지금 기록</button>
+    </div>
+    <div class="stat-row" id="odd-estimate-row-${char.id}" style="${char.odd_recorded_at?'':'display:none'}">
+      <span class="stat-label" style="font-size:0.78rem;color:var(--text-sub)">
+        예상 기본 오드
+        <span class="stat-sublabel" id="odd-estimate-${char.id}">계산 중...</span>
+      </span>
+      <button class="toggle-btn done" style="font-size:0.75rem;padding:4px 10px"
+        onclick="applyOddEstimate('${char.id}')">적용</button>
+    </div>
   </div>`;
+
+  // 예상 오드 계산 시작 (렌더 후 즉시 + 3시간마다)
+  setTimeout(() => startOddTimer('${char.id}'), 0);
 
   // ── 일일 숙제 ──
   html += `<div class="card">
@@ -1716,6 +1735,116 @@ async function reloadTable(table) {
     const char = allChars.find(c => c.id === currentCharId);
     if (char) renderDetail(char);
   }
+}
+
+// ── ODD ENERGY ESTIMATE ──
+let _oddTimers = {};
+
+function formatKST(isoStr) {
+  const d = new Date(isoStr);
+  const kst = new Date(d.getTime() + 9*3600*1000);
+  const m = kst.getUTCMonth()+1;
+  const day = kst.getUTCDate();
+  const h = String(kst.getUTCHours()).padStart(2,'0');
+  const min = String(kst.getUTCMinutes()).padStart(2,'0');
+  return `${m}/${day} ${h}:${min}`;
+}
+
+// KST 05:00 기준 충전 스케줄 - 3시간마다
+// 05:00, 08:00, 11:00, 14:00, 17:00, 20:00, 23:00, 02:00
+function calcOddEstimate(charId) {
+  const char = allChars.find(c => c.id === charId);
+  if (!char || !char.odd_recorded_at) return null;
+
+  const recorded = new Date(char.odd_recorded_at);
+  const now = new Date();
+  const baseVal = char.odd_energy_base || 0;
+
+  // KST 05:00을 기준으로 3시간 간격 충전 시각 계산
+  // 기록 시각 이후 몇 번 충전됐는지 계산
+  function getChargeSlot(date) {
+    // KST 기준 당일 05:00 UTC
+    const kst = new Date(date.getTime() + 9*3600*1000);
+    const kstHour = kst.getUTCHours();
+    const kstMin = kst.getUTCMinutes();
+    // 오늘 05:00 KST = UTC 전날 20:00
+    const todayBase = new Date(date);
+    todayBase.setUTCHours(20, 0, 0, 0); // KST 05:00 = UTC 20:00
+    if (kstHour < 5) todayBase.setUTCDate(todayBase.getUTCDate() - 1);
+    // todayBase 기준으로 몇 번째 3시간 슬롯인지
+    const msSinceBase = date - todayBase;
+    return Math.floor(msSinceBase / (3*3600*1000));
+  }
+
+  // 기록 시각의 슬롯
+  const recordedSlot = getChargeSlot(recorded);
+  // 현재 시각의 슬롯
+  const nowSlot = getChargeSlot(now);
+
+  // 기록 시각 이후 경과한 전체 슬롯 수
+  // 날짜 차이도 고려 (하루 8슬롯)
+  const recordedKST = new Date(recorded.getTime() + 9*3600*1000);
+  const nowKST = new Date(now.getTime() + 9*3600*1000);
+
+  // 기록 이후 경과 ms
+  const elapsedMs = now - recorded;
+  // 3시간 단위로 몇 번 충전됐는지
+  const chargeCount = Math.floor(elapsedMs / (3*3600*1000));
+
+  const estimated = Math.min(840, baseVal + chargeCount * 15);
+  return estimated;
+}
+
+function updateOddEstimateUI(charId) {
+  const estimated = calcOddEstimate(charId);
+  if (estimated === null) return;
+
+  const el = document.getElementById(`odd-estimate-${charId}`);
+  const row = document.getElementById(`odd-estimate-row-${charId}`);
+  if (el) el.textContent = `${estimated} / 840`;
+  if (row) row.style.display = '';
+}
+
+function startOddTimer(charId) {
+  // 기존 타이머 제거
+  if (_oddTimers[charId]) clearInterval(_oddTimers[charId]);
+  // 즉시 한번 + 3시간마다 갱신
+  updateOddEstimateUI(charId);
+  _oddTimers[charId] = setInterval(() => updateOddEstimateUI(charId), 3*3600*1000);
+}
+
+async function recordOddNow(charId) {
+  const now = new Date().toISOString();
+  const { error } = await sb.from('characters').update({odd_recorded_at: now}).eq('id', charId);
+  if (error) { showToast('저장 실패'); return; }
+  const char = allChars.find(c => c.id === charId);
+  if (char) char.odd_recorded_at = now;
+  // UI 갱신
+  const recEl = document.getElementById(`odd-recorded-${charId}`);
+  if (recEl) recEl.textContent = formatKST(now);
+  startOddTimer(charId);
+  showToast('기록 완료!');
+}
+
+async function applyOddEstimate(charId) {
+  const estimated = calcOddEstimate(charId);
+  if (estimated === null) return;
+  // 기본량 입력칸에 적용
+  const inputEl = document.getElementById(`nv-${charId}-odd_energy_base`);
+  if (inputEl) inputEl.value = estimated;
+  // 저장
+  const now = new Date().toISOString();
+  const { error } = await sb.from('characters')
+    .update({ odd_energy_base: estimated, odd_recorded_at: now })
+    .eq('id', charId);
+  if (error) { showToast('저장 실패'); return; }
+  const char = allChars.find(c => c.id === charId);
+  if (char) { char.odd_energy_base = estimated; char.odd_recorded_at = now; }
+  const recEl = document.getElementById(`odd-recorded-${charId}`);
+  if (recEl) recEl.textContent = formatKST(now);
+  startOddTimer(charId);
+  renderOverview();
+  showToast(`오드 ${estimated} 적용!`);
 }
 
 // ── START ──
