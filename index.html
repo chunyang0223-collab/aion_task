@@ -942,15 +942,15 @@ body.guest-mode .page input {
 
 .exp-supply-table {
   display: grid;
-  grid-template-columns: minmax(95px, 1fr) repeat(3, minmax(62px, 1fr));
-  gap: 4px;
+  grid-template-columns: minmax(95px, 1fr) repeat(3, minmax(56px, 1fr));
+  gap: 3px;
   font-size: 0.75rem;
 }
 .exp-supply-col-head {
   font-size: 0.66rem;
   color: var(--text-sub);
   text-align: center;
-  padding: 4px 2px 2px;
+  padding: 3px 2px 2px;
   display: flex; align-items: center; justify-content: center; gap: 4px;
   opacity: 0.85;
 }
@@ -964,25 +964,41 @@ body.guest-mode .page input {
 
 .exp-supply-row-name {
   display: flex; align-items: center;
-  padding: 6px 4px;
+  padding: 4px 4px;
   font-size: 0.78rem;
   color: var(--text);
-  gap: 4px;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+}
+.exp-supply-row-stars {
+  font-size: 0.6rem;
+  color: var(--star-text);
+  background: var(--star-bg);
+  padding: 1px 5px;
+  border-radius: 6px;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+.exp-supply-row-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .exp-supply-cell {
+  position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 6px 4px;
+  padding: 4px 2px;
   border-radius: var(--radius-xs);
   border: 1px solid var(--border);
   background: var(--surface2);
   cursor: pointer;
   transition: all 0.15s;
-  gap: 2px;
-  min-height: 46px;
+  min-height: 30px;
 }
 .exp-supply-cell:hover { background: var(--hover); }
 .exp-supply-cell.empty {
@@ -995,16 +1011,20 @@ body.guest-mode .page input {
   color: white;
   box-shadow: var(--shadow-sm);
 }
-.exp-supply-cell.checked .exp-supply-cell-ilvl { color: rgba(255,255,255,0.85); }
+.exp-supply-cell.checked .exp-supply-cell-ilvl { color: white; }
 
 .exp-supply-cell-check {
-  font-size: 0.8rem;
+  position: absolute;
+  top: 1px;
+  right: 3px;
+  font-size: 0.65rem;
   line-height: 1;
-  height: 10px;
-  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+  color: white;
+  opacity: 0.95;
 }
 .exp-supply-cell-ilvl {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   color: var(--text);
   line-height: 1;
 }
@@ -1062,6 +1082,46 @@ body.guest-mode .page input {
 }
 .exp-party-pill-check { display: none; font-size: 0.7rem; }
 .exp-party-pill.active .exp-party-pill-check { display: inline; }
+
+/* 파티 타겟 pill (위 보급의뢰에서 체크한 것 중 1개 선택) */
+.exp-target-pill {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-sub);
+  font-size: 0.78rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.exp-target-pill:hover { background: var(--hover); color: var(--text); }
+.exp-target-pill.active {
+  background: var(--peach);
+  color: white;
+  border-color: var(--peach);
+  box-shadow: var(--shadow-sm);
+}
+.exp-target-pill-check { display: none; font-size: 0.7rem; }
+.exp-target-pill.active .exp-target-pill-check { display: inline; }
+.exp-target-pill-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  flex-shrink: 0;
+}
+.exp-target-pill-dot.explo { background: var(--sky); }
+.exp-target-pill-dot.normal { background: var(--sage); }
+.exp-target-pill-dot.hard { background: var(--odd-full); }
+.exp-target-pill.active .exp-target-pill-dot {
+  background: rgba(255,255,255,0.7) !important;
+}
+.exp-target-pill-mode {
+  opacity: 0.7;
+  font-size: 0.68rem;
+}
 
 .exp-party-label {
   font-size: 0.74rem;
@@ -1187,6 +1247,213 @@ body.guest-mode .page input {
   background: var(--sage-light); border-color: var(--sage); color: #5a7a42;
 }
 
+/* ── Recommend party cards (둘다 모드 핵심 출력) ── */
+.exp-recommend-title {
+  font-size: 0.82rem;
+  color: var(--text);
+  margin: 12px 0 8px 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.exp-recommend-medal { font-size: 1rem; }
+
+.exp-recommend-row {
+  display: grid;
+  grid-template-columns: 1fr 22px 1fr;
+  gap: 8px;
+  align-items: stretch;
+}
+.exp-recommend-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.exp-recommend-card.empty {
+  background: var(--surface2);
+  border-style: dashed;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-sub);
+  font-size: 0.78rem;
+  text-align: center;
+}
+.exp-recommend-card-strip {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.exp-recommend-card-owner {
+  font-size: 0.65rem;
+  color: var(--text-sub);
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.exp-recommend-card-owner-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+}
+.exp-recommend-card-name {
+  font-size: 1rem;
+  color: var(--text);
+  line-height: 1.2;
+}
+.exp-recommend-card-stats {
+  font-size: 0.7rem;
+  color: var(--text-sub);
+  margin-bottom: 4px;
+}
+.exp-recommend-card-bar {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--border);
+  overflow: hidden;
+  position: relative;
+}
+.exp-recommend-card-bar-fill { height: 100%; transition: width 0.4s; }
+.exp-recommend-card-odd {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  margin-top: 3px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.exp-recommend-card-odd strong {
+  color: var(--text);
+  font-weight: normal;
+  font-size: 0.82rem;
+}
+
+.exp-recommend-plus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: var(--text-sub);
+  opacity: 0.45;
+  font-weight: 300;
+}
+
+/* Solo mode single card */
+.exp-recommend-solo {
+  max-width: 55%;
+}
+
+/* ── Candidates (다른 후보) ── */
+.exp-candidates-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 0 2px;
+}
+.exp-candidates-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.exp-candidates-col-title {
+  font-size: 0.7rem;
+  color: var(--text-sub);
+  margin-bottom: 3px;
+  padding-left: 2px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.exp-candidates-col-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+}
+.exp-candidates-col-empty {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  opacity: 0.6;
+  padding: 6px 2px;
+}
+
+.exp-candidate-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 7px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  font-size: 0.76rem;
+  transition: all 0.2s;
+  min-width: 0;
+}
+.exp-candidate-item.excluded {
+  opacity: 0.4;
+  background: var(--surface2);
+}
+.exp-candidate-item.excluded .exp-candidate-name { text-decoration: line-through; }
+.exp-candidate-item.top {
+  border-color: var(--peach);
+  background: #fff8f2;
+}
+
+.exp-candidate-rank {
+  width: 15px; height: 15px; border-radius: 50%;
+  background: var(--surface2);
+  color: var(--text-sub);
+  font-size: 0.58rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.exp-candidate-item.top .exp-candidate-rank {
+  background: var(--peach);
+  color: white;
+}
+.exp-candidate-name {
+  flex: 1;
+  color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-width: 0;
+}
+.exp-candidate-odd {
+  font-size: 0.68rem;
+  color: var(--text-sub);
+  flex-shrink: 0;
+}
+.exp-candidate-bar {
+  width: 22px; height: 5px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden; flex-shrink: 0;
+}
+.exp-candidate-bar-fill { height: 100%; }
+.exp-candidate-exclude-btn {
+  width: 17px; height: 17px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 0 1px 0;
+  font-family: inherit;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.exp-candidate-exclude-btn:hover {
+  background: var(--peach-light); border-color: var(--peach); color: #9a5a3a;
+}
+.exp-candidate-exclude-btn.excluded {
+  background: var(--peach-light); border-color: var(--peach); color: #9a5a3a;
+}
+
 .exp-legend {
   display: flex; flex-wrap: wrap; justify-content: center;
   gap: 8px 14px;
@@ -1199,12 +1466,29 @@ body.guest-mode .page input {
 @media (max-width: 600px) {
   .exp-result-stats { display: none; }
   .exp-supply-table {
-    grid-template-columns: minmax(80px, 1fr) repeat(3, minmax(54px, 1fr));
+    grid-template-columns: minmax(80px, 1fr) repeat(3, minmax(50px, 1fr));
     gap: 3px;
   }
   .exp-supply-row-name { font-size: 0.72rem; }
-  .exp-supply-cell { min-height: 40px; }
-  .exp-supply-cell-ilvl { font-size: 0.68rem; }
+  .exp-supply-cell { min-height: 28px; }
+  .exp-supply-cell-ilvl { font-size: 0.72rem; }
+}
+
+@media (max-width: 480px) {
+  .exp-recommend-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .exp-recommend-plus {
+    transform: rotate(90deg);
+    padding: 2px 0;
+    opacity: 0.35;
+  }
+  .exp-candidates-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .exp-recommend-solo { max-width: 100%; }
 }
 </style>
 </head>
@@ -2759,6 +3043,7 @@ function expSaveChecked(set) {
 }
 
 let _expChecked = expLoadChecked();   // 체크된 던전 키들 ('name::mode::ilvl')
+let _expPartyTarget = new Set();      // 파티 찾기용 선택된 던전 (단일 기본, 다중 허용)
 let _expParty = 'both';
 let _expExcluded = new Set();         // 세션 범위(저장 안 함)
 let _expResultExpanded = true;
@@ -2787,11 +3072,11 @@ function expCurrentOdd(char) {
   return char.odd_energy_base || 0;
 }
 
-// 선택된 던전들의 최대 템레벨 (AND 조건)
+// 파티 타겟의 최대 템레벨 (AND 조건 - 다중 선택 시 모두 가능한 캐릭)
 function expRequiredIlvl() {
-  if (_expChecked.size === 0) return null;
+  if (_expPartyTarget.size === 0) return null;
   let max = 0;
-  for (const key of _expChecked) {
+  for (const key of _expPartyTarget) {
     const { ilvl } = expParseKey(key);
     if (ilvl > max) max = ilvl;
   }
@@ -2802,8 +3087,20 @@ function expRequiredIlvl() {
 function expToggleCell(name, mode, ilvl) {
   if (currentActor === 'guest') return;
   const key = expKey(name, mode, ilvl);
-  if (_expChecked.has(key)) _expChecked.delete(key);
-  else _expChecked.add(key);
+  if (_expChecked.has(key)) {
+    _expChecked.delete(key);
+    _expPartyTarget.delete(key);
+    // 타겟이 비었고 다른 체크가 있으면 그 중 첫 번째 자동 선택
+    if (_expPartyTarget.size === 0 && _expChecked.size > 0) {
+      _expPartyTarget.add([..._expChecked][0]);
+    }
+  } else {
+    _expChecked.add(key);
+    // 타겟이 비어있을 때만 자동으로 타겟 설정 (기존 선택 존중)
+    if (_expPartyTarget.size === 0) {
+      _expPartyTarget.add(key);
+    }
+  }
   expSaveChecked(_expChecked);
   renderExpeditionPage();
 }
@@ -2812,7 +3109,18 @@ function expClearAll() {
   if (_expChecked.size === 0) return;
   if (!confirm('체크한 던전을 모두 해제할까요?')) return;
   _expChecked.clear();
+  _expPartyTarget.clear();
   expSaveChecked(_expChecked);
+  renderExpeditionPage();
+}
+function expTogglePartyTarget(key) {
+  // 단일 선택: 같은 pill 다시 탭하면 해제, 다른 pill 탭하면 전환
+  if (_expPartyTarget.has(key)) {
+    _expPartyTarget.delete(key);
+  } else {
+    _expPartyTarget.clear();
+    _expPartyTarget.add(key);
+  }
   renderExpeditionPage();
 }
 function expSetParty(party) {
@@ -2863,7 +3171,6 @@ function renderExpeditionPage() {
   `;
 
   let tableHtml = `<div class="exp-supply-table">`;
-  // 컬럼 헤더
   tableHtml += `<div class="exp-supply-col-head">던전</div>`;
   tableHtml += `<div class="exp-supply-col-head"><span class="exp-supply-col-head-dot explo"></span>탐험</div>`;
   tableHtml += `<div class="exp-supply-col-head"><span class="exp-supply-col-head-dot normal"></span>보통</div>`;
@@ -2872,7 +3179,8 @@ function renderExpeditionPage() {
   EXP_DUNGEONS.forEach(d => {
     tableHtml += `
       <div class="exp-supply-row-name">
-        ${'★'.repeat(d.star)} ${d.name}
+        <span class="exp-supply-row-stars">${d.star}★</span>
+        <span class="exp-supply-row-text">${d.name}</span>
       </div>
     `;
     modes.forEach(m => {
@@ -2882,15 +3190,14 @@ function renderExpeditionPage() {
       tableHtml += `
         <div class="exp-supply-cell ${checked ? 'checked' : ''}"
              onclick="expToggleCell('${d.name.replace(/'/g,"\\'")}','${m.key}',${ilvl})">
-          <div class="exp-supply-cell-check">${checked ? '✓' : ''}</div>
-          <div class="exp-supply-cell-ilvl">${ilvl}</div>
+          ${checked ? '<span class="exp-supply-cell-check">✓</span>' : ''}
+          <span class="exp-supply-cell-ilvl">${ilvl}</span>
         </div>
       `;
     });
   });
   tableHtml += `</div>`;
 
-  // 선택된 던전 요약 (읽기 쉽게)
   let selectedSummary = '';
   if (_expChecked.size > 0) {
     const items = [..._expChecked].map(k => {
@@ -2934,87 +3241,163 @@ function renderExpeditionPage() {
     </div>
   `;
 
-  let partyBodyHtml;
-  if (reqIlvl === null) {
-    partyBodyHtml = `
-      ${partyPillsHtml}
-      <div class="exp-party-empty-hint">위에서 오늘 갈 던전을 체크해 주세요</div>
-    `;
-  } else {
-    let pool = allChars.filter(c => c.name && (c.item_level || 0) >= reqIlvl);
-    if (_expParty !== 'both') pool = pool.filter(c => c.owner === _expParty);
-    pool.sort((a, b) => (b.combat_power || 0) - (a.combat_power || 0));
-
-    let visibleRank = 0;
-    let includedCount = 0;
-    let excludedCount = 0;
-
-    const itemsHtml = pool.map(c => {
-      const excluded = _expExcluded.has(c.id);
-      let rankCls = '', rankDisplay;
-      if (excluded) {
-        rankDisplay = '—';
-        excludedCount++;
-      } else {
-        visibleRank++;
-        includedCount++;
-        rankDisplay = visibleRank;
-        rankCls = visibleRank <= 3 ? `exp-result-rank-${visibleRank}` : '';
-      }
-      const odd = expCurrentOdd(c);
-      const pct = Math.min(100, (odd / 840) * 100);
-      const cp = c.combat_power || 0;
-      const cpText = (typeof formatCp === 'function') ? formatCp(cp) : cp;
-      return `
-        <div class="exp-result-item ${excluded ? 'excluded' : ''}">
-          <div class="exp-result-rank ${rankCls}">${rankDisplay}</div>
-          <div class="exp-result-owner-dot" style="background:var(--owner-${c.owner})"></div>
-          <div class="exp-result-name">${c.name}</div>
-          <div class="exp-result-stats">템 ${c.item_level||0} · ${cpText}</div>
-          <div class="exp-result-bar">
-            <div class="exp-result-bar-fill" style="width:${pct}%;background:${expOddColor(odd)}"></div>
-          </div>
-          <div class="exp-result-odd">${odd}</div>
-          <button class="exp-exclude-btn ${excluded ? 'excluded' : ''}"
-                  onclick="expToggleExclude(${c.id})"
-                  title="${excluded ? '다시 추가' : '추천에서 제외'}">
-            ${excluded ? '+' : '×'}
+  // 체크된 보급의뢰 던전들을 파티 찾기 pill로 표시 (단일 선택)
+  let targetPillsHtml = '';
+  if (_expChecked.size > 0) {
+    const checkedList = [..._expChecked].map(k => {
+      const { name, mode, ilvl } = expParseKey(k);
+      const modeLabel = { explo: '탐험', normal: '보통', hard: '어려움' }[mode];
+      const modeDotCls = { explo: 'explo', normal: 'normal', hard: 'hard' }[mode];
+      return { key: k, name, mode, ilvl, modeLabel, modeDotCls };
+    });
+    targetPillsHtml = `
+      <div class="exp-party-label">어느 던전으로 파티 찾기? <span style="opacity:0.6;font-size:0.66rem">· 하나 탭하세요</span></div>
+      <div class="exp-party-pills">
+        ${checkedList.map(t => `
+          <button class="exp-target-pill ${_expPartyTarget.has(t.key) ? 'active' : ''}"
+                  onclick="expTogglePartyTarget('${t.key}')">
+            <span class="exp-target-pill-check">✓</span>
+            <span class="exp-target-pill-dot ${t.modeDotCls}"></span>
+            ${t.name} <span class="exp-target-pill-mode">${t.modeLabel} ${t.ilvl}</span>
           </button>
-        </div>
-      `;
-    }).join('');
-
-    const reqInfo = `
-      <div class="exp-party-req">
-        <span>선택 <strong>${_expChecked.size}개</strong> 모두 입장 가능해야 함</span>
-        <span>필요 템레벨 <strong>${reqIlvl}</strong>+</span>
+        `).join('')}
       </div>
     `;
+  }
 
-    let resultArea;
-    if (pool.length === 0) {
-      resultArea = `<div class="exp-party-empty-hint">조건에 맞는 캐릭터가 없어요 🥲</div>`;
-    } else {
-      resultArea = `
-        <div class="exp-result-toggle" onclick="expToggleResults()">
-          <div class="exp-result-toggle-label">
-            <span>입장 가능</span>
-            <span class="exp-count-badge-ok">${includedCount}명</span>
-            ${excludedCount > 0 ? `<span class="exp-count-badge-excl">제외 ${excludedCount}명</span>` : ''}
-          </div>
-          <span class="exp-result-chevron ${!_expResultExpanded ? 'collapsed' : ''}">▼</span>
-        </div>
-        <div class="exp-result-wrap ${!_expResultExpanded ? 'collapsed' : ''}">
-          <div class="exp-result-list">${itemsHtml}</div>
+  let partyBodyHtml;
+  if (_expChecked.size === 0) {
+    partyBodyHtml = `
+      <div class="exp-party-empty-hint">위에서 오늘 갈 던전을 먼저 체크해 주세요</div>
+    `;
+  } else if (reqIlvl === null) {
+    partyBodyHtml = `
+      ${targetPillsHtml}
+      ${partyPillsHtml}
+      <div class="exp-party-empty-hint">위 던전 중 하나를 골라주세요</div>
+    `;
+  } else {
+    // 입장 가능한 캐릭 풀 (템레벨 충족)
+    const pool = allChars.filter(c => c.name && (c.item_level || 0) >= reqIlvl);
+
+    const sortByOddThenCp = (a, b) => {
+      const diff = expCurrentOdd(b) - expCurrentOdd(a);
+      return diff !== 0 ? diff : (b.combat_power || 0) - (a.combat_power || 0);
+    };
+
+    const reqInfo = (() => {
+      const targets = [..._expPartyTarget].map(k => {
+        const { name, mode, ilvl } = expParseKey(k);
+        const modeLabel = { explo: '탐험', normal: '보통', hard: '어려움' }[mode];
+        return `${name} · ${modeLabel} ${ilvl}`;
+      }).join(' + ');
+      return `
+        <div class="exp-party-req">
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0"><strong>${targets}</strong></span>
+          <span style="flex-shrink:0">필요 템 <strong>${reqIlvl}</strong>+</span>
         </div>
       `;
-    }
+    })();
 
-    partyBodyHtml = `
-      ${reqInfo}
-      ${partyPillsHtml}
-      ${resultArea}
-    `;
+    if (pool.length === 0) {
+      partyBodyHtml = `
+        ${reqInfo}
+        ${targetPillsHtml}
+        ${partyPillsHtml}
+        <div class="exp-party-empty-hint">조건에 맞는 캐릭터가 없어요 🥲</div>
+      `;
+    } else {
+      let resultArea;
+      if (_expParty === 'both') {
+        // 쌍 추천 - 오우너별로 분리, 각각 오드 내림차순
+        const seolList = pool.filter(c => c.owner === '설냥').sort(sortByOddThenCp);
+        const chuList  = pool.filter(c => c.owner === '츄츄').sort(sortByOddThenCp);
+        const topSeol = seolList.find(c => !_expExcluded.has(c.id)) || null;
+        const topChu  = chuList.find(c => !_expExcluded.has(c.id)) || null;
+
+        const hasCandidates = (seolList.length > 1) || (chuList.length > 1);
+
+        resultArea = `
+          <div class="exp-recommend-title">
+            <span class="exp-recommend-medal">🥇</span>추천 파티 (오드 많은 순)
+          </div>
+          <div class="exp-recommend-row">
+            ${expRecommendCard(topSeol, '설냥')}
+            <div class="exp-recommend-plus">+</div>
+            ${expRecommendCard(topChu, '츄츄')}
+          </div>
+          ${hasCandidates ? `
+            <div class="exp-result-toggle" onclick="expToggleResults()">
+              <div class="exp-result-toggle-label">
+                <span>다른 후보</span>
+                <span class="exp-count-badge-ok">설냥 ${seolList.length} · 츄츄 ${chuList.length}</span>
+                ${_expExcluded.size > 0 ? `<span class="exp-count-badge-excl">제외 ${_expExcluded.size}</span>` : ''}
+              </div>
+              <span class="exp-result-chevron ${!_expResultExpanded ? 'collapsed' : ''}">▼</span>
+            </div>
+            <div class="exp-result-wrap ${!_expResultExpanded ? 'collapsed' : ''}">
+              <div class="exp-candidates-grid">
+                <div class="exp-candidates-col">
+                  <div class="exp-candidates-col-title">
+                    <span class="exp-candidates-col-dot" style="background:var(--owner-설냥)"></span>설냥 · ${seolList.length}명
+                  </div>
+                  ${seolList.length === 0
+                    ? `<div class="exp-candidates-col-empty">없음</div>`
+                    : seolList.map((c, i) => expCandidateItem(c, i, topSeol)).join('')}
+                </div>
+                <div class="exp-candidates-col">
+                  <div class="exp-candidates-col-title">
+                    <span class="exp-candidates-col-dot" style="background:var(--owner-츄츄)"></span>츄츄 · ${chuList.length}명
+                  </div>
+                  ${chuList.length === 0
+                    ? `<div class="exp-candidates-col-empty">없음</div>`
+                    : chuList.map((c, i) => expCandidateItem(c, i, topChu)).join('')}
+                </div>
+              </div>
+            </div>
+          ` : ''}
+        `;
+      } else {
+        // 단일 오우너 모드
+        const soloList = pool.filter(c => c.owner === _expParty).sort(sortByOddThenCp);
+        const top = soloList.find(c => !_expExcluded.has(c.id)) || null;
+
+        if (soloList.length === 0) {
+          resultArea = `<div class="exp-party-empty-hint">${_expParty} 계정에 조건 맞는 캐릭이 없어요</div>`;
+        } else {
+          resultArea = `
+            <div class="exp-recommend-title">
+              <span class="exp-recommend-medal">🥇</span>추천 캐릭 (${_expParty})
+            </div>
+            <div class="exp-recommend-solo">
+              ${expRecommendCard(top, _expParty)}
+            </div>
+            ${soloList.length > 1 ? `
+              <div class="exp-result-toggle" onclick="expToggleResults()">
+                <div class="exp-result-toggle-label">
+                  <span>다른 후보</span>
+                  <span class="exp-count-badge-ok">${soloList.length}명</span>
+                  ${_expExcluded.size > 0 ? `<span class="exp-count-badge-excl">제외 ${_expExcluded.size}</span>` : ''}
+                </div>
+                <span class="exp-result-chevron ${!_expResultExpanded ? 'collapsed' : ''}">▼</span>
+              </div>
+              <div class="exp-result-wrap ${!_expResultExpanded ? 'collapsed' : ''}">
+                <div class="exp-candidates-col" style="max-width:60%;margin-top:6px">
+                  ${soloList.map((c, i) => expCandidateItem(c, i, top)).join('')}
+                </div>
+              </div>
+            ` : ''}
+          `;
+        }
+      }
+
+      partyBodyHtml = `
+        ${reqInfo}
+        ${targetPillsHtml}
+        ${partyPillsHtml}
+        ${resultArea}
+      `;
+    }
   }
 
   const partyCard = `
@@ -3041,6 +3424,59 @@ function renderExpeditionPage() {
   `;
 
   el.innerHTML = supplyCard + partyCard + legend;
+}
+
+// ── 헬퍼: 추천 카드 1개 렌더 ──
+function expRecommendCard(c, ownerLabel) {
+  if (!c) {
+    return `<div class="exp-recommend-card empty">
+      ${ownerLabel} 가능 캐릭 없음
+    </div>`;
+  }
+  const odd = expCurrentOdd(c);
+  const pct = Math.min(100, (odd / 840) * 100);
+  const cp = c.combat_power || 0;
+  const cpText = (typeof formatCp === 'function') ? formatCp(cp) : cp;
+  return `
+    <div class="exp-recommend-card">
+      <div class="exp-recommend-card-strip" style="background:var(--owner-${c.owner})"></div>
+      <div class="exp-recommend-card-owner">
+        <span class="exp-recommend-card-owner-dot" style="background:var(--owner-${c.owner})"></span>${c.owner}
+      </div>
+      <div class="exp-recommend-card-name">${c.name}</div>
+      <div class="exp-recommend-card-stats">템 ${c.item_level||0} · ${cpText}</div>
+      <div class="exp-recommend-card-bar">
+        <div class="exp-recommend-card-bar-fill" style="width:${pct}%;background:${expOddColor(odd)}"></div>
+      </div>
+      <div class="exp-recommend-card-odd">
+        <span>오드</span>
+        <span><strong>${odd}</strong> / 840</span>
+      </div>
+    </div>
+  `;
+}
+
+// ── 헬퍼: 후보 아이템 1개 렌더 ──
+function expCandidateItem(c, idx, topChar) {
+  const excluded = _expExcluded.has(c.id);
+  const isTop = !excluded && topChar && c.id === topChar.id;
+  const odd = expCurrentOdd(c);
+  const pct = Math.min(100, (odd / 840) * 100);
+  return `
+    <div class="exp-candidate-item ${excluded ? 'excluded' : ''} ${isTop ? 'top' : ''}">
+      <div class="exp-candidate-rank">${idx + 1}</div>
+      <div class="exp-candidate-name">${c.name}</div>
+      <div class="exp-candidate-bar">
+        <div class="exp-candidate-bar-fill" style="width:${pct}%;background:${expOddColor(odd)}"></div>
+      </div>
+      <div class="exp-candidate-odd">${odd}</div>
+      <button class="exp-candidate-exclude-btn ${excluded ? 'excluded' : ''}"
+              onclick="expToggleExclude('${c.id}')"
+              title="${excluded ? '다시 추가' : '추천에서 제외'}">
+        ${excluded ? '+' : '×'}
+      </button>
+    </div>
+  `;
 }
 </script>
 <!-- ── 계정 모달 ── -->
