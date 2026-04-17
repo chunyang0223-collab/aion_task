@@ -1520,7 +1520,15 @@ function showPage(id) {
   if (id === 'detail-page') document.getElementById('detail-tab').classList.add('active');
   if (id === 'expedition-page') {
     document.getElementById('tab-expedition').classList.add('active');
-    renderExpeditionPage();
+    try {
+      renderExpeditionPage();
+    } catch (e) {
+      console.error('[원정 탭 에러]', e);
+      document.getElementById('expedition-content').innerHTML =
+        `<div class="card" style="color:#b85050;font-size:0.85rem;white-space:pre-wrap">` +
+        `원정 탭 렌더 오류:\n${e.message}\n\n콘솔 로그를 확인해 주세요.` +
+        `</div>`;
+    }
   }
   if (id === 'log-page') {
     document.getElementById('tab-log').classList.add('active');
@@ -2827,7 +2835,8 @@ function expToggleResults() {
 // RENDER
 function renderExpeditionPage() {
   const el = document.getElementById('expedition-content');
-  if (!window.allChars) {
+  if (!el) return;
+  if (typeof allChars === 'undefined' || !Array.isArray(allChars)) {
     el.innerHTML = `<div class="loading"><div class="spinner"></div> 불러오는 중...</div>`;
     return;
   }
