@@ -1429,7 +1429,7 @@ async function saveNumInput(charId, field, newVal) {
   if (char) char[field] = newVal;
   const { error } = await sb.from('characters').update({[field]: newVal}).eq('id', charId);
   if (error) showToast('저장 실패');
-  if (document.getElementById('overview').classList.contains('active')) renderOverview();
+  renderOverview(); // 항상 갱신 (상세뷰에서 수정해도 전체뷰 반영)
 }
 
 // ── DB ACTIONS ──
