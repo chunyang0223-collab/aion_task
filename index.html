@@ -692,6 +692,63 @@ body {
 }
 
 /* ── WEEK RESET INFO ── */
+/* ── LOG PAGE ── */
+.log-date-header {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  padding: 4px 2px 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.log-date-header::after { content:''; flex:1; height:1px; background:var(--border); }
+
+.log-card {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  margin-bottom: 6px;
+  box-shadow: var(--shadow-sm);
+  font-size: 0.82rem;
+  color: var(--text);
+  line-height: 1.6;
+}
+.log-time { font-size: 0.68rem; color: var(--text-sub); margin-top: 2px; }
+.log-actor { color: var(--sage); }
+.log-owner-설냥 { color: #5a8a42; }
+.log-owner-츄츄 { color: #b06040; }
+.log-char { color: var(--lavender); }
+.log-action { color: var(--text); }
+.log-action-done { color: var(--sage); }
+
+.log-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0 14px;
+  gap: 12px;
+}
+.log-nav-btn {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-sub);
+  font-size: 0.82rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.log-nav-btn:hover { background: var(--hover); color: var(--text); }
+.log-nav-btn:disabled { opacity: 0.3; cursor: default; }
+.log-nav-date {
+  font-size: 0.85rem;
+  color: var(--text);
+  text-align: center;
+  flex: 1;
+}
+
 .reset-info {
   font-size: 0.72rem;
   color: var(--text-sub);
@@ -765,8 +822,9 @@ body {
     <div class="topbar-title">Aion2 <span>츄냥이숙제</span></div>
   </div>
   <div class="tab-pills">
-    <button class="tab-pill active" onclick="showPage('overview')">전체</button>
+    <button class="tab-pill active" id="tab-overview" onclick="showPage('overview')">전체</button>
     <button class="tab-pill" onclick="showPage('detail-page')" id="detail-tab" style="display:none">상세</button>
+    <button class="tab-pill" id="tab-log" onclick="showPage('log-page')">로그</button>
   </div>
   <div id="reset-info" style="text-align:right;flex-shrink:0;line-height:1.5"></div>
 </div>
@@ -791,6 +849,73 @@ body {
     <div class="detail-owner-badge" id="detail-owner-badge"></div>
   </div>
   <div id="detail-content"></div>
+</div>
+
+<!-- ── 로그 페이지 ── -->
+<div id="log-page" class="page">
+  <div id="log-content">
+    <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
+  </div>
+</div>
+
+<!-- ── 사용자 선택 모달 ── -->
+<div id="user-modal-overlay" style="
+  display:none;position:fixed;inset:0;z-index:300;
+  background:rgba(90,82,75,0.4);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:20px;
+">
+  <div style="
+    background:var(--surface);border-radius:var(--radius);
+    border:1px solid var(--border);padding:24px;width:100%;max-width:280px;
+    box-shadow:0 12px 40px rgba(160,150,140,0.18);text-align:center;
+  ">
+    <!-- 1단계: 이름 선택 -->
+    <div id="actor-step1">
+      <div style="font-size:1rem;color:var(--text);margin-bottom:6px">누구세요?</div>
+      <div style="font-size:0.82rem;color:var(--text-sub);margin-bottom:20px">로그 기록에 사용됩니다</div>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button onclick="selectActorName('설냥')" style="
+          padding:10px 24px;border-radius:20px;border:1px solid var(--sage);
+          background:var(--sage-light);color:#3d5c2a;font-size:0.9rem;
+          font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+        ">설냥</button>
+        <button onclick="selectActorName('츄츄')" style="
+          padding:10px 24px;border-radius:20px;border:1px solid var(--peach);
+          background:var(--peach-light);color:#9a5a3a;font-size:0.9rem;
+          font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+        ">츄츄</button>
+      </div>
+    </div>
+    <!-- 2단계: PIN 입력 -->
+    <div id="actor-step2" style="display:none">
+      <div style="font-size:1rem;color:var(--text);margin-bottom:4px" id="actor-pin-title"></div>
+      <div style="font-size:0.82rem;color:var(--text-sub);margin-bottom:16px">비밀번호를 입력해주세요</div>
+      <input id="actor-pin-input" type="password" inputmode="numeric" maxlength="4"
+        placeholder="••••"
+        style="
+          width:100%;text-align:center;font-size:1.4rem;letter-spacing:0.3em;
+          border:1px solid var(--border);border-radius:10px;
+          background:var(--surface2);color:var(--text);
+          padding:10px;font-family:'Gowun Dodum',sans-serif;
+          outline:none;-webkit-user-select:text;user-select:text;
+        "
+        oninput="if(this.value.length===4) confirmPin()"
+        onkeydown="if(event.key==='Enter') confirmPin()">
+      <div id="actor-pin-error" style="font-size:0.75rem;color:#b85050;margin-top:8px;min-height:18px"></div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:4px">
+        <button onclick="backToStep1()" style="
+          padding:7px 16px;border-radius:20px;border:1px solid var(--border);
+          background:transparent;color:var(--text-sub);font-size:0.82rem;
+          font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+        ">뒤로</button>
+        <button onclick="confirmPin()" style="
+          padding:7px 18px;border-radius:20px;border:none;
+          background:var(--sage);color:white;font-size:0.82rem;
+          font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+        ">확인</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -961,7 +1086,11 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.querySelectorAll('.tab-pill').forEach(p => p.classList.remove('active'));
-  if (id === 'overview') document.querySelector('.tab-pill').classList.add('active');
+  if (id === 'overview') document.getElementById('tab-overview').classList.add('active');
+  if (id === 'log-page') {
+    document.getElementById('tab-log').classList.add('active');
+    renderLogPage();
+  }
 }
 
 function goBack() {
@@ -1471,7 +1600,11 @@ async function toggleDaily(charId, field, value, today) {
   }
   if (error) { showToast('저장 실패'); return; }
   const char = allChars.find(c => c.id === charId);
-  if (char) renderDetail(char);
+  if (char) {
+    renderDetail(char);
+    const actionMap = { mission_done:'사명 완료', supply_done:'보급 완료' };
+    if (value && actionMap[field]) writeLog(char.owner, char.name, actionMap[field]);
+  }
 }
 
 async function toggleWeekly(charId, field, value, week) {
@@ -1489,7 +1622,11 @@ async function toggleWeekly(charId, field, value, week) {
   }
   if (error) { showToast('저장 실패'); return; }
   const char = allChars.find(c => c.id === charId);
-  if (char) renderDetail(char);
+  if (char) {
+    renderDetail(char);
+    const actionMap = { ludra_done:'성역-루드라 완료', erosion_done:'성역-침식 완료' };
+    if (value && actionMap[field]) writeLog(char.owner, char.name, actionMap[field]);
+  }
 }
 
 async function cycleAwakening(charId, cur, pip) {
@@ -1497,7 +1634,11 @@ async function cycleAwakening(charId, cur, pip) {
   const { error } = await sb.from('characters').update({awakening_done: newVal}).eq('id', charId);
   if (error) { showToast('저장 실패'); return; }
   const char = allChars.find(c => c.id === charId);
-  if (char) { char.awakening_done = newVal; renderDetail(char); }
+  if (char) {
+    char.awakening_done = newVal;
+    renderDetail(char);
+    if (newVal > cur) writeLog(char.owner, char.name, `각성 ${newVal}회 완료`);
+  }
 }
 
 // ── ACCOUNT MODAL ──
@@ -1661,7 +1802,11 @@ async function toggleAbyssChar(corridorId, charId, cleared) {
     abyssClears[k] = data;
   }
   const char = allChars.find(c => c.id === charId);
-  if (char) renderDetail(char);
+  if (char) {
+    renderDetail(char);
+    const cor = abyssCorridors.find(c => c.id === corridorId);
+    if (cleared && cor) writeLog(char.owner, char.name, `어비스 회랑-${cor.zone} 완료`);
+  }
 }
 
 // ── REALTIME ──
@@ -1686,6 +1831,9 @@ function subscribeRealtime() {
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'abyss_clears' }, async () => {
       await reloadTable('abyss_clears');
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_log' }, async () => {
+      if (document.getElementById('log-page').classList.contains('active')) renderLogPage();
     })
     .subscribe(status => {
       if (status === 'SUBSCRIBED') dot.classList.add('connected');
@@ -1729,6 +1877,144 @@ async function reloadTable(table) {
     const char = allChars.find(c => c.id === currentCharId);
     if (char) renderDetail(char);
   }
+}
+
+// ── ACTOR (누가 쓰는지) ──
+let currentActor = localStorage.getItem('aion2_actor') || null;
+
+let _pendingActor = null;
+
+function selectActorName(name) {
+  _pendingActor = name;
+  document.getElementById('actor-step1').style.display = 'none';
+  document.getElementById('actor-step2').style.display = 'block';
+  document.getElementById('actor-pin-title').textContent = name;
+  document.getElementById('actor-pin-input').value = '';
+  document.getElementById('actor-pin-error').textContent = '';
+  setTimeout(() => document.getElementById('actor-pin-input').focus(), 100);
+}
+
+function backToStep1() {
+  _pendingActor = null;
+  document.getElementById('actor-step2').style.display = 'none';
+  document.getElementById('actor-step1').style.display = 'block';
+}
+
+async function confirmPin() {
+  const input = document.getElementById('actor-pin-input').value.trim();
+  const acc = accountData[_pendingActor];
+  if (!acc) { document.getElementById('actor-pin-error').textContent = '계정 정보를 불러오는 중...'; return; }
+  if (input !== acc.pin) {
+    document.getElementById('actor-pin-error').textContent = '비밀번호가 틀렸어요';
+    document.getElementById('actor-pin-input').value = '';
+    return;
+  }
+  setActor(_pendingActor);
+}
+
+function setActor(name) {
+  currentActor = name;
+  localStorage.setItem('aion2_actor', name);
+  document.getElementById('user-modal-overlay').style.display = 'none';
+  document.getElementById('actor-step2').style.display = 'none';
+  document.getElementById('actor-step1').style.display = 'block';
+}
+
+function checkActor() {
+  if (!currentActor) {
+    document.getElementById('user-modal-overlay').style.display = 'flex';
+    return false;
+  }
+  return true;
+}
+
+// ── ACTIVITY LOG ──
+async function writeLog(owner, characterName, action) {
+  if (!checkActor()) return;
+  const gameDate = getTodayKST();
+  await sb.from('activity_log').insert({
+    game_date: gameDate,
+    actor: currentActor,
+    owner,
+    character_name: characterName,
+    action,
+  });
+}
+
+// 로그 페이지 날짜 상태
+let logCurrentDate = null;
+
+async function renderLogPage() {
+  logCurrentDate = logCurrentDate || getTodayKST();
+  const el = document.getElementById('log-content');
+
+  const { data: logs } = await sb.from('activity_log')
+    .select('*')
+    .eq('game_date', logCurrentDate)
+    .order('created_at', { ascending: false });
+
+  const dateLabel = formatLogDate(logCurrentDate);
+  const today = getTodayKST();
+  const isToday = logCurrentDate === today;
+
+  // 이전/다음 날짜 계산
+  const prev = offsetDate(logCurrentDate, -1);
+  const next = offsetDate(logCurrentDate, 1);
+  const hasNext = logCurrentDate < today;
+
+  let html = `
+    <div class="log-nav">
+      <button class="log-nav-btn" onclick="changeLogDate('${prev}')">◀ 전날</button>
+      <div class="log-nav-date">${dateLabel}${isToday ? ' <span style="font-size:0.72rem;color:var(--sage)">오늘</span>' : ''}</div>
+      <button class="log-nav-btn" onclick="changeLogDate('${next}')" ${hasNext?'':'disabled'}>다음날 ▶</button>
+    </div>`;
+
+  if (!logs || logs.length === 0) {
+    html += `<div style="text-align:center;padding:40px 0;font-size:0.85rem;color:var(--text-sub)">이 날의 활동 기록이 없어요</div>`;
+  } else {
+    logs.forEach(log => {
+      const time = formatLogTime(log.created_at);
+      const actorClass = log.actor === '설냥' ? 'log-owner-설냥' : 'log-owner-츄츄';
+      const ownerClass = log.owner === '설냥' ? 'log-owner-설냥' : 'log-owner-츄츄';
+      html += `<div class="log-card">
+        <span class="${actorClass}">[${log.actor}]</span>이 
+        <span class="${ownerClass}">[${log.owner}]</span> 계정의 
+        <span class="log-char">[${log.character_name || '계정'}]</span>
+        <span class="log-action-done"> ${log.action}</span>
+        <div class="log-time">${time}</div>
+      </div>`;
+    });
+  }
+
+  el.innerHTML = html;
+}
+
+function changeLogDate(date) {
+  logCurrentDate = date;
+  renderLogPage();
+}
+
+function offsetDate(dateStr, days) {
+  const d = new Date(dateStr + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function formatLogDate(dateStr) {
+  const days = ['일','월','화','수','목','금','토'];
+  const d = new Date(dateStr + 'T12:00:00Z');
+  const m = d.getUTCMonth() + 1;
+  const day = d.getUTCDate();
+  const wd = days[d.getUTCDay()];
+  return `${m}월 ${day}일 (${wd})`;
+}
+
+function formatLogTime(isoStr) {
+  const d = new Date(isoStr);
+  const kst = new Date(d.getTime() + 9*3600*1000);
+  const h = String(kst.getUTCHours()).padStart(2,'0');
+  const m = String(kst.getUTCMinutes()).padStart(2,'0');
+  return `${h}:${m}`;
 }
 
 // ── ODD ENERGY ESTIMATE ──
@@ -1840,6 +2126,11 @@ async function applyOddEstimate(charId) {
 
 // ── START ──
 init();
+
+// actor 미설정 시 모달 표시
+if (!currentActor) {
+  document.getElementById('user-modal-overlay').style.display = 'flex';
+}
 
 // 카운트다운 1분마다 갱신
 setInterval(() => {
