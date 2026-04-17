@@ -1096,11 +1096,24 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2000);
 }
 
+let _overviewDirty = false;
+
+function lazyRenderOverview() {
+  if (document.getElementById('overview').classList.contains('active')) {
+    renderOverview();
+  } else {
+    _overviewDirty = true;
+  }
+}
+
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.querySelectorAll('.tab-pill').forEach(p => p.classList.remove('active'));
-  if (id === 'overview') document.getElementById('tab-overview').classList.add('active');
+  if (id === 'overview') {
+    document.getElementById('tab-overview').classList.add('active');
+    if (_overviewDirty) { renderOverview(); _overviewDirty = false; }
+  }
   if (id === 'detail-page') document.getElementById('detail-tab').classList.add('active');
   if (id === 'log-page') {
     document.getElementById('tab-log').classList.add('active');
@@ -1596,7 +1609,7 @@ async function saveNumInput(charId, field, newVal) {
   if (char) char[field] = newVal;
   const { error } = await sb.from('characters').update({[field]: newVal}).eq('id', charId);
   if (error) showToast('저장 실패');
-  renderOverview(); // 항상 갱신 (상세뷰에서 수정해도 전체뷰 반영)
+  lazyRenderOverview();
 }
 
 // ── DB ACTIONS ──
@@ -1627,7 +1640,7 @@ async function toggleDaily(charId, field, value, today) {
   const char = allChars.find(c => c.id === charId);
   if (char) {
     renderDetail(char);
-    renderOverview();
+    lazyRenderOverview();
     const actionMap = { mission_done:'사명 완료', supply_done:'보급 완료' };
     if (value && actionMap[field]) writeLog(char.owner, char.name, actionMap[field]);
   }
@@ -1650,7 +1663,7 @@ async function toggleWeekly(charId, field, value, week) {
   const char = allChars.find(c => c.id === charId);
   if (char) {
     renderDetail(char);
-    renderOverview();
+    lazyRenderOverview();
     const actionMap = { ludra_done:'성역-루드라 완료', erosion_done:'성역-침식 완료' };
     if (value && actionMap[field]) writeLog(char.owner, char.name, actionMap[field]);
   }
@@ -1664,7 +1677,7 @@ async function cycleAwakening(charId, cur, pip) {
   if (char) {
     char.awakening_done = newVal;
     renderDetail(char);
-    renderOverview();
+    lazyRenderOverview();
     if (newVal > cur) writeLog(char.owner, char.name, `각성 ${newVal}회 완료`);
   }
 }
@@ -1834,6 +1847,7 @@ async function toggleAbyssChar(corridorId, charId, cleared) {
     renderDetail(char);
     const cor = abyssCorridors.find(c => c.id === corridorId);
     if (cleared && cor) writeLog(char.owner, char.name, `어비스 회랑-${cor.zone} 완료`);
+    lazyRenderOverview();
   }
 }
 
