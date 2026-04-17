@@ -834,8 +834,13 @@ function getTodayKST() {
   const now = new Date();
   const kst = new Date(now.getTime() + 9*3600*1000);
   const h = kst.getUTCHours();
+  // 05:00 이전이면 게임 기준으로 아직 전날
   if (h < 5) kst.setUTCDate(kst.getUTCDate()-1);
-  return kst.toISOString().slice(0,10);
+  // UTC 기준 Date이지만 +9h 된 값이므로 UTC 날짜 필드로 뽑아야 KST 날짜가 맞음
+  const y = kst.getUTCFullYear();
+  const m = String(kst.getUTCMonth()+1).padStart(2,'0');
+  const d = String(kst.getUTCDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
 }
 
 function getLastWarDate() {
