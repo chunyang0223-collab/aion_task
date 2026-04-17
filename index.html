@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>아이온2 숙제 도우미</title>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg: #f9f6f0;
+  --surface: #ffffff;
+  --surface2: #faf8f5;
+  --text: #5a524b;
+  --text-sub: #9e9589;
+  --border: #eae2d6;
+  --hover: #f4efe6;
+  --sage: #a3b18a;
+  --sage-light: #d4e2c4;
+  --peach: #e2b49a;
+  --peach-light: #f5ddd0;
+  --lavender: #b8aed4;
+  --lavender-light: #ddd8ee;
+  --sky: #97c4d8;
+  --sky-light: #d4eaf4;
+  --done: #a3b18a;
+  --undone: #faf8f5;
+  --shadow: 0 4px 20px rgba(160,150,140,0.10);
+  --shadow-sm: 0 2px 8px rgba(160,150,140,0.08);
+  --radius: 18px;
+  --radius-sm: 10px;
+  --radius-xs: 7px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Gowun Dodum', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ── TOP NAV ── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(249,246,240,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  gap: 12px;
+}
+
+.topbar-title {
+  font-size: 1rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.topbar-title span {
+  color: var(--sage);
+}
+
+.tab-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.tab-pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.85rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tab-pill.active {
+  background: var(--sage);
+  color: white;
+  border-color: var(--sage);
+}
+
+.realtime-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ccc;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.realtime-dot.connected { background: var(--sage); animation: pulse 2s infinite; }
+.realtime-dot.error { background: var(--peach); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── PAGES ── */
+.page { display: none; padding: 16px; }
+.page.active { display: block; }
+
+/* ── OVERVIEW PAGE ── */
+.owner-section { margin-bottom: 20px; }
+
+.owner-label {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  margin-bottom: 8px;
+  padding-left: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.owner-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.chars-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .chars-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── CHARACTER MINI CARD ── */
+.char-mini {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.char-mini:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.char-mini.empty { background: var(--surface2); border-style: dashed; cursor: default; opacity: 0.6; }
+.char-mini.empty:hover { transform: none; box-shadow: var(--shadow-sm); }
+
+.char-mini-name {
+  font-size: 0.85rem;
+  color: var(--text);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.char-mini-ilvl {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  margin-bottom: 6px;
+}
+
+.mini-progress-row {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.mini-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.2s;
+}
+
+.mini-dot.done { background: var(--sage); }
+.mini-dot.partial { background: var(--peach); }
+.mini-dot.locked { background: var(--border); opacity: 0.4; }
+
+.char-mini-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  color: var(--text-sub);
+  font-size: 1.4rem;
+}
+
+/* completion bar at bottom of card */
+.char-mini-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--sage);
+  border-radius: 0 0 0 var(--radius-sm);
+  transition: width 0.3s;
+}
+
+/* ── ACCOUNT SECTION ── */
+.account-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.account-card {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  padding: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.account-card-title {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  margin-bottom: 6px;
+}
+
+.account-card-owner {
+  font-size: 0.8rem;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.account-bool-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* ── ABYSS SECTION ── */
+.abyss-section { margin-bottom: 20px; }
+
+.section-title {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  margin-bottom: 8px;
+  padding-left: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.abyss-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.abyss-zone {
+  background: var(--surface);
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  padding: 8px 6px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.abyss-zone.acquired {
+  background: var(--lavender-light);
+  border-color: var(--lavender);
+}
+
+.abyss-zone-name {
+  font-size: 0.8rem;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.abyss-zone-layer {
+  font-size: 0.7rem;
+  color: var(--text-sub);
+  margin-bottom: 6px;
+}
+
+.abyss-toggle {
+  width: 28px;
+  height: 16px;
+  border-radius: 8px;
+  background: var(--border);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin: 0 auto 4px;
+  display: block;
+}
+
+.abyss-toggle.on { background: var(--lavender); }
+
+.abyss-toggle::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: white;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s;
+}
+
+.abyss-toggle.on::after { transform: translateX(12px); }
+
+/* char clear dots under zone */
+.abyss-char-dots {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* ── DETAIL PAGE ── */
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.back-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--text-sub);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.back-btn:hover { background: var(--hover); }
+
+.detail-name-block { flex: 1; }
+
+.detail-char-name {
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.detail-char-meta {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  margin-top: 2px;
+}
+
+.detail-owner-badge {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+}
+
+.badge-설냥 { background: var(--sage-light); color: #5a7a42; }
+.badge-츄츄 { background: var(--peach-light); color: #9a5a3a; }
+
+/* ── CARD SECTIONS ── */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.card-title {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-title-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+}
+
+.icon-daily { background: var(--sky-light); }
+.icon-weekly { background: var(--lavender-light); }
+.icon-info { background: var(--sage-light); }
+
+/* ── STAT ROW ── */
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.stat-row:last-child { border-bottom: none; }
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--text);
+  flex: 1;
+}
+
+.stat-sublabel {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  display: block;
+}
+
+.stat-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── NUMBER INPUT ── */
+.num-input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  background: var(--surface2);
+}
+
+.num-btn {
+  width: 26px;
+  height: 26px;
+  background: transparent;
+  border: none;
+  color: var(--text-sub);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  font-family: 'Gowun Dodum', sans-serif;
+}
+
+.num-btn:active { background: var(--hover); }
+
+.num-val {
+  min-width: 28px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text);
+  padding: 0 2px;
+}
+
+.num-val-input {
+  width: 48px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text);
+  font-family: "Gowun Dodum", sans-serif;
+  border: none;
+  background: transparent;
+  outline: none;
+  -webkit-user-select: text;
+  user-select: text;
+  -moz-appearance: textfield;
+  padding: 0 2px;
+}
+.num-val-input::-webkit-outer-spin-button,
+.num-val-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.num-val-input:focus { background: var(--hover); border-radius: 4px; }
+
+/* ── CP INPUT ── */
+.cp-input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--surface2);
+  overflow: hidden;
+  padding-right: 8px;
+}
+.cp-input {
+  border: none !important;
+  background: transparent !important;
+  width: 76px !important;
+  -moz-appearance: textfield;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.cp-input::-webkit-outer-spin-button,
+.cp-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.cp-input:focus { background: transparent !important; }
+.cp-k {
+  font-size: 0.85rem;
+  color: var(--sage);
+  font-weight: bold;
+  pointer-events: none;
+}
+
+/* ── TOGGLE BUTTON ── */
+.toggle-btn {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--undone);
+  color: var(--text-sub);
+  font-size: 0.8rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.toggle-btn.done {
+  background: var(--sage);
+  color: white;
+  border-color: var(--sage);
+}
+
+.toggle-btn.done-peach {
+  background: var(--peach);
+  color: white;
+  border-color: var(--peach);
+}
+
+/* ── TEXT INPUT ── */
+.text-input {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  padding: 4px 8px;
+  width: 100%;
+  outline: none;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.text-input:focus { border-color: var(--sage); }
+
+/* ── COUNTER DISPLAY ── */
+.counter-display {
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.counter-max { color: var(--text-sub); font-size: 0.75rem; }
+
+/* ── AWAKENING PIPS ── */
+.pip-row {
+  display: flex;
+  gap: 5px;
+}
+
+.pip {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--undone);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  color: transparent;
+}
+
+.pip.done {
+  background: var(--lavender);
+  border-color: var(--lavender);
+  color: white;
+}
+
+/* ── NIGHTMARE / KEY WARN ── */
+.warn-chip {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  background: #fce8e8;
+  color: #b85050;
+}
+
+.ok-chip {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  background: var(--sage-light);
+  color: #5a7a42;
+}
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  background: var(--text);
+  color: white;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  transition: transform 0.3s;
+  z-index: 999;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── LOADING ── */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-sub);
+  font-size: 0.9rem;
+  gap: 8px;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--sage);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── SECTION DIVIDER ── */
+.section-sep {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  padding: 4px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-sep::before, .section-sep::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── LOCKED OVERLAY ── */
+.locked-row {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.lock-badge {
+  font-size: 0.7rem;
+  color: var(--text-sub);
+  background: var(--border);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+/* ── WEEK RESET INFO ── */
+.reset-info {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  margin-top: -6px;
+  margin-bottom: 8px;
+  padding-left: 2px;
+}
+
+/* add char form */
+.add-char-form {
+  display: none;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.add-char-form.open { display: block; }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.form-label {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  margin-bottom: 3px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.btn-primary {
+  padding: 7px 18px;
+  border-radius: 20px;
+  border: none;
+  background: var(--sage);
+  color: white;
+  font-size: 0.85rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  padding: 7px 18px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.85rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-title">아이온2 <span>숙제</span></div>
+  <div class="tab-pills">
+    <button class="tab-pill active" onclick="showPage('overview')">전체</button>
+    <button class="tab-pill" onclick="showPage('detail-page')" id="detail-tab" style="display:none">상세</button>
+  </div>
+  <div class="realtime-dot" id="rt-dot" title="실시간 연결"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- ═══════════════════════════════ OVERVIEW PAGE ═══════════════════════════════ -->
+<div id="overview" class="page active">
+  <div id="overview-content">
+    <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ DETAIL PAGE ═══════════════════════════════ -->
+<div id="detail-page" class="page">
+  <div class="detail-header">
+    <div class="back-btn" onclick="goBack()">←</div>
+    <div class="detail-name-block">
+      <div class="detail-char-name" id="detail-char-name">—</div>
+      <div class="detail-char-meta" id="detail-char-meta">—</div>
+    </div>
+    <div class="detail-owner-badge" id="detail-owner-badge"></div>
+  </div>
+  <div id="detail-content"></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://fifknslpxytyiexwuzat.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_POE4lwR73VWv7jXn72Du-A_DQVyvWeV';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const OWNERS = ['설냥', '츄츄'];
+const ZONES = [
+  { name: '뿌리', layer: '하층' },
+  { name: '유황', layer: '하층' },
+  { name: '군도', layer: '하층' },
+  { name: '사원', layer: '중층' },
+  { name: '관측소', layer: '중층' },
+  { name: '성채', layer: '중층' },
+];
+
+let allChars = [];
+let accountData = {};
+let dailyTasks = {};
+let weeklyTasks = {};
+let abyssCorridors = [];
+let abyssClears = {};
+let currentCharId = null;
+
+// ── UTIL ──
+function getWeekStart() {
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9*3600*1000);
+  const day = kst.getUTCDay();
+  // 수요일(3) 05:00 KST 기준
+  let diff = day - 3;
+  if (diff < 0) diff += 7;
+  const wed = new Date(kst);
+  wed.setUTCDate(kst.getUTCDate() - diff);
+  wed.setUTCHours(0, 0, 0, 0);
+  const y = wed.getUTCFullYear();
+  const m = String(wed.getUTCMonth()+1).padStart(2,'0');
+  const d = String(wed.getUTCDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+
+function getTodayKST() {
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9*3600*1000);
+  const h = kst.getUTCHours();
+  if (h < 5) kst.setUTCDate(kst.getUTCDate()-1);
+  return kst.toISOString().slice(0,10);
+}
+
+function getLastWarDate() {
+  // 화/목/토(2,4,6) 21:00 KST 기준
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9*3600*1000);
+  const warDays = [2,4,6];
+  for (let i=0; i<14; i++) {
+    const d = new Date(kst);
+    d.setUTCDate(kst.getUTCDate() - i);
+    const wd = d.getUTCDay();
+    if (warDays.includes(wd)) {
+      if (i === 0 && kst.getUTCHours() < 21) continue;
+      return d.toISOString().slice(0,10);
+    }
+  }
+  return getTodayKST();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.tab-pill').forEach(p => p.classList.remove('active'));
+  if (id === 'overview') document.querySelector('.tab-pill').classList.add('active');
+}
+
+function goBack() {
+  document.getElementById('detail-tab').style.display = 'none';
+  showPage('overview');
+}
+
+// ── INIT ──
+async function init() {
+  try {
+    await loadAll();
+    renderOverview();
+    subscribeRealtime();
+  } catch(e) {
+    console.error(e);
+    document.getElementById('rt-dot').classList.add('error');
+  }
+}
+
+async function loadAll() {
+  const today = getTodayKST();
+  const week = getWeekStart();
+  const warDate = getLastWarDate();
+
+  const [charsRes, accountRes, dailyRes, weeklyRes, corridorRes, clearsRes] = await Promise.all([
+    sb.from('characters').select('*').order('owner').order('slot'),
+    sb.from('account_data').select('*'),
+    sb.from('daily_tasks').select('*').eq('task_date', today),
+    sb.from('weekly_tasks').select('*').eq('week_start', week),
+    sb.from('abyss_corridors').select('*').eq('war_date', warDate),
+    sb.from('abyss_clears').select('*, abyss_corridors(war_date)'),
+  ]);
+
+  allChars = charsRes.data || [];
+  accountData = {};
+  (accountRes.data || []).forEach(a => accountData[a.owner] = a);
+  dailyTasks = {};
+  (dailyRes.data || []).forEach(t => dailyTasks[t.character_id] = t);
+  weeklyTasks = {};
+  (weeklyRes.data || []).forEach(t => weeklyTasks[t.character_id] = t);
+  abyssCorridors = corridorRes.data || [];
+  abyssClears = {};
+  (clearsRes.data || []).forEach(c => {
+    const k = `${c.corridor_id}_${c.character_id}`;
+    abyssClears[k] = c;
+  });
+}
+
+// ── OVERVIEW RENDER ──
+function renderOverview() {
+  const el = document.getElementById('overview-content');
+  let html = '';
+
+  // Each owner section
+  for (const owner of OWNERS) {
+    const ownerChars = allChars.filter(c => c.owner === owner);
+    const slots = Array.from({length:8}, (_, i) => {
+      return ownerChars.find(c => c.slot === i+1) || null;
+    });
+
+    html += `<div class="owner-section">
+      <div class="owner-label">${owner}</div>
+      <div class="chars-grid">`;
+
+    slots.forEach((char, idx) => {
+      if (!char) {
+        html += `<div class="char-mini empty" onclick="openAddChar('${owner}', ${idx+1})">
+          <div class="char-mini-add">+</div>
+        </div>`;
+      } else {
+        const dt = dailyTasks[char.id] || {};
+        const wt = weeklyTasks[char.id] || {};
+        const dots = buildMiniDots(char, dt, wt);
+        const pct = calcCompletionPct(char, dt, wt);
+        html += `<div class="char-mini" onclick="openDetail('${char.id}')">
+          <div class="char-mini-name">${char.name || '(이름없음)'}</div>
+          <div class="char-mini-ilvl">템 ${char.item_level || 0}</div>
+          <div class="mini-progress-row">${dots}</div>
+          <div class="char-mini-bar" style="width:${pct}%"></div>
+        </div>`;
+      }
+    });
+
+    html += `</div></div>`;
+  }
+
+  // Account section
+  html += `<div class="section-sep">계정 정보</div>`;
+  html += `<div class="account-cards">`;
+  for (const owner of OWNERS) {
+    const acc = accountData[owner] || {};
+    html += `<div class="account-card" style="cursor:pointer" onclick="openAccountModal('${owner}')">
+      <div class="account-card-title">${owner} 계정 <span style="float:right;font-size:0.7rem;color:var(--text-sub)">✎</span></div>
+      <div class="stat-row" style="padding:3px 0;border:none">
+        <span class="stat-label" style="font-size:0.78rem">슈고열쇠</span>
+        <span style="font-size:0.78rem;color:var(--text)">${acc.shugo_key_base||0} <span style="color:var(--text-sub)">+${acc.shugo_key_charged||0}</span></span>
+      </div>
+      <div class="stat-row" style="padding:3px 0;border:none">
+        <span class="stat-label" style="font-size:0.78rem">일일던전</span>
+        <span style="font-size:0.78rem;color:var(--text)">${acc.dungeon_remaining||0} <span style="color:var(--text-sub)">+${acc.dungeon_charged||0}</span>회</span>
+      </div>
+      <div class="account-bool-row">
+        <span class="toggle-btn ${acc.shop_purchased?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAccount('${owner}','shop_purchased',${!acc.shop_purchased})">상점</span>
+        <span class="toggle-btn ${acc.transmutation_done?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAccount('${owner}','transmutation_done',${!acc.transmutation_done})">물질변환</span>
+      </div>
+    </div>`;
+  }
+  html += `</div>`;
+
+  // Abyss section
+  html += renderAbyssSection();
+
+  el.innerHTML = html;
+}
+
+function buildMiniDots(char, dt, wt) {
+  const dots = [];
+  // 사명, 보급
+  dots.push(`<div class="mini-dot ${dt.mission_done?'done':''}"></div>`);
+  dots.push(`<div class="mini-dot ${dt.supply_done?'done':''}"></div>`);
+  // 악몽 (12이하면 ok)
+  const nm = char.nightmare_base || 0;
+  dots.push(`<div class="mini-dot ${nm<=12?'done':'partial'}" title="악몽${nm}"></div>`);
+  // 각성
+  const aw = char.awakening_done || 0;
+  dots.push(`<div class="mini-dot ${aw>=3?'done':aw>0?'partial':''}"></div>`);
+  // 루드라/침식
+  const ilvl = char.item_level || 0;
+  if (ilvl >= 2700) dots.push(`<div class="mini-dot ${wt.ludra_done?'done':''}"></div>`);
+  else dots.push(`<div class="mini-dot locked" title="템레벨 부족"></div>`);
+  if (ilvl >= 3500) dots.push(`<div class="mini-dot ${wt.erosion_done?'done':''}"></div>`);
+  else dots.push(`<div class="mini-dot locked"></div>`);
+  return dots.join('');
+}
+
+function calcCompletionPct(char, dt, wt) {
+  let done = 0, total = 0;
+  const ilvl = char.item_level || 0;
+  total += 2; if (dt.mission_done) done++; if (dt.supply_done) done++;
+  total += 1; if ((char.nightmare_base||0) <= 12) done++;
+  total += 1; if ((char.awakening_done||0) >= 3) done++;
+  if (ilvl >= 2700) { total++; if (wt.ludra_done) done++; }
+  if (ilvl >= 3500) { total++; if (wt.erosion_done) done++; }
+  total += 3;
+  if (wt.order_lower) done++;
+  if (wt.order_middle) done++;
+  if (wt.order_town) done++;
+  return total > 0 ? Math.round(done/total*100) : 0;
+}
+
+function renderAbyssSection() {
+  const warDate = getLastWarDate();
+  let html = `<div class="abyss-section">
+    <div class="section-title">
+      어비스 회랑
+      <span style="font-size:0.72rem;color:var(--text-sub)">${warDate} 전쟁</span>
+    </div>
+    <div class="abyss-grid">`;
+
+  for (const zone of ZONES) {
+    const corridor = abyssCorridors.find(c => c.zone === zone.name);
+    const acquired = corridor?.acquired || false;
+    const corId = corridor?.id;
+
+    let charDots = '';
+    if (acquired && corId) {
+      allChars.forEach(char => {
+        const k = `${corId}_${char.id}`;
+        const cleared = abyssClears[k]?.cleared || false;
+        charDots += `<div class="mini-dot ${cleared?'done':''}" title="${char.owner} ${char.name||''}"></div>`;
+      });
+    }
+
+    html += `<div class="abyss-zone ${acquired?'acquired':''}">
+      <div class="abyss-zone-layer">${zone.layer}</div>
+      <div class="abyss-zone-name">${zone.name}</div>
+      <div class="abyss-toggle ${acquired?'on':''}" onclick="toggleAbyss('${zone.name}', ${!acquired}, '${warDate}')"></div>
+      <div class="abyss-char-dots">${charDots}</div>
+    </div>`;
+  }
+
+  html += `</div></div>`;
+  return html;
+}
+
+// ── ADD CHAR FORM ──
+function openAddChar(owner, slot) {
+  currentCharId = null;
+  // Show a small inline form at top of overview
+  let formHtml = `<div class="add-char-form open" id="add-char-form">
+    <div class="card-title"><div class="card-title-icon icon-info">✎</div>${owner} ${slot}번 캐릭터 추가</div>
+    <div class="form-row">
+      <div><div class="form-label">캐릭터명</div><input class="text-input" id="fc-name" placeholder="캐릭명"></div>
+      <div><div class="form-label">템레벨</div><input class="text-input" id="fc-ilvl" type="number" placeholder="0"></div>
+    </div>
+    <div class="form-row">
+      <div><div class="form-label">전투력 (k)</div><input class="text-input" id="fc-cp" type="text" inputmode="decimal" placeholder="0"></div>
+      <div><div class="form-label">오드에너지</div><input class="text-input" id="fc-odd" type="number" placeholder="0"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closeAddChar()">취소</button>
+      <button class="btn-primary" onclick="submitAddChar('${owner}',${slot})">추가</button>
+    </div>
+  </div>`;
+  const el = document.getElementById('overview-content');
+  el.insertAdjacentHTML('afterbegin', formHtml);
+  setTimeout(() => document.getElementById('fc-name')?.focus(), 100);
+}
+
+function closeAddChar() {
+  document.getElementById('add-char-form')?.remove();
+}
+
+async function submitAddChar(owner, slot) {
+  const name = document.getElementById('fc-name').value.trim();
+  const ilvl = parseInt(document.getElementById('fc-ilvl').value) || 0;
+  const cp = Math.round((parseFloat(document.getElementById('fc-cp').value.replace(',','.')) || 0) * 10);
+  const odd = parseInt(document.getElementById('fc-odd').value) || 0;
+  if (!name) { showToast('캐릭터명을 입력해줘!'); return; }
+  const { error } = await sb.from('characters').insert({
+    owner, slot, name, item_level: ilvl, combat_power: cp, odd_energy_base: odd
+  });
+  if (error) { showToast('저장 실패 😢'); console.error(error); return; }
+  showToast(`${name} 추가 완료!`);
+  closeAddChar();
+  await loadAll();
+  renderOverview();
+}
+
+// ── DETAIL ──
+async function openDetail(charId) {
+  currentCharId = charId;
+  const char = allChars.find(c => c.id === charId);
+  if (!char) return;
+
+  document.getElementById('detail-char-name').textContent = char.name || '(이름없음)';
+  document.getElementById('detail-char-meta').textContent = `템 ${char.item_level||0} · ${formatCp(char.combat_power||0)}`;
+  const badge = document.getElementById('detail-owner-badge');
+  badge.textContent = char.owner;
+  badge.className = `detail-owner-badge badge-${char.owner}`;
+
+  document.getElementById('detail-tab').style.display = '';
+  showPage('detail-page');
+  document.getElementById('detail-content').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+  renderDetail(char);
+}
+
+function renderDetail(char) {
+  const dt = dailyTasks[char.id] || {};
+  const wt = weeklyTasks[char.id] || {};
+  const ilvl = char.item_level || 0;
+  const today = getTodayKST();
+  const week = getWeekStart();
+
+  const nmBase = char.nightmare_base || 0;
+  const nmCharged = char.nightmare_charged || 0;
+  const nmWarn = nmBase > 12;
+
+  let html = '';
+
+  // ── 기본 정보 ──
+  html += `<div class="card">
+    <div class="card-title"><div class="card-title-icon icon-info">ℹ</div>기본 정보</div>
+    <div class="stat-row">
+      <span class="stat-label">캐릭터명</span>
+      <input class="text-input" style="width:130px" value="${char.name||''}"
+        onchange="updateCharField('${char.id}','name',this.value)">
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">템레벨</span>
+      <input class="text-input" style="width:80px" type="number" value="${char.item_level||0}"
+        onchange="updateCharField('${char.id}','item_level',parseInt(this.value)||0)">
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">전투력</span>
+      <div class="cp-input-wrap" id="cpwrap-${char.id}">
+        <input class="text-input cp-input" id="cp-${char.id}" style="width:90px"
+          type="text" inputmode="decimal" value="${(char.combat_power||0)/10}"
+          oninput="validateCpInput(this)"
+          onblur="commitCpInput('${char.id}',this)">
+        <span class="cp-k">k</span>
+      </div>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">오드에너지<span class="stat-sublabel">기본/충전</span></span>
+      <div class="stat-inputs">
+        ${numInput(`odd_energy_base`, char.odd_energy_base||0, char.id, 0, 9999)}
+        <span style="color:var(--text-sub);font-size:0.8rem">+</span>
+        ${numInput(`odd_energy_charged`, char.odd_energy_charged||0, char.id, 0, 9999)}
+      </div>
+    </div>
+  </div>`;
+
+  // ── 일일 숙제 ──
+  html += `<div class="card">
+    <div class="card-title"><div class="card-title-icon icon-daily">일</div>일일 숙제 <span style="margin-left:auto;font-size:0.72rem;color:var(--text-sub)">05:00 리셋</span></div>
+    <div class="stat-row">
+      <span class="stat-label">사명</span>
+      <button class="toggle-btn ${dt.mission_done?'done':''}"
+        onclick="toggleDaily('${char.id}','mission_done',${!dt.mission_done},'${today}')">${dt.mission_done?'완료':'미완'}</button>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">보급</span>
+      <button class="toggle-btn ${dt.supply_done?'done':''}"
+        onclick="toggleDaily('${char.id}','supply_done',${!dt.supply_done},'${today}')">${dt.supply_done?'완료':'미완'}</button>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">악몽 <span class="stat-sublabel">최대 14장</span></span>
+      <div class="stat-inputs">
+        ${numInput('nightmare_base', nmBase, char.id, 0, 14)}
+        <span style="color:var(--text-sub);font-size:0.8rem">+</span>
+        ${numInput('nightmare_charged', nmCharged, char.id, 0, 14)}
+        ${nmWarn ? `<span class="warn-chip">주의!</span>` : `<span class="ok-chip">양호</span>`}
+      </div>
+    </div>
+  </div>`;
+
+  // ── 주간 숙제 ──
+  html += `<div class="card">
+    <div class="card-title"><div class="card-title-icon icon-weekly">주</div>주간 숙제 <span style="margin-left:auto;font-size:0.72rem;color:var(--text-sub)">수요일 05:00 리셋</span></div>`;
+
+  // 각성 pips
+  const awDone = char.awakening_done || 0;
+  const awCharged = char.awakening_charged || 0;
+  html += `<div class="stat-row">
+    <span class="stat-label">각성 <span class="stat-sublabel">0/3판</span></span>
+    <div class="stat-inputs">
+      <div class="pip-row">
+        ${[1,2,3].map(i => `<div class="pip ${awDone>=i?'done':''}"
+          onclick="cycleAwakening('${char.id}',${awDone},${i})">✓</div>`).join('')}
+      </div>
+      <span style="color:var(--text-sub);font-size:0.8rem">+</span>
+      ${numInput('awakening_charged', awCharged, char.id, 0, 99)}
+    </div>
+  </div>`;
+
+  // 일일던전 (충전권)
+  html += `<div class="stat-row">
+    <span class="stat-label">일일던전 충전권<span class="stat-sublabel">캐릭별</span></span>
+    <div class="stat-inputs">
+      ${numInput('dungeon_tickets', char.dungeon_tickets||0, char.id, 0, 99)}
+    </div>
+  </div>`;
+
+  // 성역
+  const ludraLocked = ilvl < 2700;
+  const erosionLocked = ilvl < 3500;
+  html += `<div class="stat-row ${ludraLocked?'locked-row':''}">
+    <span class="stat-label">성역 - 루드라 ${ludraLocked?`<span class="lock-badge">2700↑</span>`:''}</span>
+    <button class="toggle-btn ${wt.ludra_done?'done':''}"
+      onclick="toggleWeekly('${char.id}','ludra_done',${!wt.ludra_done},'${week}')">${wt.ludra_done?'완료':'미완'}</button>
+  </div>`;
+  html += `<div class="stat-row ${erosionLocked?'locked-row':''}">
+    <span class="stat-label">성역 - 침식 ${erosionLocked?`<span class="lock-badge">3500↑</span>`:''}</span>
+    <button class="toggle-btn ${wt.erosion_done?'done':''}"
+      onclick="toggleWeekly('${char.id}','erosion_done',${!wt.erosion_done},'${week}')">${wt.erosion_done?'완료':'미완'}</button>
+  </div>`;
+
+  // 지령서
+  html += `<div class="section-sep" style="margin:8px 0 4px">지령서</div>`;
+  [['order_lower','하층'],['order_middle','중층'],['order_town','마을']].forEach(([key,label]) => {
+    html += `<div class="stat-row">
+      <span class="stat-label">${label} 지령서</span>
+      <button class="toggle-btn ${wt[key]?'done':''}"
+        onclick="toggleWeekly('${char.id}','${key}',${!wt[key]},'${week}')">${wt[key]?'구매':'미구매'}</button>
+    </div>`;
+  });
+
+  html += `</div>`;
+
+  // ── 어비스 회랑 ──
+  const acquiredZones = abyssCorridors.filter(c => c.acquired);
+  if (acquiredZones.length > 0) {
+    html += `<div class="card">
+      <div class="card-title"><div class="card-title-icon" style="background:var(--lavender-light)">회</div>어비스 회랑</div>`;
+    acquiredZones.forEach(cor => {
+      const k = `${cor.id}_${char.id}`;
+      const cleared = abyssClears[k]?.cleared || false;
+      const layerInfo = ZONES.find(z => z.name === cor.zone);
+      html += `<div class="stat-row">
+        <span class="stat-label">${layerInfo?.layer||''} - ${cor.zone}</span>
+        <button class="toggle-btn ${cleared?'done':''}"
+          onclick="toggleAbyssChar('${cor.id}','${char.id}',${!cleared})">${cleared?'완료':'미완'}</button>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  document.getElementById('detail-content').innerHTML = html;
+}
+
+// ── NUM INPUT HELPER ──
+function numInput(field, val, charId, min, max) {
+  const id = `nv-${charId}-${field}`;
+  return `<div class="num-input-wrap">
+    <button class="num-btn" onclick="stepCharById('${charId}','${field}','${id}',-1,${min},${max})">−</button>
+    <input class="num-val-input" id="${id}" type="number" value="${val}" min="${min}" max="${max}"
+      onchange="commitNumInput('${charId}','${field}','${id}',${min},${max})"
+      onblur="commitNumInput('${charId}','${field}','${id}',${min},${max})">
+    <button class="num-btn" onclick="stepCharById('${charId}','${field}','${id}',1,${min},${max})">+</button>
+  </div>`;
+}
+
+// +/- 버튼: DOM에서 현재 값 읽어서 증감
+function stepCharById(charId, field, inputId, delta, min, max) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  const cur = parseInt(el.value) || 0;
+  const newVal = Math.min(max, Math.max(min, cur + delta));
+  el.value = newVal;
+  saveNumInput(charId, field, newVal);
+}
+
+// 직접 입력 후 포커스 벗어날 때 저장
+function commitNumInput(charId, field, inputId, min, max) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  let newVal = parseInt(el.value);
+  if (isNaN(newVal)) newVal = min;
+  newVal = Math.min(max, Math.max(min, newVal));
+  el.value = newVal;
+  saveNumInput(charId, field, newVal);
+}
+
+// ── CP HELPERS ──
+// DB 저장값: 소수점 1자리를 정수로 (예: 525.2k → 5252)
+function formatCp(stored) {
+  if (!stored) return '0k';
+  const v = stored / 10;
+  return (Number.isInteger(v) ? v.toString() : v.toFixed(1)) + 'k';
+}
+
+function validateCpInput(input) {
+  // 숫자, 점, 쉼표만 허용 / 소수점 1자리까지
+  let val = input.value.replace(',', '.').replace(/[^0-9.]/g, '');
+  // 점 두 개 이상 제거
+  const parts = val.split('.');
+  if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
+  // 소수점 이하 1자리까지만
+  if (parts.length === 2 && parts[1].length > 1) val = parts[0] + '.' + parts[1].slice(0,1);
+  input.value = val;
+}
+
+async function commitCpInput(charId, input) {
+  let raw = parseFloat(input.value.replace(',', '.'));
+  if (isNaN(raw)) raw = 0;
+  // 소수점 1자리 강제
+  raw = Math.round(raw * 10) / 10;
+  input.value = raw;
+  const stored = Math.round(raw * 10); // DB 저장값
+  const char = allChars.find(c => c.id === charId);
+  if (char) {
+    char.combat_power = stored;
+    document.getElementById('detail-char-meta').textContent =
+      `템 ${char.item_level||0} · ${formatCp(stored)}`;
+  }
+  const { error } = await sb.from('characters').update({combat_power: stored}).eq('id', charId);
+  if (error) showToast('저장 실패');
+}
+
+async function saveNumInput(charId, field, newVal) {
+  const char = allChars.find(c => c.id === charId);
+  if (char) char[field] = newVal;
+  const { error } = await sb.from('characters').update({[field]: newVal}).eq('id', charId);
+  if (error) showToast('저장 실패');
+  if (document.getElementById('overview').classList.contains('active')) renderOverview();
+}
+
+// ── DB ACTIONS ──
+async function updateCharField(charId, field, value) {
+  const { error } = await sb.from('characters').update({[field]: value}).eq('id', charId);
+  if (error) { showToast('저장 실패'); return; }
+  const char = allChars.find(c => c.id === charId);
+  if (char) char[field] = value;
+  showToast('저장 완료');
+}
+
+
+
+async function toggleDaily(charId, field, value, today) {
+  const existing = dailyTasks[charId];
+  let error;
+  if (existing) {
+    ({ error } = await sb.from('daily_tasks').update({[field]: value}).eq('id', existing.id));
+    if (!error) existing[field] = value;
+  } else {
+    const { data, error: err } = await sb.from('daily_tasks')
+      .insert({ character_id: charId, task_date: today, [field]: value })
+      .select().single();
+    error = err;
+    if (!error) dailyTasks[charId] = data;
+  }
+  if (error) { showToast('저장 실패'); return; }
+  const char = allChars.find(c => c.id === charId);
+  if (char) renderDetail(char);
+}
+
+async function toggleWeekly(charId, field, value, week) {
+  const existing = weeklyTasks[charId];
+  let error;
+  if (existing) {
+    ({ error } = await sb.from('weekly_tasks').update({[field]: value}).eq('id', existing.id));
+    if (!error) existing[field] = value;
+  } else {
+    const { data, error: err } = await sb.from('weekly_tasks')
+      .insert({ character_id: charId, week_start: week, [field]: value })
+      .select().single();
+    error = err;
+    if (!error) weeklyTasks[charId] = data;
+  }
+  if (error) { showToast('저장 실패'); return; }
+  const char = allChars.find(c => c.id === charId);
+  if (char) renderDetail(char);
+}
+
+async function cycleAwakening(charId, cur, pip) {
+  const newVal = cur === pip ? pip - 1 : pip;
+  const { error } = await sb.from('characters').update({awakening_done: newVal}).eq('id', charId);
+  if (error) { showToast('저장 실패'); return; }
+  const char = allChars.find(c => c.id === charId);
+  if (char) { char.awakening_done = newVal; renderDetail(char); }
+}
+
+// ── ACCOUNT MODAL ──
+function accModalNumInput(field, val, owner, min, max) {
+  const id = `amn-${owner}-${field}`;
+  return `<div class="num-input-wrap">
+    <button class="num-btn" onclick="stepAccModal('${owner}','${field}','${id}',-1,${min},${max})">−</button>
+    <input class="num-val-input" id="${id}" type="number" value="${val}" min="${min}" max="${max}"
+      oninput="liveAccModal('${owner}','${field}','${id}',${min},${max})">
+    <button class="num-btn" onclick="stepAccModal('${owner}','${field}','${id}',1,${min},${max})">+</button>
+  </div>`;
+}
+
+function stepAccModal(owner, field, inputId, delta, min, max) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  const newVal = Math.min(max, Math.max(min, (parseInt(el.value)||0) + delta));
+  el.value = newVal;
+  commitAccModal(owner, field, newVal);
+}
+
+function liveAccModal(owner, field, inputId, min, max) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  let val = parseInt(el.value);
+  if (isNaN(val)) return;
+  val = Math.min(max, Math.max(min, val));
+  commitAccModal(owner, field, val);
+}
+
+function commitAccModal(owner, field, val) {
+  const acc = accountData[owner];
+  if (acc) acc[field] = val;
+  // 카드 숫자 즉시 갱신
+  renderOverview();
+  debounce(`acc-${owner}-${field}`, async () => {
+    const { error } = await sb.from('account_data').update({[field]: val}).eq('owner', owner);
+    if (error) showToast('저장 실패');
+  });
+}
+
+function openAccountModal(owner) {
+  const acc = accountData[owner] || {};
+  document.getElementById('acc-modal-title').textContent = `${owner} 계정 수정`;
+
+  const skWarn = (acc.shugo_key_base||0) > 12;
+
+  document.getElementById('acc-modal-body').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
+        <div style="font-size:0.75rem;color:var(--text-sub);margin-bottom:8px">슈고열쇠 <span style="font-size:0.7rem">(계정 공유 · 최대 14장)</span></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:0.8rem;color:var(--text-sub)">기본</span>
+          ${accModalNumInput('shugo_key_base', acc.shugo_key_base||0, owner, 0, 14)}
+          <span style="font-size:0.8rem;color:var(--text-sub)">충전</span>
+          ${accModalNumInput('shugo_key_charged', acc.shugo_key_charged||0, owner, 0, 99)}
+        </div>
+        ${skWarn ? `<div style="margin-top:6px;font-size:0.72rem;color:#b85050">⚠ 14장 초과! 충전이 낭비돼요</div>` : ''}
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
+        <div style="font-size:0.75rem;color:var(--text-sub);margin-bottom:8px">일일던전 <span style="font-size:0.7rem">(계정 공유 · 주간 14회)</span></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:0.8rem;color:var(--text-sub)">남은 판</span>
+          ${accModalNumInput('dungeon_remaining', acc.dungeon_remaining||0, owner, 0, 14)}
+          <span style="font-size:0.8rem;color:var(--text-sub)">충전</span>
+          ${accModalNumInput('dungeon_charged', acc.dungeon_charged||0, owner, 0, 99)}
+        </div>
+      </div>
+    </div>
+  `;
+
+  const overlay = document.getElementById('acc-modal-overlay');
+  overlay.style.display = 'flex';
+}
+
+function closeAccountModal() {
+  document.getElementById('acc-modal-overlay').style.display = 'none';
+}
+
+// 디바운스 (모달용 - 아직 없으면 추가)
+if (typeof _debounceTimers === 'undefined') var _debounceTimers = {};
+if (typeof debounce !== 'function') {
+  function debounce(key, fn, delay=600) {
+    clearTimeout(_debounceTimers[key]);
+    _debounceTimers[key] = setTimeout(fn, delay);
+  }
+}
+
+async function toggleAccount(owner, field, value) {
+  const acc = accountData[owner];
+  if (!acc) return;
+  const { error } = await sb.from('account_data').update({[field]: value}).eq('owner', owner);
+  if (error) { showToast('저장 실패'); return; }
+  acc[field] = value;
+  renderOverview();
+}
+
+async function toggleAbyss(zoneName, acquired, warDate) {
+  const existing = abyssCorridors.find(c => c.zone === zoneName);
+  if (existing) {
+    const { error } = await sb.from('abyss_corridors').update({acquired}).eq('id', existing.id);
+    if (error) { showToast('저장 실패'); return; }
+    existing.acquired = acquired;
+  } else {
+    const zone = ZONES.find(z => z.name === zoneName);
+    const { data, error } = await sb.from('abyss_corridors')
+      .insert({ war_date: warDate, zone: zoneName, layer: zone?.layer||'', acquired })
+      .select().single();
+    if (error) { showToast('저장 실패'); return; }
+    abyssCorridors.push(data);
+  }
+  renderOverview();
+}
+
+async function toggleAbyssChar(corridorId, charId, cleared) {
+  const k = `${corridorId}_${charId}`;
+  const existing = abyssClears[k];
+  if (existing) {
+    const { error } = await sb.from('abyss_clears').update({cleared}).eq('id', existing.id);
+    if (error) { showToast('저장 실패'); return; }
+    existing.cleared = cleared;
+  } else {
+    const { data, error } = await sb.from('abyss_clears')
+      .insert({ corridor_id: corridorId, character_id: charId, cleared })
+      .select().single();
+    if (error) { showToast('저장 실패'); return; }
+    abyssClears[k] = data;
+  }
+  const char = allChars.find(c => c.id === charId);
+  if (char) renderDetail(char);
+}
+
+// ── REALTIME ──
+function subscribeRealtime() {
+  const dot = document.getElementById('rt-dot');
+
+  sb.channel('aion2-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'characters' }, async () => {
+      await reloadTable('characters');
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'account_data' }, async () => {
+      await reloadTable('account_data');
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_tasks' }, async () => {
+      await reloadTable('daily_tasks');
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_tasks' }, async () => {
+      await reloadTable('weekly_tasks');
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'abyss_corridors' }, async () => {
+      await reloadTable('abyss_corridors');
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'abyss_clears' }, async () => {
+      await reloadTable('abyss_clears');
+    })
+    .subscribe(status => {
+      if (status === 'SUBSCRIBED') dot.classList.add('connected');
+      else { dot.classList.remove('connected'); if (status === 'CHANNEL_ERROR') dot.classList.add('error'); }
+    });
+}
+
+async function reloadTable(table) {
+  const today = getTodayKST();
+  const week = getWeekStart();
+  const warDate = getLastWarDate();
+
+  if (table === 'characters') {
+    const { data } = await sb.from('characters').select('*').order('owner').order('slot');
+    allChars = data || [];
+  } else if (table === 'account_data') {
+    const { data } = await sb.from('account_data').select('*');
+    accountData = {};
+    (data||[]).forEach(a => accountData[a.owner] = a);
+  } else if (table === 'daily_tasks') {
+    const { data } = await sb.from('daily_tasks').select('*').eq('task_date', today);
+    dailyTasks = {};
+    (data||[]).forEach(t => dailyTasks[t.character_id] = t);
+  } else if (table === 'weekly_tasks') {
+    const { data } = await sb.from('weekly_tasks').select('*').eq('week_start', week);
+    weeklyTasks = {};
+    (data||[]).forEach(t => weeklyTasks[t.character_id] = t);
+  } else if (table === 'abyss_corridors') {
+    const { data } = await sb.from('abyss_corridors').select('*').eq('war_date', warDate);
+    abyssCorridors = data || [];
+  } else if (table === 'abyss_clears') {
+    const { data } = await sb.from('abyss_clears').select('*, abyss_corridors(war_date)');
+    abyssClears = {};
+    (data||[]).forEach(c => { abyssClears[`${c.corridor_id}_${c.character_id}`] = c; });
+  }
+
+  // re-render current view
+  if (document.getElementById('overview').classList.contains('active')) {
+    renderOverview();
+  } else if (currentCharId) {
+    const char = allChars.find(c => c.id === currentCharId);
+    if (char) renderDetail(char);
+  }
+}
+
+// ── START ──
+init();
+</script>
+<!-- ── 계정 모달 ── -->
+<div id="acc-modal-overlay" style="
+  display:none;position:fixed;inset:0;z-index:200;
+  background:rgba(90,82,75,0.35);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:20px;
+" onclick="closeAccountModal()">
+  <div id="acc-modal" style="
+    background:var(--surface);border-radius:var(--radius);
+    border:1px solid var(--border);padding:20px;width:100%;max-width:320px;
+    box-shadow:0 12px 40px rgba(160,150,140,0.18);
+    animation:fadeUp 0.2s ease-out;
+  " onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <span id="acc-modal-title" style="font-size:0.95rem;color:var(--text)"></span>
+      <button onclick="closeAccountModal()" style="
+        width:28px;height:28px;border-radius:50%;border:1px solid var(--border);
+        background:transparent;color:var(--text-sub);font-size:1rem;
+        cursor:pointer;display:flex;align-items:center;justify-content:center;
+        font-family:'Gowun Dodum',sans-serif;
+      ">×</button>
+    </div>
+    <div id="acc-modal-body"></div>
+  </div>
+</div>
+
+</body>
+</html>
