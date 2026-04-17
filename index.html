@@ -1100,9 +1100,7 @@ function buildMiniDots(char, dt, wt) {
     ilvl >= 3500
       ? `<div class="mini-dot ${wt.erosion_done?'done-weekly':''}"></div>`
       : `<div class="mini-dot locked"></div>`,
-    `<div class="mini-dot ${acc.order_lower?'done-weekly':''}"></div>`,
-    `<div class="mini-dot ${acc.order_middle?'done-weekly':''}"></div>`,
-    `<div class="mini-dot ${acc.order_town?'done-weekly':''}"></div>`,
+
   ].join('');
 
   return `<div class="mini-dots-daily">${daily}</div><div class="mini-dots-weekly">${weekly}</div>`;
@@ -1116,11 +1114,7 @@ function calcCompletionPct(char, dt, wt) {
   total += 1; if ((char.awakening_done||0) >= 3) done++;
   if (ilvl >= 2700) { total++; if (wt.ludra_done) done++; }
   if (ilvl >= 3500) { total++; if (wt.erosion_done) done++; }
-  const accData = accountData[char.owner] || {};
-  total += 3;
-  if (accData.order_lower) done++;
-  if (accData.order_middle) done++;
-  if (accData.order_town) done++;
+
   return total > 0 ? Math.round(done/total*100) : 0;
 }
 
@@ -1336,17 +1330,6 @@ function renderDetail(char) {
     <button class="toggle-btn ${wt.erosion_done?'done':''}"
       onclick="toggleWeekly('${char.id}','erosion_done',${!wt.erosion_done},'${week}')">${wt.erosion_done?'완료':'미완'}</button>
   </div>`;
-
-  // 지령서 (계정 통합)
-  const accForOrder = accountData[char.owner] || {};
-  html += `<div class="section-sep" style="margin:8px 0 4px">지령서 <span style="font-size:0.7rem;color:var(--text-sub)">(계정 통합)</span></div>`;
-  [['order_lower','하층'],['order_middle','중층'],['order_town','마을']].forEach(([key,label]) => {
-    html += `<div class="stat-row">
-      <span class="stat-label">${label} 지령서</span>
-      <button class="toggle-btn ${accForOrder[key]?'done':''}"
-        onclick="toggleAccount('${char.owner}','${key}',${!accForOrder[key]})">${accForOrder[key]?'구매':'미구매'}</button>
-    </div>`;
-  });
 
   html += `</div>`;
 
@@ -1569,11 +1552,32 @@ function openAccountModal(owner) {
           ${accModalNumInput('dungeon_charged', acc.dungeon_charged||0, owner, 0, 99)}
         </div>
       </div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
+        <div style="font-size:0.75rem;color:var(--text-sub);margin-bottom:8px">지령서 <span style="font-size:0.7rem">(주간 리셋)</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${[['order_lower','하층'],['order_middle','중층'],['order_town','마을']].map(([key,label]) => `
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:0.8rem;color:var(--text)">${label} 지령서</span>
+            <button class="toggle-btn ${acc[key]?'done':''}" style="font-size:0.78rem;padding:4px 12px"
+              onclick="toggleAccOrder('${owner}','${key}',${!acc[key]})">${acc[key]?'구매':'미구매'}</button>
+          </div>`).join('')}
+        </div>
+      </div>
     </div>
   `;
 
   const overlay = document.getElementById('acc-modal-overlay');
   overlay.style.display = 'flex';
+}
+
+async function toggleAccOrder(owner, field, value) {
+  const acc = accountData[owner];
+  if (!acc) return;
+  const { error } = await sb.from('account_data').update({[field]: value}).eq('owner', owner);
+  if (error) { showToast('저장 실패'); return; }
+  acc[field] = value;
+  // 모달 버튼 즉시 갱신
+  openAccountModal(owner);
 }
 
 function closeAccountModal() {
