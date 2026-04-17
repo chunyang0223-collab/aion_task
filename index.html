@@ -868,11 +868,45 @@ body.guest-mode .page input {
   position: relative;
   overflow: hidden;
 }
+.exp-supply-card.collapsed {
+  padding: 10px 14px;
+}
+.exp-supply-card.collapsed .exp-card-title { margin-bottom: 0; }
 .exp-supply-card::before {
   content: ''; position: absolute;
   top: -24px; right: -24px;
   width: 80px; height: 80px; border-radius: 50%;
   background: var(--peach-light); opacity: 0.4;
+}
+
+.exp-supply-header {
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.exp-supply-count-badge {
+  background: var(--peach);
+  color: white;
+  padding: 1px 9px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+.exp-supply-chevron {
+  margin-left: auto;
+  color: var(--text-sub);
+  font-size: 0.72rem;
+  transition: transform 0.25s;
+  flex-shrink: 0;
+}
+.exp-supply-chevron.collapsed { transform: rotate(-90deg); }
+
+.exp-supply-collapsed-summary {
+  font-size: 0.76rem;
+  color: var(--text-sub);
+  padding: 4px 2px 0 28px;
+  line-height: 1.5;
+  position: relative; z-index: 1;
 }
 
 .exp-party-card {
@@ -1420,6 +1454,12 @@ body.guest-mode .page input {
   color: var(--text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   min-width: 0;
+}
+.exp-candidate-cp {
+  font-size: 0.66rem;
+  color: var(--text-sub);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 .exp-candidate-odd {
   font-size: 0.68rem;
@@ -3047,6 +3087,8 @@ let _expPartyTarget = new Set();      // 파티 찾기용 선택된 던전 (단�
 let _expParty = 'both';
 let _expExcluded = new Set();         // 세션 범위(저장 안 함)
 let _expResultExpanded = true;
+let _expSortMode = 'odd';             // 'odd' | 'cp'
+let _expSupplyExpanded = null;        // 첫 렌더 때 체크 유무로 자동 결정
 
 function expKey(name, mode, ilvl) { return `${name}::${mode}::${ilvl}`; }
 function expParseKey(key) {
@@ -3127,6 +3169,14 @@ function expSetParty(party) {
   _expParty = party;
   renderExpeditionPage();
 }
+function expSetSortMode(mode) {
+  _expSortMode = mode;
+  renderExpeditionPage();
+}
+function expToggleSupply() {
+  _expSupplyExpanded = !_expSupplyExpanded;
+  renderExpeditionPage();
+}
 function expToggleExclude(charId) {
   if (_expExcluded.has(charId)) _expExcluded.delete(charId);
   else _expExcluded.add(charId);
@@ -3147,6 +3197,11 @@ function renderExpeditionPage() {
   if (typeof allChars === 'undefined' || !Array.isArray(allChars)) {
     el.innerHTML = `<div class="loading"><div class="spinner"></div> 불러오는 중...</div>`;
     return;
+  }
+
+  // 접힘 상태 초기화 (첫 렌더 시에만)
+  if (_expSupplyExpanded === null) {
+    _expSupplyExpanded = (_expChecked.size === 0);
   }
 
   // ── 1) Supply board ──
@@ -3211,21 +3266,45 @@ function renderExpeditionPage() {
   const clearBtnHtml = `
     <div style="display:flex;justify-content:flex-end;margin-top:8px">
       <button class="exp-clear-btn" ${_expChecked.size === 0 ? 'disabled' : ''}
-              onclick="expClearAll()">모두 해제</button>
+              onclick="event.stopPropagation();expClearAll()">모두 해제</button>
     </div>
   `;
 
+  // 접힘 요약 (접혀있을 때만 표시)
+  let collapsedSummary = '';
+  if (!_expSupplyExpanded) {
+    if (_expChecked.size === 0) {
+      collapsedSummary = `<div class="exp-supply-collapsed-summary">체크된 던전 없음</div>`;
+    } else {
+      const items = [..._expChecked].map(k => {
+        const { name, mode, ilvl } = expParseKey(k);
+        const modeLabel = { explo: '탐험', normal: '보통', hard: '어려움' }[mode];
+        return `${name}·${modeLabel}`;
+      }).join(', ');
+      collapsedSummary = `<div class="exp-supply-collapsed-summary">${items}</div>`;
+    }
+  }
+
+  const titleBadge = _expChecked.size > 0
+    ? `<span class="exp-supply-count-badge">${_expChecked.size}</span>`
+    : '';
+
   const supplyCard = `
-    <div class="exp-supply-card">
-      <div class="exp-card-title">
-        <span class="exp-card-icon">📋</span>오늘 보급의뢰 던전
+    <div class="exp-supply-card ${_expSupplyExpanded ? '' : 'collapsed'}">
+      <div class="exp-card-title exp-supply-header" onclick="expToggleSupply()">
+        <span class="exp-card-icon">📋</span>
+        <span>오늘 보급의뢰 던전</span>
+        ${titleBadge}
+        <span class="exp-supply-chevron ${!_expSupplyExpanded ? 'collapsed' : ''}">▼</span>
       </div>
-      <div class="exp-card-body">
-        ${headerHtml}
-        ${tableHtml}
-        ${selectedSummary}
-        ${clearBtnHtml}
-      </div>
+      ${_expSupplyExpanded ? `
+        <div class="exp-card-body">
+          ${headerHtml}
+          ${tableHtml}
+          ${selectedSummary}
+          ${clearBtnHtml}
+        </div>
+      ` : collapsedSummary}
     </div>
   `;
 
@@ -3280,10 +3359,27 @@ function renderExpeditionPage() {
     // 입장 가능한 캐릭 풀 (템레벨 충족)
     const pool = allChars.filter(c => c.name && (c.item_level || 0) >= reqIlvl);
 
-    const sortByOddThenCp = (a, b) => {
-      const diff = expCurrentOdd(b) - expCurrentOdd(a);
-      return diff !== 0 ? diff : (b.combat_power || 0) - (a.combat_power || 0);
-    };
+    const sortFn = _expSortMode === 'cp'
+      ? (a, b) => {
+          const diff = (b.combat_power || 0) - (a.combat_power || 0);
+          return diff !== 0 ? diff : expCurrentOdd(b) - expCurrentOdd(a);
+        }
+      : (a, b) => {
+          const diff = expCurrentOdd(b) - expCurrentOdd(a);
+          return diff !== 0 ? diff : (b.combat_power || 0) - (a.combat_power || 0);
+        };
+
+    const sortPillsHtml = `
+      <div class="exp-party-label">정렬 기준</div>
+      <div class="exp-party-pills">
+        <button class="exp-party-pill ${_expSortMode === 'odd' ? 'active' : ''}" onclick="expSetSortMode('odd')">
+          <span class="exp-party-pill-check">✓</span>오드 많은 순
+        </button>
+        <button class="exp-party-pill ${_expSortMode === 'cp' ? 'active' : ''}" onclick="expSetSortMode('cp')">
+          <span class="exp-party-pill-check">✓</span>전투력 높은 순
+        </button>
+      </div>
+    `;
 
     const reqInfo = (() => {
       const targets = [..._expPartyTarget].map(k => {
@@ -3304,14 +3400,15 @@ function renderExpeditionPage() {
         ${reqInfo}
         ${targetPillsHtml}
         ${partyPillsHtml}
+        ${sortPillsHtml}
         <div class="exp-party-empty-hint">조건에 맞는 캐릭터가 없어요 🥲</div>
       `;
     } else {
       let resultArea;
       if (_expParty === 'both') {
         // 쌍 추천 - 오우너별로 분리, 각각 오드 내림차순
-        const seolList = pool.filter(c => c.owner === '설냥').sort(sortByOddThenCp);
-        const chuList  = pool.filter(c => c.owner === '츄츄').sort(sortByOddThenCp);
+        const seolList = pool.filter(c => c.owner === '설냥').sort(sortFn);
+        const chuList  = pool.filter(c => c.owner === '츄츄').sort(sortFn);
         const topSeol = seolList.find(c => !_expExcluded.has(c.id)) || null;
         const topChu  = chuList.find(c => !_expExcluded.has(c.id)) || null;
 
@@ -3359,7 +3456,7 @@ function renderExpeditionPage() {
         `;
       } else {
         // 단일 오우너 모드
-        const soloList = pool.filter(c => c.owner === _expParty).sort(sortByOddThenCp);
+        const soloList = pool.filter(c => c.owner === _expParty).sort(sortFn);
         const top = soloList.find(c => !_expExcluded.has(c.id)) || null;
 
         if (soloList.length === 0) {
@@ -3395,6 +3492,7 @@ function renderExpeditionPage() {
         ${reqInfo}
         ${targetPillsHtml}
         ${partyPillsHtml}
+        ${sortPillsHtml}
         ${resultArea}
       `;
     }
@@ -3462,10 +3560,13 @@ function expCandidateItem(c, idx, topChar) {
   const isTop = !excluded && topChar && c.id === topChar.id;
   const odd = expCurrentOdd(c);
   const pct = Math.min(100, (odd / 840) * 100);
+  const cp = c.combat_power || 0;
+  const cpText = (typeof formatCp === 'function') ? formatCp(cp) : cp;
   return `
     <div class="exp-candidate-item ${excluded ? 'excluded' : ''} ${isTop ? 'top' : ''}">
       <div class="exp-candidate-rank">${idx + 1}</div>
       <div class="exp-candidate-name">${c.name}</div>
+      <div class="exp-candidate-cp">${cpText}</div>
       <div class="exp-candidate-bar">
         <div class="exp-candidate-bar-fill" style="width:${pct}%;background:${expOddColor(odd)}"></div>
       </div>
