@@ -826,6 +826,24 @@ body {
   font-family: 'Gowun Dodum', sans-serif;
   cursor: pointer;
 }
+/* ── GUEST MODE ── */
+body.guest-mode .page button,
+body.guest-mode .page input,
+body.guest-mode .page .toggle-btn,
+body.guest-mode .page .num-btn,
+body.guest-mode .page .char-mini,
+body.guest-mode .page .abyss-toggle,
+body.guest-mode .page .account-card,
+body.guest-mode .page .pip,
+body.guest-mode .page .back-btn,
+body.guest-mode #detail-subbar .back-btn {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+body.guest-mode .page input {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
 </style>
 </head>
 <body>
@@ -2014,9 +2032,14 @@ function setActor(name) {
   document.getElementById('actor-step2').style.display = 'none';
   document.getElementById('actor-step1').style.display = 'block';
 
-  // 손님이면 읽기전용 배너 표시
+  // 손님이면 읽기전용 배너 표시 + 전체 편집 차단
   const banner = document.getElementById('guest-banner');
   if (banner) banner.style.display = name === 'guest' ? 'block' : 'none';
+  if (name === 'guest') {
+    document.body.classList.add('guest-mode');
+  } else {
+    document.body.classList.remove('guest-mode');
+  }
 }
 
 function checkActor() {
@@ -2313,6 +2336,7 @@ if (!currentActor) {
 } else if (currentActor === 'guest') {
   const banner = document.getElementById('guest-banner');
   if (banner) banner.style.display = 'block';
+  document.body.classList.add('guest-mode');
 }
 
 // 카운트다운 1분마다 갱신
