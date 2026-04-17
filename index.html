@@ -1884,13 +1884,14 @@ async function loadAll() {
   const week = getWeekStart();
   const warDate = getLastWarDate();
 
-  const [charsRes, accountRes, dailyRes, weeklyRes, corridorRes, clearsRes] = await Promise.all([
+  const [charsRes, accountRes, dailyRes, weeklyRes, corridorRes, clearsRes, supplyRes] = await Promise.all([
     sb.from('characters').select('*').order('owner').order('slot'),
     sb.from('account_data').select('*'),
     sb.from('daily_tasks').select('*').eq('task_date', today),
     sb.from('weekly_tasks').select('*').eq('week_start', week),
     sb.from('abyss_corridors').select('*').eq('war_date', warDate),
     sb.from('abyss_clears').select('*, abyss_corridors(war_date)'),
+    sb.from('expedition_supply').select('dungeon_key'),
   ]);
 
   allChars = charsRes.data || [];
@@ -1906,6 +1907,11 @@ async function loadAll() {
     const k = `${c.corridor_id}_${c.character_id}`;
     abyssClears[k] = c;
   });
+  _expChecked = new Set((supplyRes.data || []).map(r => r.dungeon_key));
+  // 파티 타겟 초기 자동 선택
+  if (_expPartyTarget.size === 0 && _expChecked.size > 0) {
+    _expPartyTarget.add([..._expChecked][0]);
+  }
 }
 
 // ── OVERVIEW RENDER ──
@@ -2651,6 +2657,9 @@ function subscribeRealtime() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'abyss_clears' }, async () => {
       await reloadTable('abyss_clears');
     })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'expedition_supply' }, async () => {
+      await reloadTable('expedition_supply');
+    })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_log' }, async () => {
       if (document.getElementById('log-page').classList.contains('active')) renderLogPage();
     })
@@ -2687,6 +2696,18 @@ async function reloadTable(table) {
     const { data } = await sb.from('abyss_clears').select('*, abyss_corridors(war_date)');
     abyssClears = {};
     (data||[]).forEach(c => { abyssClears[`${c.corridor_id}_${c.character_id}`] = c; });
+  } else if (table === 'expedition_supply') {
+    const { data } = await sb.from('expedition_supply').select('dungeon_key');
+    const newSet = new Set((data || []).map(r => r.dungeon_key));
+    // 파티 타겟이 더 이상 체크되지 않은 던전을 가리키면 정리
+    _expChecked = newSet;
+    for (const k of [..._expPartyTarget]) {
+      if (!newSet.has(k)) _expPartyTarget.delete(k);
+    }
+    // 타겟이 비었는데 체크된 게 있으면 첫 번째 자동 선택
+    if (_expPartyTarget.size === 0 && _expChecked.size > 0) {
+      _expPartyTarget.add([..._expChecked][0]);
+    }
   }
 
   // re-render current view
@@ -3071,19 +3092,9 @@ const EXP_DUNGEONS = [
   { name: '환영의 회랑',          explo: 3000, normal: 3000, hard: 3500, star: 5 },
 ];
 
-// STATE — localStorage로 지속
-function expLoadChecked() {
-  try {
-    const raw = localStorage.getItem('aion2_exp_supply');
-    return new Set(JSON.parse(raw || '[]'));
-  } catch (e) { return new Set(); }
-}
-function expSaveChecked(set) {
-  localStorage.setItem('aion2_exp_supply', JSON.stringify([...set]));
-}
-
-let _expChecked = expLoadChecked();   // 체크된 던전 키들 ('name::mode::ilvl')
-let _expPartyTarget = new Set();      // 파티 찾기용 선택된 던전 (단일 기본, 다중 허용)
+// STATE — 체크 상태는 Supabase expedition_supply 테이블에서 실시간 동기화
+let _expChecked = new Set();          // 체크된 던전 키들 ('name::mode::ilvl')
+let _expPartyTarget = new Set();      // 파티 찾기용 선택된 던전 (로컬, 공유 안 함)
 let _expParty = 'both';
 let _expExcluded = new Set();         // 세션 범위(저장 안 함)
 let _expResultExpanded = true;
@@ -3126,34 +3137,64 @@ function expRequiredIlvl() {
 }
 
 // EVENTS
-function expToggleCell(name, mode, ilvl) {
+async function expToggleCell(name, mode, ilvl) {
   if (currentActor === 'guest') return;
   const key = expKey(name, mode, ilvl);
-  if (_expChecked.has(key)) {
+  const wasChecked = _expChecked.has(key);
+
+  // 낙관적 로컬 업데이트 (반응성)
+  if (wasChecked) {
     _expChecked.delete(key);
     _expPartyTarget.delete(key);
-    // 타겟이 비었고 다른 체크가 있으면 그 중 첫 번째 자동 선택
     if (_expPartyTarget.size === 0 && _expChecked.size > 0) {
       _expPartyTarget.add([..._expChecked][0]);
     }
   } else {
     _expChecked.add(key);
-    // 타겟이 비어있을 때만 자동으로 타겟 설정 (기존 선택 존중)
     if (_expPartyTarget.size === 0) {
       _expPartyTarget.add(key);
     }
   }
-  expSaveChecked(_expChecked);
   renderExpeditionPage();
+
+  // DB 반영 (realtime으로 다른 사용자에게 전파됨)
+  let error;
+  if (wasChecked) {
+    ({ error } = await sb.from('expedition_supply').delete().eq('dungeon_key', key));
+  } else {
+    ({ error } = await sb.from('expedition_supply').insert({
+      dungeon_key: key,
+      checked_by: currentActor || null,
+    }));
+  }
+
+  if (error) {
+    showToast('저장 실패 😢');
+    console.error(error);
+    // 원복
+    if (wasChecked) _expChecked.add(key);
+    else _expChecked.delete(key);
+    renderExpeditionPage();
+  }
 }
-function expClearAll() {
+
+async function expClearAll() {
   if (currentActor === 'guest') return;
   if (_expChecked.size === 0) return;
   if (!confirm('체크한 던전을 모두 해제할까요?')) return;
+
+  const prev = new Set(_expChecked);
   _expChecked.clear();
   _expPartyTarget.clear();
-  expSaveChecked(_expChecked);
   renderExpeditionPage();
+
+  const { error } = await sb.from('expedition_supply').delete().neq('dungeon_key', '');
+  if (error) {
+    showToast('초기화 실패');
+    console.error(error);
+    _expChecked = prev;
+    renderExpeditionPage();
+  }
 }
 function expTogglePartyTarget(key) {
   // 단일 선택: 같은 pill 다시 탭하면 해제, 다른 pill 탭하면 전환
