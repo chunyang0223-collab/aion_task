@@ -2056,11 +2056,7 @@ function renderAbyssSection() {
       allChars.forEach(char => {
         const ilvl = char.item_level || 0;
         const ilvlReq = zone.layer === '하층' ? 1000 : zone.layer === '중층' ? 3000 : 0;
-        const canEnter = ilvl >= ilvlReq;
-        if (!canEnter) {
-          charDots += `<div class="mini-dot locked" title="${char.owner} ${char.name||''} (템 ${ilvl} · ${zone.layer} 입장 ${ilvlReq}↑)"></div>`;
-          return;
-        }
+        if (ilvl < ilvlReq) return;  // 템 미달 캐릭은 dot 자체를 안 그림
         const k = `${corId}_${char.id}`;
         const cleared = abyssClears[k]?.cleared || false;
         charDots += `<div class="mini-dot ${cleared?'done':''}" title="${char.owner} ${char.name||''}"></div>`;
