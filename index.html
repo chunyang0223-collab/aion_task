@@ -2108,39 +2108,24 @@ function calcOddEstimate(charId) {
   const now = new Date();
   const baseVal = char.odd_energy_base || 0;
 
-  // KST 05:00을 기준으로 3시간 간격 충전 시각 계산
-  // 기록 시각 이후 몇 번 충전됐는지 계산
-  function getChargeSlot(date) {
-    // KST 기준 당일 05:00 UTC
-    const kst = new Date(date.getTime() + 9*3600*1000);
-    const kstHour = kst.getUTCHours();
-    const kstMin = kst.getUTCMinutes();
-    // 오늘 05:00 KST = UTC 전날 20:00
-    const todayBase = new Date(date);
-    todayBase.setUTCHours(20, 0, 0, 0); // KST 05:00 = UTC 20:00
-    if (kstHour < 5) todayBase.setUTCDate(todayBase.getUTCDate() - 1);
-    // todayBase 기준으로 몇 번째 3시간 슬롯인지
-    const msSinceBase = date - todayBase;
-    return Math.floor(msSinceBase / (3*3600*1000));
+  // KST 기준 충전 시각: 02,05,08,11,14,17,20,23시
+  const chargeHoursKST = [2,5,8,11,14,17,20,23];
+
+  // 기록 시각의 KST 날짜부터 오늘까지 각 충전 시각이 몇 번 지났는지
+  const recKST = new Date(recorded.getTime() + 9*3600*1000);
+  const nowKST = new Date(now.getTime() + 9*3600*1000);
+  const startDay = new Date(Date.UTC(recKST.getUTCFullYear(), recKST.getUTCMonth(), recKST.getUTCDate()));
+  const endDay = new Date(Date.UTC(nowKST.getUTCFullYear(), nowKST.getUTCMonth(), nowKST.getUTCDate()));
+
+  let count = 0;
+  for (let d = new Date(startDay); d <= endDay; d.setUTCDate(d.getUTCDate() + 1)) {
+    for (const h of chargeHoursKST) {
+      const chargeUTC = new Date(d.getTime() + (h - 9) * 3600 * 1000);
+      if (chargeUTC > recorded && chargeUTC <= now) count++;
+    }
   }
 
-  // 기록 시각의 슬롯
-  const recordedSlot = getChargeSlot(recorded);
-  // 현재 시각의 슬롯
-  const nowSlot = getChargeSlot(now);
-
-  // 기록 시각 이후 경과한 전체 슬롯 수
-  // 날짜 차이도 고려 (하루 8슬롯)
-  const recordedKST = new Date(recorded.getTime() + 9*3600*1000);
-  const nowKST = new Date(now.getTime() + 9*3600*1000);
-
-  // 기록 이후 경과 ms
-  const elapsedMs = now - recorded;
-  // 3시간 단위로 몇 번 충전됐는지
-  const chargeCount = Math.floor(elapsedMs / (3*3600*1000));
-
-  const estimated = Math.min(840, baseVal + chargeCount * 15);
-  return estimated;
+  return Math.min(840, baseVal + count * 15);
 }
 
 function updateOddEstimateUI(charId) {
