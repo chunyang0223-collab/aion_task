@@ -1693,7 +1693,8 @@ async function cycleAwakening(charId, cur, pip) {
     char.awakening_done = newVal;
     renderDetail(char);
     lazyRenderOverview();
-    if (newVal > cur) writeLog(char.owner, char.name, `각성 ${newVal}회 완료`);
+    if (newVal > cur) writeLog(char.owner, char.name, `각성 ${newVal}회 완료`, char.id, `awakening_${newVal}`);
+    else if (newVal < cur) deleteLog(char.id, `awakening_${cur}`);
   }
 }
 
