@@ -173,7 +173,7 @@ body {
 
 .char-mini-ilvl {
   font-size: 0.75rem;
-  color: var(--text-sub);
+  color: var(--text);
   margin-bottom: 6px;
 }
 
@@ -1021,8 +1021,8 @@ function renderOverview() {
         const dots = buildMiniDots(char, dt, wt);
         const pct = calcCompletionPct(char, dt, wt);
         html += `<div class="char-mini" onclick="openDetail('${char.id}')">
-          <div class="char-mini-name">${char.name || '(이름없음)'}</div>
-          <div class="char-mini-ilvl">템 ${char.item_level || 0}</div>
+          <div class="char-mini-name">${char.name || '(이름없음)'} <span style="color:var(--text-sub);font-size:0.72rem">(${char.item_level||0} / ${formatCp(char.combat_power||0)})</span></div>
+          <div class="char-mini-ilvl">${char.odd_energy_base||0} / 840 <span style="color:var(--text-sub)">+${char.odd_energy_charged||0}</span></div>
           <div class="mini-progress-row">${dots}</div>
           <div class="char-mini-bar" style="width:${pct}%"></div>
         </div>`;
