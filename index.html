@@ -36,8 +36,8 @@
   --odd-low:   #d4e2c4;
   --odd-mid:   #a3b18a;
   --odd-full:  #c47a8a;
-  --owner-설냥: #a3b18a;
-  --owner-츄츄: #e2b49a;
+  --owner-설냥: #c47a8a;  /* 핑크 (로그 냥이 색) */
+  --owner-츄츄: #7a9abf;  /* 파랑 (로그 츄츄 색) */
   --shadow-inset: inset 0 1px 2px rgba(160,150,140,0.05);
 }
 
@@ -204,8 +204,9 @@ body {
 }
 
 .mini-dot.done { background: var(--sage); }
-.mini-dot.done-awak { background: #7aa3c8; }      /* 각성 - 파랑 */
-.mini-dot.done-sanc { background: #e8c76a; }      /* 루드라/침식 - 노랑 */
+.mini-dot.done-weekly { background: #7aa3c8; }    /* 각성/루드라/침식 - 파랑 */
+.mini-dot.done-cor-설냥 { background: #c47a8a; }  /* 회랑 - 설냥 핑크 */
+.mini-dot.done-cor-츄츄 { background: #7a9abf; }  /* 회랑 - 츄츄 파랑 */
 .mini-dot.partial { background: #d66a4a; }        /* 악몽 주의 - 빨강 */
 .mini-dot.locked { background: var(--border); opacity: 0.4; }
 
@@ -2082,14 +2083,14 @@ function buildMiniDots(char, dt, wt) {
   // 주간 (오른쪽): 각성(3/3 완료), 루드라(템2700+), 침식(템3500+)
   const weeklyDots = [];
   // 각성 - 3회 다 완료해야 완료
-  weeklyDots.push(`<div class="mini-dot ${aw>=3?'done-awak':''}" title="각성 ${aw}/3"></div>`);
+  weeklyDots.push(`<div class="mini-dot ${aw>=3?'done-weekly':''}" title="각성 ${aw}/3"></div>`);
   // 루드라 - 템 2700+만 해당, 미달은 dot 자체 생략
   if (ilvl >= 2700) {
-    weeklyDots.push(`<div class="mini-dot ${wt.ludra_done?'done-sanc':''}" title="성역 - 루드라${wt.ludra_done?' (완료)':''}"></div>`);
+    weeklyDots.push(`<div class="mini-dot ${wt.ludra_done?'done-weekly':''}" title="성역 - 루드라${wt.ludra_done?' (완료)':''}"></div>`);
   }
   // 침식 - 템 3500+만 해당
   if (ilvl >= 3500) {
-    weeklyDots.push(`<div class="mini-dot ${wt.erosion_done?'done-sanc':''}" title="성역 - 침식${wt.erosion_done?' (완료)':''}"></div>`);
+    weeklyDots.push(`<div class="mini-dot ${wt.erosion_done?'done-weekly':''}" title="성역 - 침식${wt.erosion_done?' (완료)':''}"></div>`);
   }
   const weekly = weeklyDots.join('');
 
@@ -2134,7 +2135,10 @@ function renderAbyssSection() {
         if (ilvl < ilvlReq) return;  // 템 미달 캐릭은 dot 자체를 안 그림
         const k = `${corId}_${char.id}`;
         const cleared = abyssClears[k]?.cleared || false;
-        charDots += `<div class="mini-dot ${cleared?'done':''}" title="${char.owner} ${char.name||''}"></div>`;
+        const doneClass = cleared
+          ? (char.owner === '설냥' ? 'done-cor-설냥' : 'done-cor-츄츄')
+          : '';
+        charDots += `<div class="mini-dot ${doneClass}" title="${char.owner} ${char.name||''}"></div>`;
       });
     }
 
