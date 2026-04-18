@@ -1600,8 +1600,8 @@ body.guest-mode .page input {
   ">
     <div style="font-size:1rem;color:var(--text);margin-bottom:4px">로그 삭제</div>
     <div style="font-size:0.82rem;color:var(--text-sub);margin-bottom:16px">본인 비밀번호를 입력해주세요</div>
-    <input id="log-delete-pin" type="password" inputmode="numeric" maxlength="4"
-      autocomplete="new-password" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+    <input id="log-delete-pin" type="text" inputmode="numeric" maxlength="4"
+      autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
       placeholder="••••"
       style="
         width:100%;text-align:center;font-size:1.4rem;letter-spacing:0.3em;
@@ -1609,6 +1609,7 @@ body.guest-mode .page input {
         background:var(--surface2);color:var(--text);
         padding:10px;font-family:'Gowun Dodum',sans-serif;
         outline:none;-webkit-user-select:text;user-select:text;
+        -webkit-text-security:disc;text-security:disc;
       "
       oninput="if(this.value.length===4) confirmLogDelete()"
       onkeydown="if(event.key==='Enter') confirmLogDelete()">
@@ -1693,8 +1694,8 @@ body.guest-mode .page input {
     <div id="actor-step2" style="display:none">
       <div style="font-size:1rem;color:var(--text);margin-bottom:4px" id="actor-pin-title"></div>
       <div style="font-size:0.82rem;color:var(--text-sub);margin-bottom:16px">비밀번호를 입력해주세요</div>
-      <input id="actor-pin-input" type="password" inputmode="numeric" maxlength="4"
-        autocomplete="new-password" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+      <input id="actor-pin-input" type="text" inputmode="numeric" maxlength="4"
+        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
         placeholder="••••"
         style="
           width:100%;text-align:center;font-size:1.4rem;letter-spacing:0.3em;
@@ -1702,6 +1703,7 @@ body.guest-mode .page input {
           background:var(--surface2);color:var(--text);
           padding:10px;font-family:'Gowun Dodum',sans-serif;
           outline:none;-webkit-user-select:text;user-select:text;
+          -webkit-text-security:disc;text-security:disc;
         "
         oninput="if(this.value.length===4) confirmPin()"
         onkeydown="if(event.key==='Enter') confirmPin()">
