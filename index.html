@@ -1837,6 +1837,13 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.querySelectorAll('.tab-pill').forEach(p => p.classList.remove('active'));
+
+  // detail-page가 아닌 곳으로 이동 시 상세뷰 서브바/탭 숨김
+  if (id !== 'detail-page') {
+    document.getElementById('detail-subbar').style.display = 'none';
+    document.getElementById('detail-tab').style.display = 'none';
+  }
+
   if (id === 'overview') {
     document.getElementById('tab-overview').classList.add('active');
     if (_overviewDirty) { renderOverview(); _overviewDirty = false; }
@@ -2214,11 +2221,11 @@ function renderDetail(char) {
         onclick="toggleDaily('${char.id}','supply_done',${!dt.supply_done},'${today}')">${dt.supply_done?'완료':'미완'}</button>
     </div>
     <div class="stat-row">
-      <span class="stat-label">악몽 <span class="stat-sublabel">최대 14장</span></span>
+      <span class="stat-label">악몽 <span class="stat-sublabel">기본 14 · 충전 30</span></span>
       <div class="stat-inputs">
         ${numInput('nightmare_base', nmBase, char.id, 0, 14)}
         <span style="color:var(--text-sub);font-size:0.8rem">+</span>
-        ${numInput('nightmare_charged', nmCharged, char.id, 0, 14)}
+        ${numInput('nightmare_charged', nmCharged, char.id, 0, 30)}
         ${nmWarn ? `<span class="warn-chip">주의!</span>` : `<span class="ok-chip">양호</span>`}
       </div>
     </div>
@@ -2366,9 +2373,24 @@ async function saveNumInput(charId, field, newVal) {
   if (currentActor === 'guest') return;
 
   const char = allChars.find(c => c.id === charId);
+  const prevVal = char ? (char[field] || 0) : 0;
   if (char) char[field] = newVal;
   const { error } = await sb.from('characters').update({[field]: newVal}).eq('id', charId);
-  if (error) showToast('저장 실패');
+  if (error) { showToast('저장 실패'); return; }
+
+  // 소비(감소) 시 로그 기록 — 악몽/오드만
+  if (char && newVal < prevVal) {
+    const diff = prevVal - newVal;
+    const LABELS = {
+      nightmare_base:    '악몽',
+      odd_energy_base:   '오드에너지',
+    };
+    const label = LABELS[field];
+    if (label) {
+      writeLog(char.owner, char.name, `${label} -${diff} (${prevVal}→${newVal})`, char.id, null);
+    }
+  }
+
   lazyRenderOverview();
 }
 
@@ -2488,12 +2510,27 @@ function liveAccModal(owner, field, inputId, min, max) {
 
 function commitAccModal(owner, field, val) {
   const acc = accountData[owner];
+  const prevVal = acc ? (acc[field] || 0) : 0;
   if (acc) acc[field] = val;
   // 카드 숫자 즉시 갱신
   renderOverview();
   debounce(`acc-${owner}-${field}`, async () => {
     const { error } = await sb.from('account_data').update({[field]: val}).eq('owner', owner);
-    if (error) showToast('저장 실패');
+    if (error) { showToast('저장 실패'); return; }
+
+    // 소비(감소) 시 로그 — 슈고열쇠/일일던전
+    if (val < prevVal) {
+      const diff = prevVal - val;
+      const LABELS = {
+        shugo_key_base:    '슈고 열쇠',
+        dungeon_remaining: '일일던전',
+      };
+      const label = LABELS[field];
+      if (label) {
+        // account_data는 특정 캐릭에 귀속되지 않으므로 character_name=null, character_id=null
+        writeLog(owner, null, `${label} -${diff} (${prevVal}→${val})`, null, null);
+      }
+    }
   });
 }
 
