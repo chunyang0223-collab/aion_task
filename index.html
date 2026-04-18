@@ -204,8 +204,9 @@ body {
 }
 
 .mini-dot.done { background: var(--sage); }
-.mini-dot.done-weekly { background: #c47a8a; }
-.mini-dot.partial { background: var(--peach); }
+.mini-dot.done-awak { background: #7aa3c8; }      /* 각성 - 파랑 */
+.mini-dot.done-sanc { background: #e8c76a; }      /* 루드라/침식 - 노랑 */
+.mini-dot.partial { background: #d66a4a; }        /* 악몽 주의 - 빨강 */
 .mini-dot.locked { background: var(--border); opacity: 0.4; }
 
 .char-mini-add {
@@ -2073,22 +2074,22 @@ function buildMiniDots(char, dt, wt) {
 
   // 일일 (왼쪽): 사명, 보급, 악몽
   const daily = [
-    `<div class="mini-dot ${dt.mission_done?'done':''}"></div>`,
-    `<div class="mini-dot ${dt.supply_done?'done':''}"></div>`,
-    `<div class="mini-dot ${nm<=12?'done':'partial'}" title="악몽${nm}"></div>`,
+    `<div class="mini-dot ${dt.mission_done?'done':''}" title="사명${dt.mission_done?' (완료)':''}"></div>`,
+    `<div class="mini-dot ${dt.supply_done?'done':''}" title="보급${dt.supply_done?' (완료)':''}"></div>`,
+    `<div class="mini-dot ${nm<=12?'done':'partial'}" title="악몽 ${nm}장${nm>12?' (주의)':''}"></div>`,
   ].join('');
 
   // 주간 (오른쪽): 각성(3/3 완료), 루드라(템2700+), 침식(템3500+)
   const weeklyDots = [];
   // 각성 - 3회 다 완료해야 완료
-  weeklyDots.push(`<div class="mini-dot ${aw>=3?'done-weekly':''}"></div>`);
+  weeklyDots.push(`<div class="mini-dot ${aw>=3?'done-awak':''}" title="각성 ${aw}/3"></div>`);
   // 루드라 - 템 2700+만 해당, 미달은 dot 자체 생략
   if (ilvl >= 2700) {
-    weeklyDots.push(`<div class="mini-dot ${wt.ludra_done?'done-weekly':''}"></div>`);
+    weeklyDots.push(`<div class="mini-dot ${wt.ludra_done?'done-sanc':''}" title="성역 - 루드라${wt.ludra_done?' (완료)':''}"></div>`);
   }
   // 침식 - 템 3500+만 해당
   if (ilvl >= 3500) {
-    weeklyDots.push(`<div class="mini-dot ${wt.erosion_done?'done-weekly':''}"></div>`);
+    weeklyDots.push(`<div class="mini-dot ${wt.erosion_done?'done-sanc':''}" title="성역 - 침식${wt.erosion_done?' (완료)':''}"></div>`);
   }
   const weekly = weeklyDots.join('');
 
