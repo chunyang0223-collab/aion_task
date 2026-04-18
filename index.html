@@ -651,7 +651,8 @@ body {
 
 /* 계정 모달 안에서만 숫자 컨트롤 컴팩트하게 */
 #acc-modal .num-btn { width: 22px; height: 22px; font-size: 0.9rem; }
-#acc-modal .num-val-input { width: 34px; font-size: 0.78rem; }
+#acc-modal .num-val-input { flex: 1; min-width: 0; width: auto; font-size: 0.78rem; }
+#acc-modal .num-input-wrap { width: 100%; justify-content: center; }
 
 /* ── CP INPUT ── */
 .cp-input-wrap {
@@ -2883,20 +2884,20 @@ function openAccountModal(owner) {
     <div style="display:flex;flex-direction:column;gap:12px">
       <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
         <div style="font-size:0.75rem;color:var(--text-sub);margin-bottom:8px">슈고열쇠 <span style="font-size:0.7rem">(계정 공유 · 최대 14장)</span></div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:0.72rem;color:var(--text-sub)">기본</span>
+        <div style="display:grid;grid-template-columns:1fr 1.35fr 1fr 1.35fr;align-items:center;gap:6px">
+          <span style="font-size:0.72rem;color:var(--text-sub);text-align:center">기본</span>
           ${accModalNumInput('shugo_key_base', acc.shugo_key_base||0, owner, 0, 14)}
-          <span style="font-size:0.72rem;color:var(--text-sub)">충전</span>
+          <span style="font-size:0.72rem;color:var(--text-sub);text-align:center">충전</span>
           ${accModalNumInput('shugo_key_charged', acc.shugo_key_charged||0, owner, 0, 99)}
         </div>
         ${skWarn ? `<div style="margin-top:6px;font-size:0.72rem;color:#b85050">⚠ 14장 초과! 충전이 낭비돼요</div>` : ''}
       </div>
       <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
         <div style="font-size:0.75rem;color:var(--text-sub);margin-bottom:8px">일일던전 <span style="font-size:0.7rem">(계정 공유 · 주간 14회)</span></div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:0.72rem;color:var(--text-sub)">남은판</span>
+        <div style="display:grid;grid-template-columns:1fr 1.35fr 1fr 1.35fr;align-items:center;gap:6px">
+          <span style="font-size:0.72rem;color:var(--text-sub);text-align:center">남은판</span>
           ${accModalNumInput('dungeon_remaining', acc.dungeon_remaining||0, owner, 0, 14)}
-          <span style="font-size:0.72rem;color:var(--text-sub)">충전</span>
+          <span style="font-size:0.72rem;color:var(--text-sub);text-align:center">충전</span>
           ${accModalNumInput('dungeon_charged', acc.dungeon_charged||0, owner, 0, 99)}
         </div>
       </div>
@@ -4070,9 +4071,10 @@ function expCandidateItem(c, idx, topChar) {
     box-shadow:0 12px 40px rgba(160,150,140,0.18);
     animation:fadeUp 0.2s ease-out;
   " onclick="event.stopPropagation()">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:16px;position:relative">
       <span id="acc-modal-title" style="font-size:0.95rem;color:var(--text)"></span>
       <button onclick="closeAccountModal()" style="
+        position:absolute;right:0;
         width:28px;height:28px;border-radius:50%;border:1px solid var(--border);
         background:transparent;color:var(--text-sub);font-size:1rem;
         cursor:pointer;display:flex;align-items:center;justify-content:center;
