@@ -138,12 +138,31 @@ body {
   gap: 8px;
 }
 
-.owner-label::after {
-  content: '';
+.owner-divider {
   flex: 1;
   height: 1px;
   background: var(--border);
 }
+
+.odd-batch-btn {
+  font-size: 0.7rem;
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-sub);
+  cursor: pointer;
+  font-family: 'Gowun Dodum', sans-serif;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.odd-batch-btn:hover {
+  background: var(--sage-light);
+  border-color: var(--sage);
+  color: #5a7a42;
+}
+body.guest-mode .odd-batch-btn { display: none; }
 
 .chars-grid {
   display: grid;
@@ -904,6 +923,17 @@ body {
 .log-char { color: var(--lavender); }
 .log-action { color: var(--text); }
 .log-action-done { color: var(--sage); }
+.log-odd-batch-link {
+  color: var(--sage);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  cursor: pointer;
+}
+.log-odd-batch-link:hover {
+  color: #5a7a42;
+  text-decoration-thickness: 1.5px;
+}
 
 .log-nav {
   display: flex;
@@ -1725,6 +1755,78 @@ body.guest-mode .page input {
 ">👁 손님 모드 — 보기만 가능합니다</div>
 <div id="toast" class="toast"></div>
 
+<!-- 오드 일괄 적용 미리보기 모달 -->
+<div id="odd-batch-overlay" style="
+  display:none;position:fixed;inset:0;z-index:250;
+  background:rgba(90,82,75,0.4);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:20px;
+" onclick="closeOddBatchModal()">
+  <div style="
+    background:var(--surface);border-radius:var(--radius);
+    border:1px solid var(--border);padding:20px;width:100%;max-width:360px;
+    max-height:80vh;overflow-y:auto;
+    box-shadow:0 12px 40px rgba(160,150,140,0.18);
+  " onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:16px;position:relative">
+      <span id="odd-batch-title" style="font-size:0.95rem;color:var(--text)"></span>
+      <button onclick="closeOddBatchModal()" style="
+        position:absolute;right:0;
+        width:28px;height:28px;border-radius:50%;border:1px solid var(--border);
+        background:transparent;color:var(--text-sub);font-size:1rem;
+        cursor:pointer;display:flex;align-items:center;justify-content:center;
+        font-family:'Gowun Dodum',sans-serif;
+      ">×</button>
+    </div>
+    <div id="odd-batch-body"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button onclick="closeOddBatchModal()" style="
+        padding:7px 16px;border-radius:20px;border:1px solid var(--border);
+        background:transparent;color:var(--text-sub);font-size:0.82rem;
+        font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+      ">취소</button>
+      <button id="odd-batch-confirm" onclick="confirmOddBatchApply()" style="
+        padding:7px 18px;border-radius:20px;border:none;
+        background:var(--sage);color:white;font-size:0.82rem;
+        font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+      ">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- 오드 일괄 적용 로그 상세보기 모달 (로그에서 클릭 시) -->
+<div id="odd-batch-detail-overlay" style="
+  display:none;position:fixed;inset:0;z-index:250;
+  background:rgba(90,82,75,0.4);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:20px;
+" onclick="closeOddBatchDetailModal()">
+  <div style="
+    background:var(--surface);border-radius:var(--radius);
+    border:1px solid var(--border);padding:20px;width:100%;max-width:360px;
+    max-height:80vh;overflow-y:auto;
+    box-shadow:0 12px 40px rgba(160,150,140,0.18);
+  " onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:4px;position:relative">
+      <span style="font-size:0.95rem;color:var(--text)">오드 일괄 적용 내역</span>
+      <button onclick="closeOddBatchDetailModal()" style="
+        position:absolute;right:0;
+        width:28px;height:28px;border-radius:50%;border:1px solid var(--border);
+        background:transparent;color:var(--text-sub);font-size:1rem;
+        cursor:pointer;display:flex;align-items:center;justify-content:center;
+        font-family:'Gowun Dodum',sans-serif;
+      ">×</button>
+    </div>
+    <div id="odd-batch-detail-meta" style="text-align:center;font-size:0.72rem;color:var(--text-sub);margin-bottom:14px"></div>
+    <div id="odd-batch-detail-body"></div>
+    <div style="display:flex;justify-content:center;margin-top:16px">
+      <button onclick="closeOddBatchDetailModal()" style="
+        padding:7px 24px;border-radius:20px;border:1px solid var(--border);
+        background:transparent;color:var(--text-sub);font-size:0.82rem;
+        font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+      ">닫기</button>
+    </div>
+  </div>
+</div>
+
 <!-- 로그 삭제 PIN 모달 -->
 <div id="log-delete-overlay" style="
   display:none;position:fixed;inset:0;z-index:300;
@@ -2137,7 +2239,11 @@ function renderOverview() {
     });
 
     html += `<div class="owner-section">
-      <div class="owner-label">${owner}</div>
+      <div class="owner-label">
+        <span>${owner}</span>
+        <span class="owner-divider"></span>
+        <button class="odd-batch-btn" onclick="openOddBatchModal('${owner}')">오드 일괄 적용</button>
+      </div>
       <div class="chars-grid">`;
 
     slots.forEach((char, idx) => {
@@ -3276,8 +3382,17 @@ async function renderLogPage() {
       const ownerClass = log.owner === '설냥' ? 'log-owner-설냥' : 'log-owner-츄츄';
       const delBtn = currentActor === 'guest' ? '' :
         `<button class="log-delete-btn" onclick="openLogDeleteModal('${log.id}')" title="삭제">×</button>`;
+
+      let textHtml;
+      // 오드 일괄 적용 로그 - 전용 포맷 + 클릭 가능
+      if (log.field === 'odd_batch' && log.meta && log.meta.type === 'odd_batch') {
+        textHtml = `<span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerClass}">[${log.owner}]</span> 계정의 <span class="log-odd-batch-link" onclick="openOddBatchDetailModal('${log.id}')">오드를 일괄 적용했습니다</span>`;
+      } else {
+        textHtml = `<span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerClass}">[${log.owner}]</span> 계정의 <span class="log-char">[${log.character_name || '계정'}]</span><span class="log-action-done"> ${log.action}</span>`;
+      }
+
       html += `<div class="log-card">
-        <div class="log-card-text"><span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerClass}">[${log.owner}]</span> 계정의 <span class="log-char">[${log.character_name || '계정'}]</span><span class="log-action-done"> ${log.action}</span></div>
+        <div class="log-card-text">${textHtml}</div>
         <div class="log-time">${time}</div>
         ${delBtn}
       </div>`;
@@ -3433,6 +3548,178 @@ async function applyOddEstimate(charId) {
   startOddTimer(charId);
   renderOverview();
   showToast(`오드 ${estimated} 적용!`);
+}
+
+// ═══════════════════════════════════════════════
+// 오드 일괄 적용
+// ═══════════════════════════════════════════════
+let _oddBatchOwner = null;
+let _oddBatchPlan = null;  // [{ charId, name, before, after, hasRecord }]
+
+function openOddBatchModal(owner) {
+  if (currentActor === 'guest') return;
+  _oddBatchOwner = owner;
+
+  // 해당 owner 캐릭 전원 대상 (휴식 포함, slot 순)
+  const chars = allChars
+    .filter(c => c.owner === owner && c.name)
+    .sort((a, b) => (a.slot || 0) - (b.slot || 0));
+
+  _oddBatchPlan = chars.map(c => {
+    const before = c.odd_energy_base || 0;
+    const hasRecord = !!c.odd_recorded_at;
+    const estimated = hasRecord ? calcOddEstimate(c.id) : null;
+    return {
+      charId: c.id,
+      name: c.name,
+      before,
+      after: estimated !== null ? estimated : before,
+      hasRecord,
+    };
+  });
+
+  document.getElementById('odd-batch-title').textContent = `${owner} 오드 일괄 적용`;
+
+  const rows = _oddBatchPlan.map(p => {
+    if (!p.hasRecord) {
+      return `<div style="display:grid;grid-template-columns:1fr auto;gap:8px;padding:6px 8px;border-radius:6px;font-size:0.8rem;align-items:center">
+        <span style="color:var(--text)">${p.name}</span>
+        <span style="color:var(--text-sub);font-size:0.72rem">기록 필요</span>
+      </div>
+      <div style="padding:0 8px 6px;font-size:0.66rem;color:#b85050">${p.name} 상세페이지에서 기록을 1회 눌러주신 후 가능해요</div>`;
+    }
+    const changed = p.after !== p.before;
+    const arrow = changed ? '→' : '→';
+    const afterColor = changed ? '#5a7a42' : 'var(--text-sub)';
+    return `<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:8px;padding:6px 8px;border-radius:6px;font-size:0.8rem;align-items:center">
+      <span style="color:var(--text)">${p.name}</span>
+      <span style="color:var(--text-sub);font-variant-numeric:tabular-nums">${p.before}</span>
+      <span style="color:var(--text-sub);font-size:0.72rem">${arrow}</span>
+      <span style="color:${afterColor};font-variant-numeric:tabular-nums">${p.after}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('odd-batch-body').innerHTML = rows || `<div style="text-align:center;padding:20px;color:var(--text-sub);font-size:0.8rem">적용할 캐릭이 없어요</div>`;
+
+  // 기록이 하나도 없으면 확인 버튼 비활성화
+  const anyApplicable = _oddBatchPlan.some(p => p.hasRecord);
+  const confirmBtn = document.getElementById('odd-batch-confirm');
+  confirmBtn.disabled = !anyApplicable;
+  confirmBtn.style.opacity = anyApplicable ? '1' : '0.4';
+  confirmBtn.style.cursor = anyApplicable ? 'pointer' : 'not-allowed';
+
+  document.getElementById('odd-batch-overlay').style.display = 'flex';
+}
+
+function closeOddBatchModal() {
+  _oddBatchOwner = null;
+  _oddBatchPlan = null;
+  document.getElementById('odd-batch-overlay').style.display = 'none';
+}
+
+async function confirmOddBatchApply() {
+  if (currentActor === 'guest') return;
+  if (!_oddBatchOwner || !_oddBatchPlan) return;
+
+  const owner = _oddBatchOwner;
+  const plan = _oddBatchPlan;
+  const applicable = plan.filter(p => p.hasRecord);
+  if (applicable.length === 0) return;
+
+  const now = new Date().toISOString();
+
+  // 각 캐릭 업데이트 (병렬)
+  const updates = applicable.map(p =>
+    sb.from('characters')
+      .update({ odd_energy_base: p.after, odd_recorded_at: now })
+      .eq('id', p.charId)
+  );
+  const results = await Promise.all(updates);
+  const anyError = results.some(r => r.error);
+  if (anyError) {
+    showToast('일부 저장 실패');
+    console.error(results.filter(r => r.error));
+    return;
+  }
+
+  // 로컬 상태 업데이트
+  applicable.forEach(p => {
+    const c = allChars.find(c => c.id === p.charId);
+    if (c) {
+      c.odd_energy_base = p.after;
+      c.odd_recorded_at = now;
+    }
+  });
+
+  // 로그 기록 — meta에 전체 plan (기록없는 캐릭 포함) 저장
+  // 기록없는 캐릭도 포함해서 저장해야 나중에 상세보기에서 전체 목록 확인 가능
+  await sb.from('activity_log').insert({
+    game_date: getTodayKST(),
+    actor: currentActor,
+    owner,
+    character_name: null,
+    action: '오드 일괄 적용',
+    character_id: null,
+    field: 'odd_batch',
+    meta: {
+      type: 'odd_batch',
+      applied_at: now,
+      changes: plan.map(p => ({
+        name: p.name,
+        before: p.before,
+        after: p.after,
+        hasRecord: p.hasRecord,
+      })),
+    },
+  });
+
+  closeOddBatchModal();
+  showToast(`${owner} 오드 일괄 적용 완료`);
+  renderOverview();
+}
+
+// ── 로그에서 "오드 일괄 적용" 링크 클릭 시 상세보기 ──
+function openOddBatchDetailModal(logId) {
+  // activity_log에서 meta 가져와서 표시
+  (async () => {
+    const { data, error } = await sb.from('activity_log')
+      .select('*')
+      .eq('id', logId)
+      .single();
+    if (error || !data || !data.meta) {
+      showToast('로그 데이터를 찾을 수 없어요');
+      return;
+    }
+    const meta = data.meta;
+    const changes = meta.changes || [];
+
+    const dateStr = data.created_at ? formatKST(data.created_at) : '';
+    document.getElementById('odd-batch-detail-meta').textContent = `${data.owner} · ${dateStr}`;
+
+    const rows = changes.map(c => {
+      if (!c.hasRecord) {
+        return `<div style="display:grid;grid-template-columns:1fr auto;gap:8px;padding:6px 8px;font-size:0.8rem;align-items:center">
+          <span style="color:var(--text)">${c.name}</span>
+          <span style="color:var(--text-sub);font-size:0.72rem">기록 없음 (미적용)</span>
+        </div>`;
+      }
+      const changed = c.after !== c.before;
+      const afterColor = changed ? '#5a7a42' : 'var(--text-sub)';
+      return `<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:8px;padding:6px 8px;font-size:0.8rem;align-items:center">
+        <span style="color:var(--text)">${c.name}</span>
+        <span style="color:var(--text-sub);font-variant-numeric:tabular-nums">${c.before}</span>
+        <span style="color:var(--text-sub);font-size:0.72rem">→</span>
+        <span style="color:${afterColor};font-variant-numeric:tabular-nums">${c.after}</span>
+      </div>`;
+    }).join('');
+
+    document.getElementById('odd-batch-detail-body').innerHTML = rows;
+    document.getElementById('odd-batch-detail-overlay').style.display = 'flex';
+  })();
+}
+
+function closeOddBatchDetailModal() {
+  document.getElementById('odd-batch-detail-overlay').style.display = 'none';
 }
 
 // ── DRAG AND DROP ──
