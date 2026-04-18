@@ -3589,13 +3589,16 @@ function openOddBatchModal(owner) {
       <div style="padding:0 8px 6px;font-size:0.66rem;color:#b85050">${p.name} 상세페이지에서 기록을 1회 눌러주신 후 가능해요</div>`;
     }
     const changed = p.after !== p.before;
-    const arrow = changed ? '→' : '→';
+    const diff = p.after - p.before;
     const afterColor = changed ? '#5a7a42' : 'var(--text-sub)';
-    return `<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:8px;padding:6px 8px;border-radius:6px;font-size:0.8rem;align-items:center">
+    const diffText = diff > 0 ? `(+${diff})` : diff < 0 ? `(${diff})` : '';
+    const diffColor = diff > 0 ? '#5a7a42' : diff < 0 ? '#b85050' : 'transparent';
+    return `<div style="display:grid;grid-template-columns:1fr auto auto auto 40px;gap:8px;padding:6px 8px;border-radius:6px;font-size:0.8rem;align-items:center">
       <span style="color:var(--text)">${p.name}</span>
       <span style="color:var(--text-sub);font-variant-numeric:tabular-nums">${p.before}</span>
-      <span style="color:var(--text-sub);font-size:0.72rem">${arrow}</span>
+      <span style="color:var(--text-sub);font-size:0.72rem">→</span>
       <span style="color:${afterColor};font-variant-numeric:tabular-nums">${p.after}</span>
+      <span style="color:${diffColor};font-size:0.7rem;font-variant-numeric:tabular-nums;text-align:right">${diffText}</span>
     </div>`;
   }).join('');
 
@@ -3704,12 +3707,16 @@ function openOddBatchDetailModal(logId) {
         </div>`;
       }
       const changed = c.after !== c.before;
+      const diff = c.after - c.before;
       const afterColor = changed ? '#5a7a42' : 'var(--text-sub)';
-      return `<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:8px;padding:6px 8px;font-size:0.8rem;align-items:center">
+      const diffText = diff > 0 ? `(+${diff})` : diff < 0 ? `(${diff})` : '';
+      const diffColor = diff > 0 ? '#5a7a42' : diff < 0 ? '#b85050' : 'transparent';
+      return `<div style="display:grid;grid-template-columns:1fr auto auto auto 40px;gap:8px;padding:6px 8px;font-size:0.8rem;align-items:center">
         <span style="color:var(--text)">${c.name}</span>
         <span style="color:var(--text-sub);font-variant-numeric:tabular-nums">${c.before}</span>
         <span style="color:var(--text-sub);font-size:0.72rem">→</span>
         <span style="color:${afterColor};font-variant-numeric:tabular-nums">${c.after}</span>
+        <span style="color:${diffColor};font-size:0.7rem;font-variant-numeric:tabular-nums;text-align:right">${diffText}</span>
       </div>`;
     }).join('');
 
