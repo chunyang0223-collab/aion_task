@@ -2917,7 +2917,7 @@ function closeLogDeleteModal() {
 }
 
 async function confirmLogDelete() {
-  if (_logDeleteId === null) return;
+  if (!_logDeleteId) return;
   const pin = document.getElementById('log-delete-pin').value.trim();
   const errEl = document.getElementById('log-delete-error');
 
@@ -2988,7 +2988,7 @@ async function renderLogPage() {
       const actorClass = log.actor === '설냥' ? 'log-actor-냥이' : 'log-actor-츄츄';
       const ownerClass = log.owner === '설냥' ? 'log-owner-설냥' : 'log-owner-츄츄';
       const delBtn = currentActor === 'guest' ? '' :
-        `<button class="log-delete-btn" onclick="openLogDeleteModal(${log.id})" title="삭제">×</button>`;
+        `<button class="log-delete-btn" onclick="openLogDeleteModal('${log.id}')" title="삭제">×</button>`;
       html += `<div class="log-card">
         <div class="log-card-text"><span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerClass}">[${log.owner}]</span> 계정의 <span class="log-char">[${log.character_name || '계정'}]</span><span class="log-action-done"> ${log.action}</span></div>
         <div class="log-time">${time}</div>
