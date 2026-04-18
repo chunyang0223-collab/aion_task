@@ -2078,17 +2078,19 @@ function buildMiniDots(char, dt, wt) {
     `<div class="mini-dot ${nm<=12?'done':'partial'}" title="악몽${nm}"></div>`,
   ].join('');
 
-  // 주간 (오른쪽): 각성, 루드라, 침식, 지령서3
-  const weekly = [
-    `<div class="mini-dot ${aw>=3?'done-weekly':aw>0?'done-weekly':''}"></div>`,
-    ilvl >= 2700
-      ? `<div class="mini-dot ${wt.ludra_done?'done-weekly':''}"></div>`
-      : `<div class="mini-dot locked"></div>`,
-    ilvl >= 3500
-      ? `<div class="mini-dot ${wt.erosion_done?'done-weekly':''}"></div>`
-      : `<div class="mini-dot locked"></div>`,
-
-  ].join('');
+  // 주간 (오른쪽): 각성(3/3 완료), 루드라(템2700+), 침식(템3500+)
+  const weeklyDots = [];
+  // 각성 - 3회 다 완료해야 완료
+  weeklyDots.push(`<div class="mini-dot ${aw>=3?'done-weekly':''}"></div>`);
+  // 루드라 - 템 2700+만 해당, 미달은 dot 자체 생략
+  if (ilvl >= 2700) {
+    weeklyDots.push(`<div class="mini-dot ${wt.ludra_done?'done-weekly':''}"></div>`);
+  }
+  // 침식 - 템 3500+만 해당
+  if (ilvl >= 3500) {
+    weeklyDots.push(`<div class="mini-dot ${wt.erosion_done?'done-weekly':''}"></div>`);
+  }
+  const weekly = weeklyDots.join('');
 
   return `<div class="mini-dots-daily">${daily}</div><div class="mini-dots-weekly">${weekly}</div>`;
 }
