@@ -1601,6 +1601,7 @@ body.guest-mode .page input {
     <div style="font-size:1rem;color:var(--text);margin-bottom:4px">로그 삭제</div>
     <div style="font-size:0.82rem;color:var(--text-sub);margin-bottom:16px">본인 비밀번호를 입력해주세요</div>
     <input id="log-delete-pin" type="password" inputmode="numeric" maxlength="4"
+      autocomplete="new-password" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
       placeholder="••••"
       style="
         width:100%;text-align:center;font-size:1.4rem;letter-spacing:0.3em;
@@ -1693,6 +1694,7 @@ body.guest-mode .page input {
       <div style="font-size:1rem;color:var(--text);margin-bottom:4px" id="actor-pin-title"></div>
       <div style="font-size:0.82rem;color:var(--text-sub);margin-bottom:16px">비밀번호를 입력해주세요</div>
       <input id="actor-pin-input" type="password" inputmode="numeric" maxlength="4"
+        autocomplete="new-password" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
         placeholder="••••"
         style="
           width:100%;text-align:center;font-size:1.4rem;letter-spacing:0.3em;
@@ -2150,12 +2152,12 @@ function openAddChar(owner, slot) {
   let formHtml = `<div class="add-char-form open" id="add-char-form">
     <div class="card-title"><div class="card-title-icon icon-info">✎</div>${owner} ${slot}번 캐릭터 추가</div>
     <div class="form-row">
-      <div><div class="form-label">캐릭터명</div><input class="text-input" id="fc-name" placeholder="캐릭명"></div>
-      <div><div class="form-label">템레벨</div><input class="text-input" id="fc-ilvl" type="number" placeholder="0"></div>
+      <div><div class="form-label">캐릭터명</div><input class="text-input" id="fc-name" placeholder="캐릭명" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"></div>
+      <div><div class="form-label">템레벨</div><input class="text-input" id="fc-ilvl" type="number" placeholder="0" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"></div>
     </div>
     <div class="form-row">
-      <div><div class="form-label">전투력 (k)</div><input class="text-input" id="fc-cp" type="text" inputmode="decimal" placeholder="0"></div>
-      <div><div class="form-label">오드에너지</div><input class="text-input" id="fc-odd" type="number" placeholder="0"></div>
+      <div><div class="form-label">전투력 (k)</div><input class="text-input" id="fc-cp" type="text" inputmode="decimal" placeholder="0" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"></div>
+      <div><div class="form-label">오드에너지</div><input class="text-input" id="fc-odd" type="number" placeholder="0" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"></div>
     </div>
     <div class="form-actions">
       <button class="btn-cancel" onclick="closeAddChar()">취소</button>
@@ -2228,12 +2230,14 @@ function renderDetail(char) {
     <div class="stat-row">
       <span class="stat-label">캐릭터명</span>
       <input class="text-input" style="width:130px" tabindex="0" value="${char.name||''}"
+        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
         onfocus="this.select()"
         onchange="updateCharField('${char.id}','name',this.value)">
     </div>
     <div class="stat-row">
       <span class="stat-label">템레벨</span>
       <input class="text-input" style="width:80px" type="number" tabindex="0" value="${char.item_level||0}"
+        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
         onfocus="this.select()"
         onchange="updateCharField('${char.id}','item_level',parseInt(this.value)||0)">
     </div>
@@ -2242,6 +2246,7 @@ function renderDetail(char) {
       <div class="cp-input-wrap" id="cpwrap-${char.id}">
         <input class="text-input cp-input" id="cp-${char.id}" style="width:90px"
           type="text" inputmode="decimal" tabindex="0" value="${(char.combat_power||0)/10}"
+          autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
           onfocus="this.select()"
           oninput="validateCpInput(this)"
           onblur="commitCpInput('${char.id}',this)">
@@ -2366,7 +2371,8 @@ function numInput(field, val, charId, min, max) {
   const id = `nv-${charId}-${field}`;
   return `<div class="num-input-wrap">
     <button class="num-btn" onclick="stepCharById('${charId}','${field}','${id}',-1,${min},${max})">−</button>
-    <input class="num-val-input" id="${id}" type="number" value="${val}" min="${min}" max="${max}"
+    <input class="num-val-input" id="${id}" name="${id}" type="number" value="${val}" min="${min}" max="${max}"
+      autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
       onchange="commitNumInput('${charId}','${field}','${id}',${min},${max})"
       onblur="commitNumInput('${charId}','${field}','${id}',${min},${max})">
     <button class="num-btn" onclick="stepCharById('${charId}','${field}','${id}',1,${min},${max})">+</button>
@@ -2539,7 +2545,8 @@ function accModalNumInput(field, val, owner, min, max) {
   const id = `amn-${owner}-${field}`;
   return `<div class="num-input-wrap">
     <button class="num-btn" onclick="stepAccModal('${owner}','${field}','${id}',-1,${min},${max})">−</button>
-    <input class="num-val-input" id="${id}" type="number" value="${val}" min="${min}" max="${max}"
+    <input class="num-val-input" id="${id}" name="${id}" type="number" value="${val}" min="${min}" max="${max}"
+      autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
       onfocus="this.select()"
       oninput="liveAccModal('${owner}','${field}','${id}',${min},${max})">
     <button class="num-btn" onclick="stepAccModal('${owner}','${field}','${id}',1,${min},${max})">+</button>
