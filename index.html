@@ -341,13 +341,10 @@ body {
 
 /* ── 매트릭스 뷰 (캐릭별) ── */
 .abyss-matrix {
-  overflow-x: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   padding: 2px 0;
-}
-.abyss-matrix-table {
-  display: grid;
-  gap: 3px;
-  min-width: 100%;
 }
 .abyss-matrix-header {
   display: grid;
@@ -386,6 +383,7 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 .abyss-matrix-row.all-done .abyss-matrix-name { color: #5a7a42; }
 .abyss-matrix-owner-dot {
@@ -2349,12 +2347,12 @@ function renderAbyssCharMatrix(acquiredZones, warDate) {
     return (a.slot || 0) - (b.slot || 0);
   });
 
-  // 그리드 컬럼: 이름 | zone1 | zone2 | ...
-  const gridCols = `minmax(80px, 1fr) ${acquiredZones.map(() => 'minmax(32px, 40px)').join(' ')}`;
+  // 그리드 컬럼: 이름 | zone1 | zone2 | ... (각 row와 헤더가 동일하게 사용)
+  const gridCols = `minmax(80px, 1.4fr) ${acquiredZones.map(() => 'minmax(36px, 1fr)').join(' ')}`;
 
   // 헤더
-  let html = `<div class="abyss-matrix"><div class="abyss-matrix-table" style="grid-template-columns:${gridCols}">`;
-  html += `<div class="abyss-matrix-header" style="grid-template-columns:${gridCols};display:contents">`;
+  let html = `<div class="abyss-matrix">`;
+  html += `<div class="abyss-matrix-header" style="grid-template-columns:${gridCols}">`;
   html += `<div class="abyss-matrix-header-cell" style="text-align:left;padding-left:4px">캐릭</div>`;
   acquiredZones.forEach(z => {
     html += `<div class="abyss-matrix-header-cell">${z.name}<span class="abyss-matrix-header-cell-layer">${z.layer}</span></div>`;
@@ -2392,7 +2390,7 @@ function renderAbyssCharMatrix(acquiredZones, warDate) {
     </div>`;
   });
 
-  html += `</div></div>`;
+  html += `</div>`;
   return html;
 }
 
