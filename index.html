@@ -311,6 +311,120 @@ body {
   gap: 6px;
 }
 
+/* ── View toggle (zone별 / 캐릭별) ── */
+.abyss-view-toggle {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 2px;
+  font-size: 0.7rem;
+  margin-left: 8px;
+}
+.abyss-view-toggle button {
+  border: none;
+  background: transparent;
+  padding: 3px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  color: var(--text-sub);
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+.abyss-view-toggle button.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── 매트릭스 뷰 (캐릭별) ── */
+.abyss-matrix {
+  overflow-x: auto;
+  padding: 2px 0;
+}
+.abyss-matrix-table {
+  display: grid;
+  gap: 3px;
+  min-width: 100%;
+}
+.abyss-matrix-header {
+  display: grid;
+  gap: 3px;
+  padding: 0 4px 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+  font-size: 0.62rem;
+  color: var(--text-sub);
+}
+.abyss-matrix-header-cell {
+  text-align: center;
+  line-height: 1.2;
+  padding: 2px 0;
+}
+.abyss-matrix-header-cell-layer {
+  display: block;
+  font-size: 0.55rem;
+  opacity: 0.7;
+  margin-top: 1px;
+}
+.abyss-matrix-row {
+  display: grid;
+  gap: 3px;
+  padding: 4px;
+  border-radius: var(--radius-xs);
+  align-items: center;
+  transition: background 0.15s;
+}
+.abyss-matrix-row:hover { background: var(--hover); cursor: pointer; }
+.abyss-matrix-row.all-done { background: var(--sage-light); }
+.abyss-matrix-name {
+  font-size: 0.76rem;
+  color: var(--text);
+  padding-left: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.abyss-matrix-row.all-done .abyss-matrix-name { color: #5a7a42; }
+.abyss-matrix-owner-dot {
+  display: inline-block;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+.abyss-matrix-cell {
+  height: 22px;
+  border-radius: 5px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.abyss-matrix-cell.done {
+  background: var(--sage);
+  border-color: var(--sage);
+  color: white;
+}
+.abyss-matrix-cell.locked {
+  opacity: 0.25;
+  border-style: dashed;
+  cursor: not-allowed;
+}
+.abyss-matrix-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-sub);
+  font-size: 0.8rem;
+}
+
 .abyss-zone {
   background: var(--sky-light);
   border-radius: var(--radius-xs);
@@ -2133,19 +2247,49 @@ function calcCompletionPct(char, dt, wt) {
   return total > 0 ? Math.round(done/total*100) : 0;
 }
 
+let _abyssViewMode = 'zone';  // 'zone' | 'char'
+
+function toggleAbyssViewMode(mode) {
+  _abyssViewMode = mode;
+  lazyRenderOverview();
+}
+
 function renderAbyssSection() {
   const warDate = getLastWarDate();
   const { text: cdText, urgent: cdUrgent } = getCountdown();
   const warLabel = formatWarDate(warDate);
+  const acquiredZones = ZONES.filter(z => {
+    const c = abyssCorridors.find(c => c.zone === z.name);
+    return c?.acquired;
+  });
+
   let html = `<div class="abyss-section">
     <div class="section-title">
-      어비스 회랑
+      <span>
+        어비스 회랑
+        <span class="abyss-view-toggle">
+          <button class="${_abyssViewMode==='zone'?'active':''}" onclick="toggleAbyssViewMode('zone')">회랑별</button>
+          <button class="${_abyssViewMode==='char'?'active':''}" onclick="toggleAbyssViewMode('char')">캐릭별</button>
+        </span>
+      </span>
       <span style="font-size:0.72rem;color:var(--text-sub)">${warLabel} 전쟁 결과 ·
         <span id="abyss-countdown" style="color:${cdUrgent?'#b85050':'var(--text-sub)'}">다음 전쟁까지 ${cdText}</span>
       </span>
-    </div>
-    <div class="abyss-grid">`;
+    </div>`;
 
+  if (_abyssViewMode === 'char') {
+    html += renderAbyssCharMatrix(acquiredZones, warDate);
+  } else {
+    html += renderAbyssZoneGrid(warDate);
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+// ── 기존 zone별 뷰 ──
+function renderAbyssZoneGrid(warDate) {
+  let html = `<div class="abyss-grid">`;
   for (const zone of ZONES) {
     const corridor = abyssCorridors.find(c => c.zone === zone.name);
     const acquired = corridor?.acquired || false;
@@ -2156,7 +2300,7 @@ function renderAbyssSection() {
       allChars.forEach(char => {
         const ilvl = char.item_level || 0;
         const ilvlReq = zone.layer === '하층' ? 1000 : zone.layer === '중층' ? 3000 : 0;
-        if (ilvl < ilvlReq) return;  // 템 미달 캐릭은 dot 자체를 안 그림
+        if (ilvl < ilvlReq) return;
         const k = `${corId}_${char.id}`;
         const cleared = abyssClears[k]?.cleared || false;
         const doneClass = cleared
@@ -2173,9 +2317,89 @@ function renderAbyssSection() {
       <div class="abyss-char-dots">${charDots}</div>
     </div>`;
   }
+  html += `</div>`;
+  return html;
+}
+
+// ── 캐릭별 매트릭스 뷰 ──
+function renderAbyssCharMatrix(acquiredZones, warDate) {
+  if (acquiredZones.length === 0) {
+    return `<div class="abyss-matrix-empty">획득된 회랑이 없어요</div>`;
+  }
+
+  // 쉬고 있지 않은 + 입장 가능한(하층이면 템1000+ / 중층이면 템3000+) 캐릭만
+  const hasLower = acquiredZones.some(z => z.layer === '하층');
+  const hasMiddle = acquiredZones.some(z => z.layer === '중층');
+  const eligibleChars = allChars.filter(c => {
+    if (c.resting) return false;
+    if (!c.name) return false;
+    const ilvl = c.item_level || 0;
+    if (hasLower && ilvl >= 1000) return true;
+    if (hasMiddle && ilvl >= 3000) return true;
+    return false;
+  });
+
+  if (eligibleChars.length === 0) {
+    return `<div class="abyss-matrix-empty">입장 가능한 캐릭이 없어요</div>`;
+  }
+
+  // 설냥 먼저 → 츄츄
+  eligibleChars.sort((a, b) => {
+    if (a.owner !== b.owner) return a.owner === '설냥' ? -1 : 1;
+    return (a.slot || 0) - (b.slot || 0);
+  });
+
+  // 그리드 컬럼: 이름 | zone1 | zone2 | ...
+  const gridCols = `minmax(80px, 1fr) ${acquiredZones.map(() => 'minmax(32px, 40px)').join(' ')}`;
+
+  // 헤더
+  let html = `<div class="abyss-matrix"><div class="abyss-matrix-table" style="grid-template-columns:${gridCols}">`;
+  html += `<div class="abyss-matrix-header" style="grid-template-columns:${gridCols};display:contents">`;
+  html += `<div class="abyss-matrix-header-cell" style="text-align:left;padding-left:4px">캐릭</div>`;
+  acquiredZones.forEach(z => {
+    html += `<div class="abyss-matrix-header-cell">${z.name}<span class="abyss-matrix-header-cell-layer">${z.layer}</span></div>`;
+  });
+  html += `</div>`;
+
+  // 각 캐릭 행
+  eligibleChars.forEach(char => {
+    const ilvl = char.item_level || 0;
+    let eligibleZoneCount = 0;
+    let clearedCount = 0;
+    const cells = acquiredZones.map(zone => {
+      const ilvlReq = zone.layer === '하층' ? 1000 : 3000;
+      if (ilvl < ilvlReq) {
+        return `<div class="abyss-matrix-cell locked" title="${zone.name} 입장 불가 (템 ${ilvlReq}↑)"></div>`;
+      }
+      eligibleZoneCount++;
+      const corridor = abyssCorridors.find(c => c.zone === zone.name);
+      const corId = corridor?.id;
+      const k = corId ? `${corId}_${char.id}` : null;
+      const cleared = k ? (abyssClears[k]?.cleared || false) : false;
+      if (cleared) clearedCount++;
+      return `<div class="abyss-matrix-cell ${cleared?'done':''}"
+        onclick="event.stopPropagation();toggleAbyssCharMatrix('${corId}','${char.id}',${!cleared})"
+        title="${zone.name}${cleared?' (완료)':''}">${cleared?'✓':''}</div>`;
+    }).join('');
+
+    const allDone = eligibleZoneCount > 0 && clearedCount === eligibleZoneCount;
+    html += `<div class="abyss-matrix-row ${allDone?'all-done':''}" style="grid-template-columns:${gridCols}"
+      onclick="openDetail('${char.id}')">
+      <div class="abyss-matrix-name">
+        <span class="abyss-matrix-owner-dot" style="background:var(--owner-${char.owner})"></span>${char.name}
+      </div>
+      ${cells}
+    </div>`;
+  });
 
   html += `</div></div>`;
   return html;
+}
+
+// 매트릭스 셀 클릭 — zone별 뷰의 toggleAbyssChar와 동일 로직
+async function toggleAbyssCharMatrix(corridorId, charId, cleared) {
+  if (!corridorId) return;
+  await toggleAbyssChar(corridorId, charId, cleared);
 }
 
 // ── ADD CHAR FORM ──
@@ -2345,7 +2569,7 @@ function renderDetail(char) {
   const awDone = char.awakening_done || 0;
   const awCharged = char.awakening_charged || 0;
   html += `<div class="stat-row">
-    <span class="stat-label">각성 <span class="stat-sublabel">0/3판</span></span>
+    <span class="stat-label">각성 <span class="stat-sublabel">${awDone}/3판</span></span>
     <div class="stat-inputs">
       <div class="pip-row">
         ${[1,2,3].map(i => `<div class="pip ${awDone>=i?'done':''}"
