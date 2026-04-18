@@ -171,6 +171,25 @@ body {
 .char-mini:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
 .char-mini.empty { background: var(--surface2); border-style: dashed; cursor: default; opacity: 0.6; }
 .char-mini.empty:hover { transform: none; box-shadow: var(--shadow-sm); }
+.char-mini.resting {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+  background: var(--surface2);
+}
+.char-mini.resting:hover {
+  opacity: 0.7;
+  transform: translateY(-1px);
+}
+.char-mini-resting-badge {
+  position: absolute;
+  top: 6px; right: 6px;
+  font-size: 0.6rem;
+  color: var(--text-sub);
+  background: var(--border);
+  padding: 1px 6px;
+  border-radius: 8px;
+  line-height: 1.3;
+}
 
 .char-mini-name {
   font-size: 0.85rem;
@@ -2016,9 +2035,13 @@ function renderOverview() {
       } else {
         const dt = dailyTasks[char.id] || {};
         const wt = weeklyTasks[char.id] || {};
-        const dots = buildMiniDots(char, dt, wt);
-        const pct = calcCompletionPct(char, dt, wt);
-        html += `<div class="char-mini"
+        const isResting = !!char.resting;
+        const dots = isResting ? '' : buildMiniDots(char, dt, wt);
+        const pct = isResting ? 0 : calcCompletionPct(char, dt, wt);
+        const barHtml = isResting ? '' : `<div class="char-mini-bar" style="width:${pct}%"></div>`;
+        const progressRowHtml = isResting ? '' : `<div class="mini-progress-row">${dots}</div>`;
+        const restBadge = isResting ? `<div class="char-mini-resting-badge">휴식</div>` : '';
+        html += `<div class="char-mini ${isResting ? 'resting' : ''}"
           draggable="true"
           data-char-id="${char.id}" data-owner="${owner}" data-slot="${slot}"
           ondragstart="dragStart(event, '${char.id}', '${owner}', ${slot})"
@@ -2026,10 +2049,11 @@ function renderOverview() {
           ondrop="dropChar(event, '${owner}', ${slot})"
           ondragend="dragEnd(event)"
           onclick="openDetail('${char.id}')">
+          ${restBadge}
           <div class="char-mini-name">${char.name || '(이름없음)'} <span style="color:var(--text-sub);font-size:0.72rem">(${char.item_level||0} / ${formatCp(char.combat_power||0)})</span></div>
           <div class="char-mini-ilvl">${char.odd_energy_base||0} / 840 <span style="color:var(--text-sub)">+${char.odd_energy_charged||0}</span></div>
-          <div class="mini-progress-row">${dots}</div>
-          <div class="char-mini-bar" style="width:${pct}%"></div>
+          ${progressRowHtml}
+          ${barHtml}
         </div>`;
       }
     });
@@ -2233,9 +2257,16 @@ function renderDetail(char) {
 
   let html = '';
 
+  const isResting = !!char.resting;
+
   // ── 기본 정보 ──
   html += `<div class="card">
-    <div class="card-title"><div class="card-title-icon icon-info">ℹ</div>기본 정보</div>
+    <div class="card-title">
+      <div class="card-title-icon icon-info">ℹ</div>기본 정보
+      <button class="toggle-btn ${isResting ? 'done-peach' : ''}"
+        style="margin-left:auto;font-size:0.72rem"
+        onclick="toggleResting('${char.id}', ${!isResting})">${isResting ? '💤 휴식중' : '휴식'}</button>
+    </div>
     <div class="stat-row">
       <span class="stat-label">캐릭터명</span>
       <input class="text-input" style="width:130px" tabindex="0" value="${char.name||''}"
@@ -2473,6 +2504,19 @@ async function updateCharField(charId, field, value) {
   const char = allChars.find(c => c.id === charId);
   if (char) char[field] = value;
   showToast('저장 완료');
+}
+
+async function toggleResting(charId, value) {
+  if (currentActor === 'guest') return;
+  const { error } = await sb.from('characters').update({ resting: value }).eq('id', charId);
+  if (error) { showToast('저장 실패'); return; }
+  const char = allChars.find(c => c.id === charId);
+  if (char) {
+    char.resting = value;
+    renderDetail(char);
+    lazyRenderOverview();
+    writeLog(char.owner, char.name, value ? '휴식 시작' : '휴식 해제', char.id, null);
+  }
 }
 
 
