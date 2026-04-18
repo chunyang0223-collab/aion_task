@@ -2804,6 +2804,7 @@ async function commitCpInput(charId, input) {
     document.getElementById('subbar-char-meta').textContent =
       `템 ${char.item_level||0} · ${formatCp(stored)}`;
   }
+  markSelfChange('characters', charId);
   const { error } = await sb.from('characters').update({combat_power: stored}).eq('id', charId);
   if (error) showToast('저장 실패');
 }
@@ -2814,6 +2815,7 @@ async function saveNumInput(charId, field, newVal) {
   const char = allChars.find(c => c.id === charId);
   const prevVal = char ? (char[field] || 0) : 0;
   if (char) char[field] = newVal;
+  markSelfChange('characters', charId);
   const { error } = await sb.from('characters').update({[field]: newVal}).eq('id', charId);
   if (error) { showToast('저장 실패'); return; }
 
@@ -2831,15 +2833,18 @@ async function saveNumInput(charId, field, newVal) {
 async function updateCharField(charId, field, value) {
   if (currentActor === 'guest') return;
 
+  markSelfChange('characters', charId);
   const { error } = await sb.from('characters').update({[field]: value}).eq('id', charId);
   if (error) { showToast('저장 실패'); return; }
   const char = allChars.find(c => c.id === charId);
   if (char) char[field] = value;
   showToast('저장 완료');
+  lazyRenderOverview();
 }
 
 async function toggleResting(charId, value) {
   if (currentActor === 'guest') return;
+  markSelfChange('characters', charId);
   const { error } = await sb.from('characters').update({ resting: value }).eq('id', charId);
   if (error) { showToast('저장 실패'); return; }
   const char = allChars.find(c => c.id === charId);
@@ -2859,6 +2864,7 @@ async function toggleDaily(charId, field, value, today) {
   const existing = dailyTasks[charId];
   let error;
   if (existing) {
+    markSelfChange('daily_tasks', existing.id);
     ({ error } = await sb.from('daily_tasks').update({[field]: value}).eq('id', existing.id));
     if (!error) existing[field] = value;
   } else {
@@ -2887,6 +2893,7 @@ async function toggleWeekly(charId, field, value, week) {
   const existing = weeklyTasks[charId];
   let error;
   if (existing) {
+    markSelfChange('weekly_tasks', existing.id);
     ({ error } = await sb.from('weekly_tasks').update({[field]: value}).eq('id', existing.id));
     if (!error) existing[field] = value;
   } else {
@@ -2913,6 +2920,7 @@ async function cycleAwakening(charId, cur, pip) {
   if (currentActor === 'guest') return;
 
   const newVal = cur === pip ? pip - 1 : pip;
+  markSelfChange('characters', charId);
   const { error } = await sb.from('characters').update({awakening_done: newVal}).eq('id', charId);
   if (error) { showToast('저장 실패'); return; }
   const char = allChars.find(c => c.id === charId);
@@ -2962,6 +2970,7 @@ function commitAccModal(owner, field, val) {
   // 카드 숫자 즉시 갱신
   renderOverview();
   debounce(`acc-${owner}-${field}`, async () => {
+    markSelfChange('account_data', owner);
     const { error } = await sb.from('account_data').update({[field]: val}).eq('owner', owner);
     if (error) { showToast('저장 실패'); return; }
 
@@ -3080,6 +3089,7 @@ async function toggleAbyss(zoneName, acquired, warDate) {
 
   const existing = abyssCorridors.find(c => c.zone === zoneName);
   if (existing) {
+    markSelfChange('abyss_corridors', existing.id);
     const { error } = await sb.from('abyss_corridors').update({acquired}).eq('id', existing.id);
     if (error) { showToast('저장 실패'); return; }
     existing.acquired = acquired;
@@ -3100,6 +3110,7 @@ async function toggleAbyssChar(corridorId, charId, cleared) {
   const k = `${corridorId}_${charId}`;
   const existing = abyssClears[k];
   if (existing) {
+    markSelfChange('abyss_clears', existing.id);
     const { error } = await sb.from('abyss_clears').update({cleared}).eq('id', existing.id);
     if (error) { showToast('저장 실패'); return; }
     existing.cleared = cleared;
@@ -3127,26 +3138,26 @@ function subscribeRealtime() {
   const dot = document.getElementById('rt-dot');
 
   sb.channel('aion2-changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'characters' }, async () => {
-      await reloadTable('characters');
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'characters' }, async (payload) => {
+      await handleRealtimeChange('characters', payload);
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'account_data' }, async () => {
-      await reloadTable('account_data');
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'account_data' }, async (payload) => {
+      await handleRealtimeChange('account_data', payload);
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_tasks' }, async () => {
-      await reloadTable('daily_tasks');
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_tasks' }, async (payload) => {
+      await handleRealtimeChange('daily_tasks', payload);
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_tasks' }, async () => {
-      await reloadTable('weekly_tasks');
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_tasks' }, async (payload) => {
+      await handleRealtimeChange('weekly_tasks', payload);
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'abyss_corridors' }, async () => {
-      await reloadTable('abyss_corridors');
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'abyss_corridors' }, async (payload) => {
+      await handleRealtimeChange('abyss_corridors', payload);
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'abyss_clears' }, async () => {
-      await reloadTable('abyss_clears');
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'abyss_clears' }, async (payload) => {
+      await handleRealtimeChange('abyss_clears', payload);
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'expedition_supply' }, async () => {
-      await reloadTable('expedition_supply');
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'expedition_supply' }, async (payload) => {
+      await handleRealtimeChange('expedition_supply', payload);
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_log' }, async () => {
       if (document.getElementById('log-page').classList.contains('active')) renderLogPage();
@@ -3155,6 +3166,95 @@ function subscribeRealtime() {
       if (status === 'SUBSCRIBED') dot.classList.add('connected');
       else { dot.classList.remove('connected'); if (status === 'CHANNEL_ERROR') dot.classList.add('error'); }
     });
+}
+
+// ── 내가 방금 바꾼 row 캐시 (self-echo 무시용) ──
+// key: `table:id`, value: timestamp
+const _selfChanges = new Map();
+const SELF_ECHO_WINDOW_MS = 3000;  // 3초 내 돌아오는 내 변경은 무시
+
+function markSelfChange(table, id) {
+  if (!id) return;
+  _selfChanges.set(`${table}:${id}`, Date.now());
+  // 오래된 것 정리
+  for (const [k, t] of _selfChanges) {
+    if (Date.now() - t > SELF_ECHO_WINDOW_MS) _selfChanges.delete(k);
+  }
+}
+
+function isSelfEcho(table, id) {
+  if (!id) return false;
+  const t = _selfChanges.get(`${table}:${id}`);
+  if (!t) return false;
+  if (Date.now() - t > SELF_ECHO_WINDOW_MS) {
+    _selfChanges.delete(`${table}:${id}`);
+    return false;
+  }
+  return true;
+}
+
+// ── realtime 이벤트 처리 ──
+// UPDATE: 해당 row만 메모리에서 교체 → 렌더
+// INSERT/DELETE: 구조 변경이니 전체 재조회
+async function handleRealtimeChange(table, payload) {
+  const eventType = payload.eventType;
+  const newRow = payload.new;
+  const oldRow = payload.old;
+  // account_data는 owner가 PK 역할, 나머지는 id
+  const rowKey = table === 'account_data'
+    ? ((newRow && newRow.owner) || (oldRow && oldRow.owner))
+    : ((newRow && newRow.id) || (oldRow && oldRow.id));
+
+  if (isSelfEcho(table, rowKey)) return;
+
+  if (eventType === 'UPDATE' && newRow) {
+    applyRowUpdate(table, newRow);
+    scheduleLocalRerender();
+    return;
+  }
+
+  // INSERT/DELETE는 전체 재조회 (구조 변경)
+  await reloadTable(table);
+}
+
+// 메모리의 해당 row만 교체
+function applyRowUpdate(table, row) {
+  if (table === 'characters') {
+    const idx = allChars.findIndex(c => c.id === row.id);
+    if (idx >= 0) allChars[idx] = row;
+    else allChars.push(row);
+  } else if (table === 'account_data') {
+    accountData[row.owner] = row;
+  } else if (table === 'daily_tasks') {
+    dailyTasks[row.character_id] = row;
+  } else if (table === 'weekly_tasks') {
+    weeklyTasks[row.character_id] = row;
+  } else if (table === 'abyss_corridors') {
+    const idx = abyssCorridors.findIndex(c => c.id === row.id);
+    if (idx >= 0) abyssCorridors[idx] = row;
+    else abyssCorridors.push(row);
+  } else if (table === 'abyss_clears') {
+    abyssClears[`${row.corridor_id}_${row.character_id}`] = row;
+  } else if (table === 'expedition_supply') {
+    _expChecked.add(row.dungeon_key);
+  }
+}
+
+// 렌더 debounce (연속 이벤트 모아서 한 번만)
+let _rerenderTimer = null;
+function scheduleLocalRerender() {
+  if (_rerenderTimer) return;
+  _rerenderTimer = setTimeout(() => {
+    _rerenderTimer = null;
+    if (document.getElementById('overview').classList.contains('active')) {
+      renderOverview();
+    } else if (document.getElementById('expedition-page').classList.contains('active')) {
+      renderExpeditionPage();
+    } else if (currentCharId) {
+      const char = allChars.find(c => c.id === currentCharId);
+      if (char) renderDetail(char);
+    }
+  }, 50);
 }
 
 async function reloadTable(table) {
@@ -3515,6 +3615,7 @@ async function recordOddNow(charId) {
   if (currentActor === 'guest') return;
 
   const now = new Date().toISOString();
+  markSelfChange('characters', charId);
   const { error } = await sb.from('characters').update({odd_recorded_at: now}).eq('id', charId);
   if (error) { showToast('저장 실패'); return; }
   const char = allChars.find(c => c.id === charId);
@@ -3536,6 +3637,7 @@ async function applyOddEstimate(charId) {
   if (inputEl) inputEl.value = estimated;
   // 저장
   const now = new Date().toISOString();
+  markSelfChange('characters', charId);
   const { error } = await sb.from('characters')
     .update({ odd_energy_base: estimated, odd_recorded_at: now })
     .eq('id', charId);
@@ -3631,6 +3733,7 @@ async function confirmOddBatchApply() {
   const now = new Date().toISOString();
 
   // 각 캐릭 업데이트 (병렬)
+  applicable.forEach(p => markSelfChange('characters', p.charId));
   const updates = applicable.map(p =>
     sb.from('characters')
       .update({ odd_energy_base: p.after, odd_recorded_at: now })
@@ -3766,6 +3869,8 @@ async function dropChar(e, targetOwner, targetSlot) {
 
   if (targetChar) {
     // 두 캐릭터 슬롯 교환
+    markSelfChange('characters', _dragCharId);
+    markSelfChange('characters', targetChar.id);
     await Promise.all([
       sb.from('characters').update({slot: targetSlot}).eq('id', _dragCharId),
       sb.from('characters').update({slot: _dragSlot}).eq('id', targetChar.id),
@@ -3775,6 +3880,7 @@ async function dropChar(e, targetOwner, targetSlot) {
     targetChar.slot = _dragSlot;
   } else {
     // 빈 슬롯으로 이동
+    markSelfChange('characters', _dragCharId);
     await sb.from('characters').update({slot: targetSlot}).eq('id', _dragCharId);
     const dragChar = allChars.find(c => c.id === _dragCharId);
     if (dragChar) dragChar.slot = targetSlot;
@@ -3789,6 +3895,57 @@ async function dropChar(e, targetOwner, targetSlot) {
 
 // ── START ──
 init();
+
+// ── 5초마다 백업 sync (realtime 이벤트 놓친 경우 보정) ──
+// 탭이 화면에 보일 때만 돌림
+let _backupSyncTimer = null;
+async function backupSyncTick() {
+  if (document.visibilityState !== 'visible') return;
+  if (currentActor === 'guest' && !allChars.length) return;
+  // 가벼운 전체 재조회 — 캐릭/계정/오늘자 일일/주간
+  const today = getTodayKST();
+  const week = getWeekStart();
+  const warDate = getLastWarDate();
+  try {
+    const [chars, accs, dailies, weeklies, corridors, clears] = await Promise.all([
+      sb.from('characters').select('*').order('owner').order('slot'),
+      sb.from('account_data').select('*'),
+      sb.from('daily_tasks').select('*').eq('task_date', today),
+      sb.from('weekly_tasks').select('*').eq('week_start', week),
+      sb.from('abyss_corridors').select('*').eq('war_date', warDate),
+      sb.from('abyss_clears').select('*'),
+    ]);
+    if (chars.data) allChars = chars.data;
+    if (accs.data) { accountData = {}; accs.data.forEach(a => accountData[a.owner] = a); }
+    if (dailies.data) { dailyTasks = {}; dailies.data.forEach(t => dailyTasks[t.character_id] = t); }
+    if (weeklies.data) { weeklyTasks = {}; weeklies.data.forEach(t => weeklyTasks[t.character_id] = t); }
+    if (corridors.data) abyssCorridors = corridors.data;
+    if (clears.data) { abyssClears = {}; clears.data.forEach(c => { abyssClears[`${c.corridor_id}_${c.character_id}`] = c; }); }
+    scheduleLocalRerender();
+  } catch (e) {
+    console.warn('backup sync failed', e);
+  }
+}
+function startBackupSync() {
+  if (_backupSyncTimer) return;
+  _backupSyncTimer = setInterval(backupSyncTick, 5000);
+}
+function stopBackupSync() {
+  if (_backupSyncTimer) {
+    clearInterval(_backupSyncTimer);
+    _backupSyncTimer = null;
+  }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    startBackupSync();
+    // 탭 돌아오면 즉시 한 번
+    backupSyncTick();
+  } else {
+    stopBackupSync();
+  }
+});
+if (document.visibilityState === 'visible') startBackupSync();
 
 // actor 미설정 시 모달 표시
 if (!currentActor) {
