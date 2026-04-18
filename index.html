@@ -738,6 +738,27 @@ body {
 }
 .log-card-text { flex: 1; }
 .log-time { font-size: 0.62rem; color: var(--text-sub); white-space: nowrap; flex-shrink: 0; }
+.log-delete-btn {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.8rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 0 1px 0;
+  font-family: inherit;
+  flex-shrink: 0;
+  margin-left: 4px;
+  transition: all 0.15s;
+}
+.log-delete-btn:hover {
+  background: #fce8e8;
+  border-color: #d66a4a;
+  color: #b85050;
+}
 .log-actor-냥이 { color: #c47a8a; }
 .log-actor-츄츄 { color: #7a9abf; }
 .log-owner-설냥 { color: #5a8a42; }
@@ -1566,6 +1587,46 @@ body.guest-mode .page input {
 ">👁 손님 모드 — 보기만 가능합니다</div>
 <div id="toast" class="toast"></div>
 
+<!-- 로그 삭제 PIN 모달 -->
+<div id="log-delete-overlay" style="
+  display:none;position:fixed;inset:0;z-index:300;
+  background:rgba(90,82,75,0.4);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:20px;
+">
+  <div style="
+    background:var(--surface);border-radius:var(--radius);
+    border:1px solid var(--border);padding:24px;width:100%;max-width:280px;
+    box-shadow:0 12px 40px rgba(160,150,140,0.18);text-align:center;
+  ">
+    <div style="font-size:1rem;color:var(--text);margin-bottom:4px">로그 삭제</div>
+    <div style="font-size:0.82rem;color:var(--text-sub);margin-bottom:16px">본인 비밀번호를 입력해주세요</div>
+    <input id="log-delete-pin" type="password" inputmode="numeric" maxlength="4"
+      placeholder="••••"
+      style="
+        width:100%;text-align:center;font-size:1.4rem;letter-spacing:0.3em;
+        border:1px solid var(--border);border-radius:10px;
+        background:var(--surface2);color:var(--text);
+        padding:10px;font-family:'Gowun Dodum',sans-serif;
+        outline:none;-webkit-user-select:text;user-select:text;
+      "
+      oninput="if(this.value.length===4) confirmLogDelete()"
+      onkeydown="if(event.key==='Enter') confirmLogDelete()">
+    <div id="log-delete-error" style="font-size:0.75rem;color:#b85050;margin-top:8px;min-height:18px"></div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:4px">
+      <button onclick="closeLogDeleteModal()" style="
+        padding:7px 16px;border-radius:20px;border:1px solid var(--border);
+        background:transparent;color:var(--text-sub);font-size:0.82rem;
+        font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+      ">취소</button>
+      <button onclick="confirmLogDelete()" style="
+        padding:7px 18px;border-radius:20px;border:none;
+        background:#d66a4a;color:white;font-size:0.82rem;
+        font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+      ">삭제</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════ OVERVIEW PAGE ═══════════════════════════════ -->
 <div id="overview" class="page active">
   <div id="overview-content">
@@ -2378,17 +2439,11 @@ async function saveNumInput(charId, field, newVal) {
   const { error } = await sb.from('characters').update({[field]: newVal}).eq('id', charId);
   if (error) { showToast('저장 실패'); return; }
 
-  // 소비(감소) 시 로그 기록 — 악몽/오드만
-  if (char && newVal < prevVal) {
-    const diff = prevVal - newVal;
-    const LABELS = {
-      nightmare_base:    '악몽',
-      odd_energy_base:   '오드에너지',
-    };
-    const label = LABELS[field];
-    if (label) {
-      writeLog(char.owner, char.name, `${label} -${diff} (${prevVal}→${newVal})`, char.id, null);
-    }
+  // 악몽만 +/- 양방향 로그 (오드는 로그 안 찍음)
+  if (char && field === 'nightmare_base' && newVal !== prevVal) {
+    const diff = newVal - prevVal;
+    const sign = diff > 0 ? '+' : '';
+    writeLog(char.owner, char.name, `악몽 ${sign}${diff} (${prevVal}→${newVal})`, char.id, null);
   }
 
   lazyRenderOverview();
@@ -2518,18 +2573,16 @@ function commitAccModal(owner, field, val) {
     const { error } = await sb.from('account_data').update({[field]: val}).eq('owner', owner);
     if (error) { showToast('저장 실패'); return; }
 
-    // 소비(감소) 시 로그 — 슈고열쇠/일일던전
-    if (val < prevVal) {
-      const diff = prevVal - val;
-      const LABELS = {
-        shugo_key_base:    '슈고 열쇠',
-        dungeon_remaining: '일일던전',
-      };
-      const label = LABELS[field];
-      if (label) {
-        // account_data는 특정 캐릭에 귀속되지 않으므로 character_name=null, character_id=null
-        writeLog(owner, null, `${label} -${diff} (${prevVal}→${val})`, null, null);
-      }
+    // 슈고/일일던전 +/- 양방향 로그
+    const LABELS = {
+      shugo_key_base:    '슈고 열쇠',
+      dungeon_remaining: '일일던전',
+    };
+    const label = LABELS[field];
+    if (label && val !== prevVal) {
+      const diff = val - prevVal;
+      const sign = diff > 0 ? '+' : '';
+      writeLog(owner, null, `${label} ${sign}${diff} (${prevVal}→${val})`, null, null);
     }
   });
 }
@@ -2846,6 +2899,58 @@ async function deleteLog(charId, field) {
     .eq('game_date', gameDate);
 }
 
+// ── 로그 × 버튼 삭제 (PIN 확인) ──
+let _logDeleteId = null;
+
+function openLogDeleteModal(logId) {
+  if (currentActor === 'guest') return;
+  _logDeleteId = logId;
+  document.getElementById('log-delete-pin').value = '';
+  document.getElementById('log-delete-error').textContent = '';
+  document.getElementById('log-delete-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('log-delete-pin').focus(), 100);
+}
+
+function closeLogDeleteModal() {
+  _logDeleteId = null;
+  document.getElementById('log-delete-overlay').style.display = 'none';
+}
+
+async function confirmLogDelete() {
+  if (_logDeleteId === null) return;
+  const pin = document.getElementById('log-delete-pin').value.trim();
+  const errEl = document.getElementById('log-delete-error');
+
+  if (pin.length !== 4) {
+    errEl.textContent = '4자리를 입력해주세요';
+    return;
+  }
+
+  // 본인(currentActor) PIN 확인 — account_data.pin
+  const acc = accountData[currentActor];
+  if (!acc) {
+    errEl.textContent = '계정 정보 로딩 중...';
+    return;
+  }
+  if (pin !== acc.pin) {
+    errEl.textContent = '비밀번호가 틀려요';
+    document.getElementById('log-delete-pin').value = '';
+    return;
+  }
+
+  // 삭제
+  const { error } = await sb.from('activity_log').delete().eq('id', _logDeleteId);
+  if (error) {
+    errEl.textContent = '삭제 실패';
+    console.error(error);
+    return;
+  }
+
+  closeLogDeleteModal();
+  showToast('로그 삭제됨');
+  renderLogPage();
+}
+
 // 로그 페이지 날짜 상태
 let logCurrentDate = null;
 
@@ -2882,9 +2987,12 @@ async function renderLogPage() {
       const actorDisplay = log.actor === '설냥' ? '냥이' : '츄츄';
       const actorClass = log.actor === '설냥' ? 'log-actor-냥이' : 'log-actor-츄츄';
       const ownerClass = log.owner === '설냥' ? 'log-owner-설냥' : 'log-owner-츄츄';
+      const delBtn = currentActor === 'guest' ? '' :
+        `<button class="log-delete-btn" onclick="openLogDeleteModal(${log.id})" title="삭제">×</button>`;
       html += `<div class="log-card">
         <div class="log-card-text"><span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerClass}">[${log.owner}]</span> 계정의 <span class="log-char">[${log.character_name || '계정'}]</span><span class="log-action-done"> ${log.action}</span></div>
         <div class="log-time">${time}</div>
+        ${delBtn}
       </div>`;
     });
   }
