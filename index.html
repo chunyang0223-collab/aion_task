@@ -4535,5 +4535,148 @@ function expCandidateItem(c, idx, topChar) {
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════
+     VERSION SWITCHER (v1.1)
+     ═══════════════════════════════════════════════════════════ -->
+<style>
+  #vsw-badge {
+    position: fixed; bottom: 10px; right: 14px;
+    font-size: 0.72rem; color: var(--text-sub);
+    text-decoration: underline; text-underline-offset: 2px;
+    cursor: pointer; z-index: 500;
+    font-family: 'Gowun Dodum', sans-serif;
+    background: transparent; border: none; padding: 0;
+  }
+  #vsw-badge:hover { color: var(--text); }
+  #vsw-overlay {
+    display: none; position: fixed; inset: 0; z-index: 400;
+    background: rgba(90,82,75,0.4); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  #vsw-overlay .vsw-card {
+    background: var(--surface); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 22px;
+    width: 100%; max-width: 340px; max-height: 80vh; overflow-y: auto;
+    box-shadow: 0 12px 40px rgba(160,150,140,0.18);
+  }
+  #vsw-overlay .vsw-title { text-align: center; font-size: 0.95rem; color: var(--text); margin-bottom: 4px; }
+  #vsw-overlay .vsw-sub { text-align: center; font-size: 0.72rem; color: var(--text-sub); margin-bottom: 16px; }
+  #vsw-overlay .vsw-pin-row { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; }
+  #vsw-overlay .vsw-pin {
+    flex: 1; padding: 8px 12px; font-size: 1rem; letter-spacing: 0.15em; text-align: center;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface2); font-family: 'Gowun Dodum', sans-serif;
+    -webkit-text-security: disc; text-security: disc;
+    color: var(--text); outline: none;
+  }
+  #vsw-overlay .vsw-err { font-size: 0.72rem; color: #b85050; min-height: 18px; text-align: center; margin-bottom: 12px; }
+  #vsw-overlay .vsw-list { display: none; flex-direction: column; gap: 6px; }
+  #vsw-overlay .vsw-item {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; cursor: pointer; background: var(--surface2);
+    transition: all 0.15s;
+  }
+  #vsw-overlay .vsw-item:hover { background: var(--hover); }
+  #vsw-overlay .vsw-item.current { opacity: 0.55; cursor: default; background: var(--surface); }
+  #vsw-overlay .vsw-item.current:hover { background: var(--surface); }
+  #vsw-overlay .vsw-item-head { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text); margin-bottom: 4px; }
+  #vsw-overlay .vsw-item-date { font-size: 0.68rem; color: var(--text-sub); }
+  #vsw-overlay .vsw-item-desc { font-size: 0.72rem; color: var(--text-sub); white-space: pre-line; line-height: 1.5; }
+  #vsw-overlay .vsw-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+  #vsw-overlay .vsw-btn {
+    padding: 6px 16px; border-radius: 20px; font-family: 'Gowun Dodum', sans-serif; font-size: 0.8rem;
+    border: 1px solid var(--border); background: transparent; color: var(--text-sub); cursor: pointer;
+  }
+  #vsw-overlay .vsw-btn.primary { background: var(--sage); color: white; border-color: var(--sage); }
+</style>
+
+<button id="vsw-badge" onclick="vswOpen()">v1.1</button>
+
+<div id="vsw-overlay" onclick="vswClose()">
+  <div class="vsw-card" onclick="event.stopPropagation()">
+    <div class="vsw-title">버전 전환</div>
+    <div class="vsw-sub">다른 버전으로 이동하려면 비밀번호 입력</div>
+    <div class="vsw-pin-row">
+      <input id="vsw-pin-input" class="vsw-pin" type="text" inputmode="numeric" maxlength="8"
+        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+        placeholder="••••••••"
+        onkeydown="if(event.key==='Enter') vswCheckPin()">
+      <button class="vsw-btn primary" onclick="vswCheckPin()">확인</button>
+    </div>
+    <div id="vsw-err" class="vsw-err"></div>
+    <div id="vsw-list" class="vsw-list"></div>
+    <div class="vsw-btns">
+      <button class="vsw-btn" onclick="vswClose()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const CURRENT_VERSION = 'v1.1';
+  const VERSIONS_URL = './versions.json';
+
+  function openModal() {
+    document.getElementById('vsw-err').textContent = '';
+    document.getElementById('vsw-pin-input').value = '';
+    document.getElementById('vsw-list').style.display = 'none';
+    document.getElementById('vsw-overlay').style.display = 'flex';
+    setTimeout(() => document.getElementById('vsw-pin-input').focus(), 100);
+  }
+  function closeModal() {
+    document.getElementById('vsw-overlay').style.display = 'none';
+  }
+
+  async function checkPin() {
+    const input = document.getElementById('vsw-pin-input').value.trim();
+    const errEl = document.getElementById('vsw-err');
+    if (input.length !== 8) { errEl.textContent = '8자리를 입력해주세요'; return; }
+    try {
+      const { data, error } = await sb.from('app_config').select('value').eq('key', 'version_pin').single();
+      if (error || !data) { errEl.textContent = '설정을 불러올 수 없어요'; return; }
+      if (input !== data.value) {
+        errEl.textContent = '비밀번호가 틀려요';
+        document.getElementById('vsw-pin-input').value = '';
+        return;
+      }
+      errEl.textContent = '';
+      await renderList();
+    } catch (e) {
+      console.error(e);
+      errEl.textContent = '확인 실패';
+    }
+  }
+
+  async function renderList() {
+    const listEl = document.getElementById('vsw-list');
+    listEl.innerHTML = '<div style="text-align:center;font-size:0.75rem;color:var(--text-sub);padding:12px">목록 불러오는 중...</div>';
+    listEl.style.display = 'flex';
+    try {
+      const res = await fetch(VERSIONS_URL + '?t=' + Date.now());
+      if (!res.ok) throw new Error('fetch failed');
+      const versions = await res.json();
+      listEl.innerHTML = versions.map(v => {
+        const isCurrent = v.id === CURRENT_VERSION;
+        const cls = 'vsw-item' + (isCurrent ? ' current' : '');
+        const handler = isCurrent ? '' : `onclick="location.href='${v.file}'"`;
+        const badge = isCurrent ? '<span style="font-size:0.68rem;color:var(--sage)">(현재)</span>' : '';
+        return `
+          <div class="${cls}" ${handler}>
+            <div class="vsw-item-head"><span>${v.id} ${badge}</span><span class="vsw-item-date">${v.date || ''}</span></div>
+            <div class="vsw-item-desc">${(v.desc || '').replace(/</g,'&lt;')}</div>
+          </div>
+        `;
+      }).join('');
+    } catch (e) {
+      listEl.innerHTML = '<div style="text-align:center;font-size:0.75rem;color:#b85050;padding:12px">버전 목록을 불러올 수 없어요</div>';
+    }
+  }
+
+  window.vswOpen = openModal;
+  window.vswClose = closeModal;
+  window.vswCheckPin = checkPin;
+})();
+</script>
+
 </body>
 </html>
