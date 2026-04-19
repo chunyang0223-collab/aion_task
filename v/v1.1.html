@@ -1,0 +1,4687 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Aion2 츄냥이 숙제일기</title>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg: #f9f6f0;
+  --surface: #ffffff;
+  --surface2: #faf8f5;
+  --text: #5a524b;
+  --text-sub: #9e9589;
+  --border: #eae2d6;
+  --hover: #f4efe6;
+  --sage: #a3b18a;
+  --sage-light: #d4e2c4;
+  --peach: #e2b49a;
+  --peach-light: #f5ddd0;
+  --lavender: #b8aed4;
+  --lavender-light: #ddd8ee;
+  --sky: #97c4d8;
+  --sky-light: #d4eaf4;
+  --done: #a3b18a;
+  --undone: #faf8f5;
+  --shadow: 0 4px 20px rgba(160,150,140,0.10);
+  --shadow-sm: 0 2px 8px rgba(160,150,140,0.08);
+  --radius: 18px;
+  --radius-sm: 10px;
+  --radius-xs: 7px;
+
+  /* ── Expedition tokens ── */
+  --odd-empty: #ede6d8;
+  --odd-low:   #d4e2c4;
+  --odd-mid:   #a3b18a;
+  --odd-full:  #c47a8a;
+  --owner-설냥: #c47a8a;  /* 핑크 (로그 냥이 색) */
+  --owner-츄츄: #7a9abf;  /* 파랑 (로그 츄츄 색) */
+  --shadow-inset: inset 0 1px 2px rgba(160,150,140,0.05);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Gowun Dodum', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ── TOP NAV ── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(249,246,240,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  gap: 12px;
+}
+
+.topbar-title {
+  font-size: 1rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.topbar-title span {
+  color: var(--sage);
+}
+
+.tab-pills {
+  display: flex;
+  gap: 6px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.tab-pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.85rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tab-pill.active {
+  background: var(--sage);
+  color: white;
+  border-color: var(--sage);
+}
+
+.realtime-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ccc;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.realtime-dot.connected { background: #6b9841; animation: pulse 2s infinite; }
+.realtime-dot.error { background: #d66a4a; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── PAGES ── */
+.page { display: none; padding: 16px; }
+#detail-page { padding-top: 0; }
+.page.active { display: block; }
+
+/* ── OVERVIEW PAGE ── */
+.owner-section { margin-bottom: 20px; }
+
+.owner-label {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  margin-bottom: 8px;
+  padding-left: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.owner-divider {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.odd-batch-btn {
+  font-size: 0.7rem;
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--peach);
+  background: var(--peach);
+  color: white;
+  cursor: pointer;
+  font-family: 'Gowun Dodum', sans-serif;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.odd-batch-btn:hover {
+  background: #d6a487;
+  border-color: #d6a487;
+}
+body.guest-mode .odd-batch-btn { display: none; }
+
+.chars-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .chars-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── CHARACTER MINI CARD ── */
+.char-mini {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.char-mini:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.char-mini.empty { background: var(--surface2); border-style: dashed; cursor: default; opacity: 0.6; }
+.char-mini.empty:hover { transform: none; box-shadow: var(--shadow-sm); }
+.char-mini.resting {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+  background: var(--surface2);
+}
+.char-mini.resting:hover {
+  opacity: 0.7;
+  transform: translateY(-1px);
+}
+.char-mini-resting-badge {
+  position: absolute;
+  top: 6px; right: 6px;
+  font-size: 0.6rem;
+  color: var(--text-sub);
+  background: var(--border);
+  padding: 1px 6px;
+  border-radius: 8px;
+  line-height: 1.3;
+}
+
+.char-mini-name {
+  font-size: 0.85rem;
+  color: var(--text);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.char-mini-ilvl {
+  font-size: 0.75rem;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.mini-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.mini-dots-daily { display: flex; gap: 3px; }
+.mini-dots-weekly { display: flex; gap: 3px; }
+
+.mini-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.2s;
+}
+
+.mini-dot.done { background: var(--sage); }
+.mini-dot.done-weekly { background: #7aa3c8; }    /* 각성/루드라/침식 - 파랑 */
+.mini-dot.done-cor-설냥 { background: #c47a8a; }  /* 회랑 - 설냥 핑크 */
+.mini-dot.done-cor-츄츄 { background: #7a9abf; }  /* 회랑 - 츄츄 파랑 */
+.mini-dot.partial { background: #d66a4a; }        /* 악몽 주의 - 빨강 */
+.mini-dot.locked { background: var(--border); opacity: 0.4; }
+
+.char-mini-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  color: var(--text-sub);
+  font-size: 1.4rem;
+}
+
+/* completion bar at bottom of card */
+.char-mini.drag-over {
+  border: 2px dashed var(--sage);
+  background: var(--sage-light);
+  transform: none;
+}
+.char-mini.dragging {
+  opacity: 0.4;
+}
+
+.char-mini-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--sage);
+  border-radius: 0 0 0 var(--radius-sm);
+  transition: width 0.3s;
+}
+
+/* ── ACCOUNT SECTION ── */
+.account-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.account-card {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  padding: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.account-card-title {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  margin-bottom: 6px;
+}
+
+.account-card-owner {
+  font-size: 0.8rem;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.account-bool-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* ── ABYSS SECTION ── */
+.abyss-section { margin-bottom: 20px; }
+
+.section-title {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  margin-bottom: 8px;
+  padding-left: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.abyss-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+/* ── View toggle (zone별 / 캐릭별) ── */
+.abyss-view-toggle {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 2px;
+  font-size: 0.7rem;
+  margin-left: 8px;
+}
+.abyss-view-toggle button {
+  border: none;
+  background: transparent;
+  padding: 3px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  color: var(--text-sub);
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+.abyss-view-toggle button.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── 매트릭스 뷰 (캐릭별) ── */
+.abyss-matrix {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 0;
+}
+.abyss-matrix-header {
+  display: grid;
+  gap: 3px;
+  padding: 0 4px 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+  font-size: 0.62rem;
+  color: var(--text-sub);
+}
+.abyss-matrix-header-cell {
+  text-align: center;
+  line-height: 1.2;
+  padding: 2px 0;
+}
+.abyss-matrix-header-cell-layer {
+  display: block;
+  font-size: 0.55rem;
+  opacity: 0.7;
+  margin-top: 1px;
+}
+.abyss-matrix-row {
+  display: grid;
+  gap: 3px;
+  padding: 4px;
+  border-radius: var(--radius-xs);
+  align-items: center;
+  transition: background 0.15s;
+}
+.abyss-matrix-row:hover { background: var(--hover); cursor: pointer; }
+.abyss-matrix-row.all-done { background: var(--sage-light); }
+.abyss-matrix-name {
+  font-size: 0.76rem;
+  color: var(--text);
+  padding-left: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.abyss-matrix-row.all-done .abyss-matrix-name { color: #5a7a42; }
+.abyss-matrix-owner-dot {
+  display: inline-block;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+.abyss-matrix-cell {
+  height: 22px;
+  border-radius: 5px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.abyss-matrix-cell.done {
+  background: var(--sage);
+  border-color: var(--sage);
+  color: white;
+}
+.abyss-matrix-cell.locked {
+  opacity: 0.25;
+  border-style: dashed;
+  cursor: not-allowed;
+}
+.abyss-matrix-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-sub);
+  font-size: 0.8rem;
+}
+
+.abyss-zone {
+  background: var(--sky-light);
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--sky);
+  padding: 8px 6px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.abyss-zone.acquired {
+  background: var(--lavender-light);
+  border-color: var(--lavender);
+}
+
+.abyss-zone-name {
+  font-size: 0.8rem;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.abyss-zone-layer {
+  font-size: 0.7rem;
+  color: var(--text-sub);
+  margin-bottom: 6px;
+}
+
+.abyss-toggle {
+  width: 28px;
+  height: 16px;
+  border-radius: 8px;
+  background: var(--sky);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin: 0 auto 4px;
+  display: block;
+}
+
+.abyss-toggle.on { background: var(--lavender); }
+
+.abyss-toggle::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: white;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s;
+}
+
+.abyss-toggle.on::after { transform: translateX(12px); }
+
+/* char clear dots under zone */
+.abyss-char-dots {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* ── DETAIL PAGE ── */
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.back-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--text-sub);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.back-btn:hover { background: var(--hover); }
+
+.detail-name-block { flex: 1; }
+
+.detail-char-name {
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.detail-char-meta {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  margin-top: 2px;
+}
+
+.detail-owner-badge {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+}
+
+.badge-설냥 { background: var(--sage-light); color: #5a7a42; }
+.badge-츄츄 { background: var(--peach-light); color: #9a5a3a; }
+
+/* ── CARD SECTIONS ── */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.card-title {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-title-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+}
+
+.icon-daily { background: var(--sky-light); }
+.icon-weekly { background: var(--lavender-light); }
+.icon-info { background: var(--sage-light); }
+
+/* ── STAT ROW ── */
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.stat-row:last-child { border-bottom: none; }
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--text);
+  flex: 1;
+}
+
+.stat-sublabel {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  display: block;
+}
+
+.stat-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── NUMBER INPUT ── */
+.num-input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  background: var(--surface2);
+}
+
+.num-btn {
+  width: 26px;
+  height: 26px;
+  background: transparent;
+  border: none;
+  color: var(--text-sub);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  font-family: 'Gowun Dodum', sans-serif;
+}
+
+.num-btn:active { background: var(--hover); }
+
+.num-val {
+  min-width: 28px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text);
+  padding: 0 2px;
+}
+
+.num-val-input {
+  width: 48px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text);
+  font-family: "Gowun Dodum", sans-serif;
+  border: none;
+  background: transparent;
+  outline: none;
+  -webkit-user-select: text;
+  user-select: text;
+  -moz-appearance: textfield;
+  padding: 0 2px;
+}
+.num-val-input::-webkit-outer-spin-button,
+.num-val-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.num-val-input:focus { background: var(--hover); border-radius: 4px; }
+
+/* 계정 모달 안에서만 숫자 컨트롤 컴팩트하게 */
+#acc-modal .num-btn { width: 22px; height: 22px; font-size: 0.9rem; }
+#acc-modal .num-val-input { flex: 1; min-width: 0; width: auto; font-size: 0.78rem; }
+#acc-modal .num-input-wrap { width: 100%; justify-content: center; }
+
+/* ── CP INPUT ── */
+.cp-input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--surface2);
+  overflow: hidden;
+  padding-right: 8px;
+}
+.cp-input {
+  border: none !important;
+  background: transparent !important;
+  width: 76px !important;
+  -moz-appearance: textfield;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.cp-input::-webkit-outer-spin-button,
+.cp-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.cp-input:focus { background: transparent !important; }
+.cp-k {
+  font-size: 0.85rem;
+  color: var(--sage);
+  font-weight: bold;
+  pointer-events: none;
+}
+
+/* ── TOGGLE BUTTON ── */
+.toggle-btn {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--undone);
+  color: var(--text-sub);
+  font-size: 0.8rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.toggle-btn.done {
+  background: var(--sage);
+  color: white;
+  border-color: var(--sage);
+}
+
+.toggle-btn.done-peach {
+  background: var(--peach);
+  color: white;
+  border-color: var(--peach);
+}
+
+/* ── TEXT INPUT ── */
+.text-input {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  padding: 4px 8px;
+  width: 100%;
+  outline: none;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.text-input:focus { border-color: var(--sage); }
+
+/* ── COUNTER DISPLAY ── */
+.counter-display {
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.counter-max { color: var(--text-sub); font-size: 0.75rem; }
+
+/* ── AWAKENING PIPS ── */
+.pip-row {
+  display: flex;
+  gap: 5px;
+}
+
+.pip {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--undone);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  color: transparent;
+}
+
+.pip.done {
+  background: var(--lavender);
+  border-color: var(--lavender);
+  color: white;
+}
+
+/* ── NIGHTMARE / KEY WARN ── */
+.warn-chip {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  background: #fce8e8;
+  color: #b85050;
+}
+
+.ok-chip {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  background: var(--sage-light);
+  color: #5a7a42;
+}
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  background: var(--text);
+  color: white;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  transition: transform 0.3s;
+  z-index: 999;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── LOADING ── */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-sub);
+  font-size: 0.9rem;
+  gap: 8px;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--sage);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── SECTION DIVIDER ── */
+.section-sep {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  padding: 4px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-sep::before, .section-sep::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── LOCKED OVERLAY ── */
+.locked-row {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.lock-badge {
+  font-size: 0.7rem;
+  color: var(--text-sub);
+  background: var(--border);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+/* ── WEEK RESET INFO ── */
+/* ── LOG PAGE ── */
+.log-date-header {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  padding: 4px 2px 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.log-date-header::after { content:''; flex:1; height:1px; background:var(--border); }
+
+.log-card {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  margin-bottom: 6px;
+  box-shadow: var(--shadow-sm);
+  font-size: 0.82rem;
+  color: var(--text);
+  line-height: 1.6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.log-card-text { flex: 1; }
+.log-time { font-size: 0.62rem; color: var(--text-sub); white-space: nowrap; flex-shrink: 0; }
+.log-delete-btn {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.8rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 0 1px 0;
+  font-family: inherit;
+  flex-shrink: 0;
+  margin-left: 4px;
+  transition: all 0.15s;
+}
+.log-delete-btn:hover {
+  background: #fce8e8;
+  border-color: #d66a4a;
+  color: #b85050;
+}
+.log-actor-냥이 { color: #c47a8a; }
+.log-actor-츄츄 { color: #7a9abf; }
+.log-owner-설냥 { color: #5a8a42; }
+.log-owner-츄츄 { color: #b06040; }
+.log-char { color: var(--lavender); }
+.log-action { color: var(--text); }
+.log-action-done { color: var(--sage); }
+.log-odd-batch-link {
+  color: var(--sage);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  cursor: pointer;
+}
+.log-odd-batch-link:hover {
+  color: #5a7a42;
+  text-decoration-thickness: 1.5px;
+}
+
+.log-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0 14px;
+  gap: 12px;
+}
+.log-nav-btn {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-sub);
+  font-size: 0.82rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.log-nav-btn:hover { background: var(--hover); color: var(--text); }
+.log-nav-btn:disabled { opacity: 0.3; cursor: default; }
+.log-nav-date {
+  font-size: 0.85rem;
+  color: var(--text);
+  text-align: center;
+  flex: 1;
+}
+
+.reset-info {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  margin-top: -6px;
+  margin-bottom: 8px;
+  padding-left: 2px;
+}
+
+/* add char form */
+.add-char-form {
+  display: none;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.add-char-form.open { display: block; }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.form-label {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  margin-bottom: 3px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.btn-primary {
+  padding: 7px 18px;
+  border-radius: 20px;
+  border: none;
+  background: var(--sage);
+  color: white;
+  font-size: 0.85rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  padding: 7px 18px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.85rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+}
+/* ── GUEST MODE ── */
+body.guest-mode .page button,
+body.guest-mode .page input,
+body.guest-mode .page .toggle-btn,
+body.guest-mode .page .num-btn,
+body.guest-mode .page .char-mini,
+body.guest-mode .page .abyss-toggle,
+body.guest-mode .page .account-card,
+body.guest-mode .page .pip,
+body.guest-mode .page .back-btn,
+body.guest-mode #detail-subbar .back-btn {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+body.guest-mode .page input {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   EXPEDITION TAB
+   ═══════════════════════════════════════════════════ */
+
+.exp-supply-card {
+  background: linear-gradient(180deg, #fff 0%, var(--peach-light) 230%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 14px 12px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.exp-supply-card.collapsed {
+  padding: 10px 14px;
+}
+.exp-supply-card.collapsed .exp-card-title { margin-bottom: 0; }
+.exp-supply-card::before {
+  content: ''; position: absolute;
+  top: -24px; right: -24px;
+  width: 80px; height: 80px; border-radius: 50%;
+  background: var(--peach-light); opacity: 0.4;
+}
+
+.exp-supply-header {
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.exp-supply-count-badge {
+  background: var(--peach);
+  color: white;
+  padding: 1px 9px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+.exp-supply-chevron {
+  margin-left: auto;
+  color: var(--text-sub);
+  font-size: 0.72rem;
+  transition: transform 0.25s;
+  flex-shrink: 0;
+}
+.exp-supply-chevron.collapsed { transform: rotate(-90deg); }
+
+.exp-supply-collapsed-summary {
+  font-size: 0.76rem;
+  color: var(--text-sub);
+  padding: 4px 2px 0 28px;
+  line-height: 1.5;
+  position: relative; z-index: 1;
+}
+
+.exp-party-card {
+  background: linear-gradient(180deg, #fff 0%, var(--sage-light) 250%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.exp-party-card::before {
+  content: ''; position: absolute;
+  top: -24px; right: -24px;
+  width: 80px; height: 80px; border-radius: 50%;
+  background: var(--sage-light); opacity: 0.35;
+}
+
+.exp-card-title {
+  font-size: 0.92rem;
+  color: var(--text);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  position: relative;
+  z-index: 1;
+}
+.exp-card-icon {
+  width: 22px; height: 22px; border-radius: 7px;
+  background: var(--peach);
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem;
+}
+.exp-card-icon.sage { background: var(--sage); }
+.exp-card-body { position: relative; z-index: 1; }
+
+/* ── Supply board: 9 dungeons × 3 modes grid ── */
+.exp-supply-legend {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2px 8px;
+  font-size: 0.7rem; color: var(--text-sub);
+}
+.exp-supply-legend-group {
+  display: flex; gap: 10px; flex-wrap: wrap;
+}
+.exp-supply-legend-item {
+  display: flex; align-items: center; gap: 4px;
+}
+.exp-supply-legend-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+}
+
+.exp-clear-btn {
+  padding: 3px 10px; border-radius: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.72rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer; transition: all 0.15s;
+}
+.exp-clear-btn:hover:not(:disabled) { background: var(--hover); color: var(--text); }
+.exp-clear-btn:disabled { opacity: 0.3; cursor: default; }
+
+.exp-supply-table {
+  display: grid;
+  grid-template-columns: minmax(95px, 1fr) repeat(3, minmax(56px, 1fr));
+  gap: 3px;
+  font-size: 0.75rem;
+}
+.exp-supply-col-head {
+  font-size: 0.66rem;
+  color: var(--text-sub);
+  text-align: center;
+  padding: 3px 2px 2px;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  opacity: 0.85;
+}
+.exp-supply-col-head:first-child { text-align: left; padding-left: 4px; justify-content: flex-start; }
+.exp-supply-col-head-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+}
+.exp-supply-col-head-dot.explo { background: var(--sky); }
+.exp-supply-col-head-dot.normal { background: var(--sage); }
+.exp-supply-col-head-dot.hard { background: var(--odd-full); }
+
+.exp-supply-row-name {
+  display: flex; align-items: center;
+  padding: 4px 4px;
+  font-size: 0.78rem;
+  color: var(--text);
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+}
+.exp-supply-row-stars {
+  font-size: 0.6rem;
+  color: var(--star-text);
+  background: var(--star-bg);
+  padding: 1px 5px;
+  border-radius: 6px;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+.exp-supply-row-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.exp-supply-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 2px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 30px;
+}
+.exp-supply-cell:hover { background: var(--hover); }
+.exp-supply-cell.empty {
+  background: transparent; border: 1px dashed var(--border);
+  opacity: 0.3; cursor: default;
+}
+.exp-supply-cell.checked {
+  background: var(--peach);
+  border-color: var(--peach);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+.exp-supply-cell.checked .exp-supply-cell-ilvl { color: white; }
+
+.exp-supply-cell-check {
+  position: absolute;
+  top: 1px;
+  right: 3px;
+  font-size: 0.65rem;
+  line-height: 1;
+  pointer-events: none;
+  color: white;
+  opacity: 0.95;
+}
+.exp-supply-cell-ilvl {
+  font-size: 0.78rem;
+  color: var(--text);
+  line-height: 1;
+}
+
+.exp-supply-selected {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: var(--surface2);
+  border-radius: var(--radius-xs);
+  font-size: 0.76rem;
+  color: var(--text-sub);
+  line-height: 1.5;
+}
+.exp-supply-selected strong {
+  color: var(--text);
+  font-weight: normal;
+}
+
+/* ── Party finder ── */
+.exp-party-empty-hint {
+  text-align: center;
+  padding: 18px 10px;
+  color: var(--text-sub);
+  font-size: 0.82rem;
+}
+.exp-party-req {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px 10px;
+  font-size: 0.76rem;
+  color: var(--text-sub);
+}
+.exp-party-req strong { color: var(--text); font-weight: normal; }
+
+.exp-party-pills {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 2px 0 4px;
+}
+.exp-party-pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-sub);
+  font-size: 0.8rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.exp-party-pill:hover { background: var(--hover); color: var(--text); }
+.exp-party-pill.active {
+  background: var(--sage); color: white; border-color: var(--sage);
+  box-shadow: var(--shadow-sm);
+}
+.exp-party-pill-check { display: none; font-size: 0.7rem; }
+.exp-party-pill.active .exp-party-pill-check { display: inline; }
+
+/* 파티 타겟 pill (위 보급의뢰에서 체크한 것 중 1개 선택) */
+.exp-target-pill {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-sub);
+  font-size: 0.78rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.exp-target-pill:hover { background: var(--hover); color: var(--text); }
+.exp-target-pill.active {
+  background: var(--peach);
+  color: white;
+  border-color: var(--peach);
+  box-shadow: var(--shadow-sm);
+}
+.exp-target-pill-check { display: none; font-size: 0.7rem; }
+.exp-target-pill.active .exp-target-pill-check { display: inline; }
+.exp-target-pill-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  flex-shrink: 0;
+}
+.exp-target-pill-dot.explo { background: var(--sky); }
+.exp-target-pill-dot.normal { background: var(--sage); }
+.exp-target-pill-dot.hard { background: var(--odd-full); }
+.exp-target-pill.active .exp-target-pill-dot {
+  background: rgba(255,255,255,0.7) !important;
+}
+.exp-target-pill-mode {
+  opacity: 0.7;
+  font-size: 0.68rem;
+}
+
+.exp-party-label {
+  font-size: 0.74rem;
+  color: var(--text-sub);
+  margin: 10px 0 5px 2px;
+  opacity: 0.85;
+}
+
+/* Results toggle */
+.exp-result-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 4px 8px;
+  margin-top: 8px;
+  border-top: 1px dashed var(--border);
+  cursor: pointer; user-select: none;
+  transition: background 0.15s;
+  border-radius: var(--radius-xs);
+}
+.exp-result-toggle:hover { background: rgba(255,255,255,0.4); }
+.exp-result-toggle-label {
+  font-size: 0.82rem; color: var(--text);
+  display: flex; align-items: center; gap: 6px;
+}
+.exp-count-badge-ok {
+  background: var(--sage-light); color: #5a7a42;
+  padding: 2px 9px; border-radius: 10px;
+  font-size: 0.72rem;
+}
+.exp-count-badge-excl {
+  background: var(--peach-light); color: #9a5a3a;
+  padding: 2px 9px; border-radius: 10px;
+  font-size: 0.72rem;
+}
+.exp-result-chevron {
+  color: var(--text-sub); font-size: 0.72rem;
+  transition: transform 0.25s; flex-shrink: 0;
+}
+.exp-result-chevron.collapsed { transform: rotate(-90deg); }
+
+.exp-result-wrap {
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  max-height: 4000px;
+}
+.exp-result-wrap.collapsed { max-height: 0; }
+
+.exp-result-list {
+  margin-top: 6px;
+  display: flex; flex-direction: column;
+  gap: 5px;
+}
+
+.exp-result-item {
+  display: flex; align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  transition: all 0.2s;
+}
+.exp-result-item.excluded { opacity: 0.45; background: var(--surface2); }
+.exp-result-item.excluded .exp-result-name { text-decoration: line-through; color: var(--text-sub); }
+
+.exp-result-rank {
+  width: 19px; height: 19px; border-radius: 50%;
+  background: var(--surface2); color: var(--text-sub);
+  font-size: 0.68rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.exp-result-rank-1 { background: #f7d77a; color: #7a5a00; }
+.exp-result-rank-2 { background: #d8d8d8; color: #555; }
+.exp-result-rank-3 { background: #d9a888; color: #6a3a1a; }
+
+.exp-result-owner-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+
+.exp-result-name {
+  color: var(--text);
+  flex: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-width: 30px;
+}
+.exp-result-stats {
+  font-size: 0.66rem; color: var(--text-sub);
+  white-space: nowrap;
+}
+.exp-result-bar {
+  width: 32px; height: 7px;
+  border-radius: 4px;
+  background: var(--border);
+  overflow: hidden; flex-shrink: 0;
+}
+.exp-result-bar-fill { height: 100%; transition: width 0.4s; }
+.exp-result-odd {
+  font-size: 0.64rem; color: var(--text-sub);
+  width: 26px; text-align: right;
+}
+
+.exp-exclude-btn {
+  width: 21px; height: 21px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-sub);
+  font-size: 0.85rem; line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; flex-shrink: 0;
+  padding: 0 0 1px 0;
+  font-family: inherit;
+}
+.exp-exclude-btn:hover {
+  background: var(--peach-light); border-color: var(--peach); color: #9a5a3a;
+}
+.exp-exclude-btn.excluded {
+  background: var(--peach-light); border-color: var(--peach); color: #9a5a3a;
+}
+.exp-exclude-btn.excluded:hover {
+  background: var(--sage-light); border-color: var(--sage); color: #5a7a42;
+}
+
+/* ── Recommend party cards (둘다 모드 핵심 출력) ── */
+.exp-recommend-title {
+  font-size: 0.82rem;
+  color: var(--text);
+  margin: 12px 0 8px 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.exp-recommend-medal { font-size: 1rem; }
+
+.exp-recommend-row {
+  display: grid;
+  grid-template-columns: 1fr 22px 1fr;
+  gap: 8px;
+  align-items: stretch;
+}
+.exp-recommend-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.exp-recommend-card.empty {
+  background: var(--surface2);
+  border-style: dashed;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-sub);
+  font-size: 0.78rem;
+  text-align: center;
+}
+.exp-recommend-card-strip {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.exp-recommend-card-owner {
+  font-size: 0.65rem;
+  color: var(--text-sub);
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.exp-recommend-card-owner-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+}
+.exp-recommend-card-name {
+  font-size: 1rem;
+  color: var(--text);
+  line-height: 1.2;
+}
+.exp-recommend-card-stats {
+  font-size: 0.7rem;
+  color: var(--text-sub);
+  margin-bottom: 4px;
+}
+.exp-recommend-card-bar {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--border);
+  overflow: hidden;
+  position: relative;
+}
+.exp-recommend-card-bar-fill { height: 100%; transition: width 0.4s; }
+.exp-recommend-card-odd {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  margin-top: 3px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.exp-recommend-card-odd strong {
+  color: var(--text);
+  font-weight: normal;
+  font-size: 0.82rem;
+}
+
+.exp-recommend-plus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: var(--text-sub);
+  opacity: 0.45;
+  font-weight: 300;
+}
+
+/* Solo mode single card */
+.exp-recommend-solo {
+  max-width: 55%;
+}
+
+/* ── Candidates (다른 후보) ── */
+.exp-candidates-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 0 2px;
+}
+.exp-candidates-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.exp-candidates-col-title {
+  font-size: 0.7rem;
+  color: var(--text-sub);
+  margin-bottom: 3px;
+  padding-left: 2px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.exp-candidates-col-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+}
+.exp-candidates-col-empty {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  opacity: 0.6;
+  padding: 6px 2px;
+}
+
+.exp-candidate-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 7px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  font-size: 0.76rem;
+  transition: all 0.2s;
+  min-width: 0;
+}
+.exp-candidate-item.excluded {
+  opacity: 0.4;
+  background: var(--surface2);
+}
+.exp-candidate-item.excluded .exp-candidate-name { text-decoration: line-through; }
+.exp-candidate-item.top {
+  border-color: var(--peach);
+  background: #fff8f2;
+}
+
+.exp-candidate-rank {
+  width: 15px; height: 15px; border-radius: 50%;
+  background: var(--surface2);
+  color: var(--text-sub);
+  font-size: 0.58rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.exp-candidate-item.top .exp-candidate-rank {
+  background: var(--peach);
+  color: white;
+}
+.exp-candidate-name {
+  flex: 1;
+  color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-width: 0;
+}
+.exp-candidate-cp {
+  font-size: 0.66rem;
+  color: var(--text-sub);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.exp-candidate-odd {
+  font-size: 0.68rem;
+  color: var(--text-sub);
+  flex-shrink: 0;
+}
+.exp-candidate-bar {
+  width: 22px; height: 5px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden; flex-shrink: 0;
+}
+.exp-candidate-bar-fill { height: 100%; }
+.exp-candidate-exclude-btn {
+  width: 17px; height: 17px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 0 1px 0;
+  font-family: inherit;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.exp-candidate-exclude-btn:hover {
+  background: var(--peach-light); border-color: var(--peach); color: #9a5a3a;
+}
+.exp-candidate-exclude-btn.excluded {
+  background: var(--peach-light); border-color: var(--peach); color: #9a5a3a;
+}
+
+.exp-legend {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 8px 14px;
+  font-size: 0.68rem; color: var(--text-sub);
+  padding: 10px 6px 0;
+}
+.exp-legend-item { display: flex; align-items: center; gap: 5px; }
+.exp-legend-dot { width: 9px; height: 9px; border-radius: 3px; }
+
+@media (max-width: 600px) {
+  .exp-result-stats { display: none; }
+  .exp-supply-table {
+    grid-template-columns: minmax(80px, 1fr) repeat(3, minmax(50px, 1fr));
+    gap: 3px;
+  }
+  .exp-supply-row-name { font-size: 0.72rem; }
+  .exp-supply-cell { min-height: 28px; }
+  .exp-supply-cell-ilvl { font-size: 0.72rem; }
+}
+
+@media (max-width: 480px) {
+  .exp-recommend-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .exp-recommend-plus {
+    transform: rotate(90deg);
+    padding: 2px 0;
+    opacity: 0.35;
+  }
+  .exp-candidates-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .exp-recommend-solo { max-width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:7px;flex-shrink:0">
+    <div class="realtime-dot" id="rt-dot" title="실시간 연결"></div>
+    <div class="topbar-title" id="topbar-title-area">Aion2 <span>츄냥이숙제</span></div>
+  </div>
+  <div class="tab-pills">
+    <button class="tab-pill active" id="tab-overview" onclick="showPage('overview')">전체</button>
+    <button class="tab-pill" onclick="showPage('detail-page')" id="detail-tab" style="display:none">상세</button>
+    <button class="tab-pill" id="tab-expedition" onclick="showPage('expedition-page')">원정</button>
+    <button class="tab-pill" id="tab-log" onclick="showPage('log-page')">로그</button>
+  </div>
+  <div id="reset-info" style="text-align:right;flex-shrink:0;line-height:1.5"></div>
+</div>
+<!-- 상세뷰 전용 서브바 -->
+<div id="detail-subbar" style="display:none;position:sticky;top:52px;z-index:99;background:rgba(249,246,240,0.95);backdrop-filter:blur(12px);padding:10px 16px 0;">
+  <div class="detail-header" style="margin-bottom:10px">
+    <div class="back-btn" onclick="goBack()">←</div>
+    <div class="detail-name-block">
+      <div class="detail-char-name" id="subbar-char-name">—</div>
+      <div class="detail-char-meta" id="subbar-char-meta">—</div>
+    </div>
+    <div id="subbar-owner-badge" class="detail-owner-badge"></div>
+  </div>
+</div>
+
+<div id="guest-banner" style="
+  display:none;background:#f5ddd0;border-bottom:1px solid var(--peach);
+  padding:6px 16px;font-size:0.75rem;color:#9a5a3a;text-align:center;
+">👁 손님 모드 — 보기만 가능합니다</div>
+<div id="toast" class="toast"></div>
+
+<!-- 오드 일괄 적용 미리보기 모달 -->
+<div id="odd-batch-overlay" style="
+  display:none;position:fixed;inset:0;z-index:250;
+  background:rgba(90,82,75,0.4);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:20px;
+" onclick="closeOddBatchModal()">
+  <div style="
+    background:var(--surface);border-radius:var(--radius);
+    border:1px solid var(--border);padding:20px;width:100%;max-width:360px;
+    max-height:80vh;overflow-y:auto;
+    box-shadow:0 12px 40px rgba(160,150,140,0.18);
+  " onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:16px;position:relative">
+      <span id="odd-batch-title" style="font-size:0.95rem;color:var(--text)"></span>
+      <button onclick="closeOddBatchModal()" style="
+        position:absolute;right:0;
+        width:28px;height:28px;border-radius:50%;border:1px solid var(--border);
+        background:transparent;color:var(--text-sub);font-size:1rem;
+        cursor:pointer;display:flex;align-items:center;justify-content:center;
+        font-family:'Gowun Dodum',sans-serif;
+      ">×</button>
+    </div>
+    <div id="odd-batch-body"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button onclick="closeOddBatchModal()" style="
+        padding:7px 16px;border-radius:20px;border:1px solid var(--border);
+        background:transparent;color:var(--text-sub);font-size:0.82rem;
+        font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+      ">취소</button>
+      <button id="odd-batch-confirm" onclick="confirmOddBatchApply()" style="
+        padding:7px 18px;border-radius:20px;border:none;
+        background:var(--sage);color:white;font-size:0.82rem;
+        font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+      ">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- 오드 일괄 적용 로그 상세보기 모달 (로그에서 클릭 시) -->
+<div id="odd-batch-detail-overlay" style="
+  display:none;position:fixed;inset:0;z-index:250;
+  background:rgba(90,82,75,0.4);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:20px;
+" onclick="closeOddBatchDetailModal()">
+  <div style="
+    background:var(--surface);border-radius:var(--radius);
+    border:1px solid var(--border);padding:20px;width:100%;max-width:360px;
+    max-height:80vh;overflow-y:auto;
+    box-shadow:0 12px 40px rgba(160,150,140,0.18);
+  " onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:4px;position:relative">
+      <span style="font-size:0.95rem;color:var(--text)">오드 일괄 적용 내역</span>
+      <button onclick="closeOddBatchDetailModal()" style="
+        position:absolute;right:0;
+        width:28px;height:28px;border-radius:50%;border:1px solid var(--border);
+        background:transparent;color:var(--text-sub);font-size:1rem;
+        cursor:pointer;display:flex;align-items:center;justify-content:center;
+        font-family:'Gowun Dodum',sans-serif;
+      ">×</button>
+    </div>
+    <div id="odd-batch-detail-meta" style="text-align:center;font-size:0.72rem;color:var(--text-sub);margin-bottom:14px"></div>
+    <div id="odd-batch-detail-body"></div>
+    <div style="display:flex;justify-content:center;margin-top:16px">
+      <button onclick="closeOddBatchDetailModal()" style="
+        padding:7px 24px;border-radius:20px;border:1px solid var(--border);
+        background:transparent;color:var(--text-sub);font-size:0.82rem;
+        font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+      ">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 로그 삭제 PIN 모달 -->
+<div id="log-delete-overlay" style="
+  display:none;position:fixed;inset:0;z-index:300;
+  background:rgba(90,82,75,0.4);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:20px;
+">
+  <div style="
+    background:var(--surface);border-radius:var(--radius);
+    border:1px solid var(--border);padding:24px;width:100%;max-width:280px;
+    box-shadow:0 12px 40px rgba(160,150,140,0.18);text-align:center;
+  ">
+    <div style="font-size:1rem;color:var(--text);margin-bottom:4px">로그 삭제</div>
+    <div style="font-size:0.82rem;color:var(--text-sub);margin-bottom:16px">본인 비밀번호를 입력해주세요</div>
+    <input id="log-delete-pin" type="text" inputmode="numeric" maxlength="4"
+      autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+      placeholder="••••"
+      style="
+        width:100%;text-align:center;font-size:1.4rem;letter-spacing:0.3em;
+        border:1px solid var(--border);border-radius:10px;
+        background:var(--surface2);color:var(--text);
+        padding:10px;font-family:'Gowun Dodum',sans-serif;
+        outline:none;-webkit-user-select:text;user-select:text;
+        -webkit-text-security:disc;text-security:disc;
+      "
+      oninput="if(this.value.length===4) confirmLogDelete()"
+      onkeydown="if(event.key==='Enter') confirmLogDelete()">
+    <div id="log-delete-error" style="font-size:0.75rem;color:#b85050;margin-top:8px;min-height:18px"></div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:4px">
+      <button onclick="closeLogDeleteModal()" style="
+        padding:7px 16px;border-radius:20px;border:1px solid var(--border);
+        background:transparent;color:var(--text-sub);font-size:0.82rem;
+        font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+      ">취소</button>
+      <button onclick="confirmLogDelete()" style="
+        padding:7px 18px;border-radius:20px;border:none;
+        background:#d66a4a;color:white;font-size:0.82rem;
+        font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+      ">삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ OVERVIEW PAGE ═══════════════════════════════ -->
+<div id="overview" class="page active">
+  <div id="overview-content">
+    <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ DETAIL PAGE ═══════════════════════════════ -->
+<div id="detail-page" class="page">
+  <div id="detail-content"></div>
+</div>
+
+<!-- ═══════════════════════════════ EXPEDITION PAGE ═══════════════════════════════ -->
+<div id="expedition-page" class="page">
+  <div id="expedition-content">
+    <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
+  </div>
+</div>
+
+<!-- ── 로그 페이지 ── -->
+<div id="log-page" class="page">
+  <div id="log-content">
+    <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
+  </div>
+</div>
+
+<!-- ── 사용자 선택 모달 ── -->
+<div id="user-modal-overlay" style="
+  display:none;position:fixed;inset:0;z-index:300;
+  background:rgba(90,82,75,0.4);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:20px;
+">
+  <div style="
+    background:var(--surface);border-radius:var(--radius);
+    border:1px solid var(--border);padding:24px;width:100%;max-width:280px;
+    box-shadow:0 12px 40px rgba(160,150,140,0.18);text-align:center;
+  ">
+    <!-- 1단계: 이름 선택 -->
+    <div id="actor-step1">
+      <div style="font-size:1rem;color:var(--text);margin-bottom:6px">누구세요?</div>
+      <div style="font-size:0.82rem;color:var(--text-sub);margin-bottom:20px">로그 기록에 사용됩니다</div>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button onclick="selectActorName('설냥')" style="
+          padding:10px 24px;border-radius:20px;border:1px solid var(--sage);
+          background:var(--sage-light);color:#3d5c2a;font-size:0.9rem;
+          font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+        ">설냥</button>
+        <button onclick="selectActorName('츄츄')" style="
+          padding:10px 24px;border-radius:20px;border:1px solid var(--peach);
+          background:var(--peach-light);color:#9a5a3a;font-size:0.9rem;
+          font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+        ">츄츄</button>
+      </div>
+      <div style="margin-top:16px;text-align:center">
+        <button onclick="setActor('guest')" style="
+          border:none;background:transparent;color:var(--text-sub);
+          font-size:0.75rem;font-family:'Gowun Dodum',sans-serif;
+          cursor:pointer;text-decoration:underline;text-underline-offset:3px;
+        ">손님으로 입장</button>
+      </div>
+    </div>
+    <!-- 2단계: PIN 입력 -->
+    <div id="actor-step2" style="display:none">
+      <div style="font-size:1rem;color:var(--text);margin-bottom:4px" id="actor-pin-title"></div>
+      <div style="font-size:0.82rem;color:var(--text-sub);margin-bottom:16px">비밀번호를 입력해주세요</div>
+      <input id="actor-pin-input" type="text" inputmode="numeric" maxlength="4"
+        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+        placeholder="••••"
+        style="
+          width:100%;text-align:center;font-size:1.4rem;letter-spacing:0.3em;
+          border:1px solid var(--border);border-radius:10px;
+          background:var(--surface2);color:var(--text);
+          padding:10px;font-family:'Gowun Dodum',sans-serif;
+          outline:none;-webkit-user-select:text;user-select:text;
+          -webkit-text-security:disc;text-security:disc;
+        "
+        oninput="if(this.value.length===4) confirmPin()"
+        onkeydown="if(event.key==='Enter') confirmPin()">
+      <div id="actor-pin-error" style="font-size:0.75rem;color:#b85050;margin-top:8px;min-height:18px"></div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:4px">
+        <button onclick="backToStep1()" style="
+          padding:7px 16px;border-radius:20px;border:1px solid var(--border);
+          background:transparent;color:var(--text-sub);font-size:0.82rem;
+          font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+        ">뒤로</button>
+        <button onclick="confirmPin()" style="
+          padding:7px 18px;border-radius:20px;border:none;
+          background:var(--sage);color:white;font-size:0.82rem;
+          font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+        ">확인</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://fifknslpxytyiexwuzat.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_POE4lwR73VWv7jXn72Du-A_DQVyvWeV';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const OWNERS = ['설냥', '츄츄'];
+const ZONES = [
+  { name: '뿌리', layer: '하층' },
+  { name: '유황', layer: '하층' },
+  { name: '군도', layer: '하층' },
+  { name: '중앙섬', layer: '중층' },
+  { name: '고목나무', layer: '중층' },
+  { name: '늪지', layer: '중층' },
+];
+
+let allChars = [];
+let accountData = {};
+let dailyTasks = {};
+let weeklyTasks = {};
+let abyssCorridors = [];
+let abyssClears = {};
+let currentCharId = null;
+
+// ── UTIL ──
+// 게임 기준 "오늘" — KST 05:00 이전이면 전날로 취급
+function getTodayKST() {
+  const now = new Date();
+  // KST = UTC+9
+  const kstMs = now.getTime() + 9 * 3600 * 1000;
+  const kst = new Date(kstMs);
+  // KST 시간이 05:00 미만이면 아직 전날 게임일
+  if (kst.getUTCHours() < 5) {
+    kst.setUTCDate(kst.getUTCDate() - 1);
+  }
+  const y = kst.getUTCFullYear();
+  const m = String(kst.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(kst.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// 게임 기준 "이번 주 시작" — 가장 최근 수요일 KST 05:00 기준
+function getWeekStart() {
+  const now = new Date();
+  const kstMs = now.getTime() + 9 * 3600 * 1000;
+  const kst = new Date(kstMs);
+  const dow = kst.getUTCDay();   // 0=일 1=월 2=화 3=수 4=목 5=금 6=토
+  const hour = kst.getUTCHours(); // KST 시각
+
+  // 가장 최근 수요일(3)까지의 거리
+  let diff = (dow - 3 + 7) % 7;
+  // 수요일 당일이지만 KST 05:00 미만 → 아직 저번 주
+  if (diff === 0 && hour < 5) diff = 7;
+
+  const wed = new Date(kstMs);
+  wed.setUTCDate(kst.getUTCDate() - diff);
+  // 수요일 KST 날짜를 그대로 UTC 필드로 읽음 (offset이 이미 더해진 상태)
+  const y = wed.getUTCFullYear();
+  const m = String(wed.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(wed.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function getLastWarDate() {
+  // 화/목/토(2,4,6) 21:00 KST 기준
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9*3600*1000);
+  const warDays = [2,4,6];
+  for (let i=0; i<14; i++) {
+    const d = new Date(kst);
+    d.setUTCDate(kst.getUTCDate() - i);
+    const wd = d.getUTCDay();
+    if (warDays.includes(wd)) {
+      if (i === 0 && kst.getUTCHours() < 21) continue;
+      return d.toISOString().slice(0,10);
+    }
+  }
+  return getTodayKST();
+}
+
+// 다음 전쟁 시각 (KST) 반환 - UTC Date 객체
+function getNextWarTime() {
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9*3600*1000);
+  const warDays = [2,4,6]; // 화/목/토
+  // i=0 부터 시작 → 오늘도 체크
+  for (let i=0; i<=7; i++) {
+    const d = new Date(kst);
+    d.setUTCDate(kst.getUTCDate() + i);
+    const wd = d.getUTCDay();
+    if (warDays.includes(wd)) {
+      // KST 21:00 = UTC 12:00 당일
+      d.setUTCHours(12, 0, 0, 0);
+      // 오늘이지만 이미 21:00 지났으면 스킵
+      if (d <= now) continue;
+      return d;
+    }
+  }
+  return null;
+}
+
+function formatWarDate(dateStr) {
+  const days = ['일','월','화','수','목','금','토'];
+  const d = new Date(dateStr + 'T00:00:00+09:00');
+  const m = d.getMonth()+1;
+  const day = d.getDate();
+  const wd = days[d.getDay()];
+  return `${m}/${day} (${wd})`;
+}
+
+function getCountdown() {
+  const next = getNextWarTime();
+  if (!next) return { text: '—', urgent: false };
+  const diff = next - new Date();
+  if (diff <= 0) return { text: '전쟁 중!', urgent: true };
+  const totalMin = Math.floor(diff / 60000);
+  const days = Math.floor(totalMin / 1440);
+  const hours = Math.floor((totalMin % 1440) / 60);
+  const mins = totalMin % 60;
+  let text = '';
+  if (days > 0) text += `${days}일 `;
+  text += `${hours}시간 ${mins}분`;
+  const urgent = diff < 12 * 3600 * 1000; // 12시간 미만
+  return { text, urgent };
+}
+
+function formatResetTime(isoStr) {
+  // UTC ISO → KST 표시
+  const d = new Date(isoStr);
+  const kst = new Date(d.getTime() + 9*3600*1000);
+  const y = kst.getUTCFullYear();
+  const m = kst.getUTCMonth()+1;
+  const day = kst.getUTCDate();
+  const h = String(kst.getUTCHours()).padStart(2,'0');
+  return `${y}년 ${m}월 ${day}일 ${h}시`;
+}
+
+async function renderResetInfo() {
+  const el = document.getElementById('reset-info');
+  if (!el) return;
+
+  const { data } = await sb.from('reset_log')
+    .select('reset_type, executed_at')
+    .order('executed_at', { ascending: false })
+    .limit(20);
+
+  const daily = (data||[]).find(r => r.reset_type === 'daily');
+  const weekly = (data||[]).find(r => r.reset_type === 'weekly');
+
+  const dailyStr = daily ? formatResetTime(daily.executed_at) : '—';
+  const weeklyStr = weekly ? formatResetTime(weekly.executed_at) : '—';
+
+  el.innerHTML = `
+    <div style="font-size:0.65rem;color:var(--text-sub)">마지막 일일 리셋 : ${dailyStr}</div>
+    <div style="font-size:0.65rem;color:var(--text-sub)">마지막 주간 리셋 : ${weeklyStr}</div>
+  `;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+let _overviewDirty = false;
+
+function lazyRenderOverview() {
+  if (document.getElementById('overview').classList.contains('active')) {
+    renderOverview();
+  } else {
+    _overviewDirty = true;
+  }
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.tab-pill').forEach(p => p.classList.remove('active'));
+
+  // detail-page가 아닌 곳으로 이동 시 상세뷰 서브바/탭 숨김
+  if (id !== 'detail-page') {
+    document.getElementById('detail-subbar').style.display = 'none';
+    document.getElementById('detail-tab').style.display = 'none';
+  }
+
+  if (id === 'overview') {
+    document.getElementById('tab-overview').classList.add('active');
+    if (_overviewDirty) { renderOverview(); _overviewDirty = false; }
+  }
+  if (id === 'detail-page') document.getElementById('detail-tab').classList.add('active');
+  if (id === 'expedition-page') {
+    document.getElementById('tab-expedition').classList.add('active');
+    try {
+      renderExpeditionPage();
+    } catch (e) {
+      console.error('[원정 탭 에러]', e);
+      document.getElementById('expedition-content').innerHTML =
+        `<div class="card" style="color:#b85050;font-size:0.85rem;white-space:pre-wrap">` +
+        `원정 탭 렌더 오류:\n${e.message}\n\n콘솔 로그를 확인해 주세요.` +
+        `</div>`;
+    }
+  }
+  if (id === 'log-page') {
+    document.getElementById('tab-log').classList.add('active');
+    renderLogPage();
+  }
+}
+
+function goBack() {
+  document.getElementById('detail-tab').style.display = 'none';
+  document.getElementById('detail-subbar').style.display = 'none';
+  showPage('overview');
+}
+
+// ── INIT ──
+async function init() {
+  try {
+    await loadAll();
+    renderOverview();
+    subscribeRealtime();
+    renderResetInfo();
+  } catch(e) {
+    console.error(e);
+    document.getElementById('rt-dot').classList.add('error');
+  }
+}
+
+async function loadAll() {
+  const today = getTodayKST();
+  const week = getWeekStart();
+  const warDate = getLastWarDate();
+
+  const [charsRes, accountRes, dailyRes, weeklyRes, corridorRes, clearsRes, supplyRes] = await Promise.all([
+    sb.from('characters').select('*').order('owner').order('slot'),
+    sb.from('account_data').select('*'),
+    sb.from('daily_tasks').select('*').eq('task_date', today),
+    sb.from('weekly_tasks').select('*').eq('week_start', week),
+    sb.from('abyss_corridors').select('*').eq('war_date', warDate),
+    sb.from('abyss_clears').select('*, abyss_corridors(war_date)'),
+    sb.from('expedition_supply').select('dungeon_key'),
+  ]);
+
+  allChars = charsRes.data || [];
+  accountData = {};
+  (accountRes.data || []).forEach(a => accountData[a.owner] = a);
+  dailyTasks = {};
+  (dailyRes.data || []).forEach(t => dailyTasks[t.character_id] = t);
+  weeklyTasks = {};
+  (weeklyRes.data || []).forEach(t => weeklyTasks[t.character_id] = t);
+  abyssCorridors = corridorRes.data || [];
+  abyssClears = {};
+  (clearsRes.data || []).forEach(c => {
+    const k = `${c.corridor_id}_${c.character_id}`;
+    abyssClears[k] = c;
+  });
+  _expChecked = new Set((supplyRes.data || []).map(r => r.dungeon_key));
+  // 파티 타겟 초기 자동 선택
+  if (_expPartyTarget.size === 0 && _expChecked.size > 0) {
+    _expPartyTarget.add([..._expChecked][0]);
+  }
+}
+
+// ── OVERVIEW RENDER ──
+function renderOverview() {
+  const el = document.getElementById('overview-content');
+  let html = '';
+
+  // Each owner section
+  for (const owner of OWNERS) {
+    const ownerChars = allChars.filter(c => c.owner === owner);
+    const slots = Array.from({length:8}, (_, i) => {
+      return ownerChars.find(c => c.slot === i+1) || null;
+    });
+
+    html += `<div class="owner-section">
+      <div class="owner-label">
+        <span>${owner}</span>
+        <span class="owner-divider"></span>
+        <button class="odd-batch-btn" onclick="openOddBatchModal('${owner}')">오드 일괄 적용</button>
+      </div>
+      <div class="chars-grid">`;
+
+    slots.forEach((char, idx) => {
+      const slot = idx + 1;
+      if (!char) {
+        html += `<div class="char-mini empty"
+          data-owner="${owner}" data-slot="${slot}"
+          ondragover="dragOver(event)" ondrop="dropChar(event, '${owner}', ${slot})"
+          onclick="openAddChar('${owner}', ${slot})">
+          <div class="char-mini-add">+</div>
+        </div>`;
+      } else {
+        const dt = dailyTasks[char.id] || {};
+        const wt = weeklyTasks[char.id] || {};
+        const isResting = !!char.resting;
+        const dots = isResting ? '' : buildMiniDots(char, dt, wt);
+        const pct = isResting ? 0 : calcCompletionPct(char, dt, wt);
+        const barHtml = isResting ? '' : `<div class="char-mini-bar" style="width:${pct}%"></div>`;
+        const progressRowHtml = isResting ? '' : `<div class="mini-progress-row">${dots}</div>`;
+        const restBadge = isResting ? `<div class="char-mini-resting-badge">휴식</div>` : '';
+        html += `<div class="char-mini ${isResting ? 'resting' : ''}"
+          draggable="true"
+          data-char-id="${char.id}" data-owner="${owner}" data-slot="${slot}"
+          ondragstart="dragStart(event, '${char.id}', '${owner}', ${slot})"
+          ondragover="dragOver(event)"
+          ondrop="dropChar(event, '${owner}', ${slot})"
+          ondragend="dragEnd(event)"
+          onclick="openDetail('${char.id}')">
+          ${restBadge}
+          <div class="char-mini-name">${char.name || '(이름없음)'} <span style="color:var(--text-sub);font-size:0.72rem">(${char.item_level||0} / ${formatCp(char.combat_power||0)})</span></div>
+          <div class="char-mini-ilvl">${char.odd_energy_base||0} / 840 <span style="color:var(--text-sub)">+${char.odd_energy_charged||0}</span></div>
+          ${progressRowHtml}
+          ${barHtml}
+        </div>`;
+      }
+    });
+
+    html += `</div></div>`;
+  }
+
+  // Account section
+  html += `<div class="section-sep">계정 정보</div>`;
+  html += `<div class="account-cards">`;
+  for (const owner of OWNERS) {
+    const acc = accountData[owner] || {};
+    html += `<div class="account-card" style="cursor:pointer" onclick="openAccountModal('${owner}')">
+      <div class="account-card-title">${owner} 계정 <span style="float:right;font-size:0.7rem;color:var(--text-sub)">✎</span></div>
+      <div class="stat-row" style="padding:3px 0;border:none">
+        <span class="stat-label" style="font-size:0.78rem">슈고열쇠</span>
+        <span style="font-size:0.78rem;color:var(--text)">${acc.shugo_key_base||0} <span style="color:var(--text-sub)">+${acc.shugo_key_charged||0}</span></span>
+      </div>
+      <div class="stat-row" style="padding:3px 0;border:none">
+        <span class="stat-label" style="font-size:0.78rem">일일던전</span>
+        <span style="font-size:0.78rem;color:var(--text)">${acc.dungeon_remaining||0} <span style="color:var(--text-sub)">+${acc.dungeon_charged||0}</span>회</span>
+      </div>
+      <div class="account-bool-row">
+        <span class="toggle-btn ${acc.shop_purchased?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAccount('${owner}','shop_purchased',${!acc.shop_purchased})">상점</span>
+        <span class="toggle-btn ${acc.transmutation_done?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAccount('${owner}','transmutation_done',${!acc.transmutation_done})">물질변환</span>
+        <span class="toggle-btn ${(acc.order_lower&&acc.order_middle&&acc.order_town)?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAllOrders('${owner}',${!(acc.order_lower&&acc.order_middle&&acc.order_town)})">지령서</span>
+      </div>
+    </div>`;
+  }
+  html += `</div>`;
+
+  // Abyss section
+  html += renderAbyssSection();
+
+  el.innerHTML = html;
+}
+
+function buildMiniDots(char, dt, wt) {
+  const ilvl = char.item_level || 0;
+  const nm = char.nightmare_base || 0;
+  const aw = char.awakening_done || 0;
+  const acc = accountData[char.owner] || {};
+
+  // 일일 (왼쪽): 사명, 보급, 악몽
+  const daily = [
+    `<div class="mini-dot ${dt.mission_done?'done':''}" title="사명${dt.mission_done?' (완료)':''}"></div>`,
+    `<div class="mini-dot ${dt.supply_done?'done':''}" title="보급${dt.supply_done?' (완료)':''}"></div>`,
+    `<div class="mini-dot ${nm<=12?'done':'partial'}" title="악몽 ${nm}장${nm>12?' (주의)':''}"></div>`,
+  ].join('');
+
+  // 주간 (오른쪽): 각성(3/3 완료), 루드라(템2700+), 침식(템3500+)
+  const weeklyDots = [];
+  // 각성 - 3회 다 완료해야 완료
+  weeklyDots.push(`<div class="mini-dot ${aw>=3?'done-weekly':''}" title="각성 ${aw}/3"></div>`);
+  // 루드라 - 템 2700+만 해당, 미달은 dot 자체 생략
+  if (ilvl >= 2700) {
+    weeklyDots.push(`<div class="mini-dot ${wt.ludra_done?'done-weekly':''}" title="성역 - 루드라${wt.ludra_done?' (완료)':''}"></div>`);
+  }
+  // 침식 - 템 3500+만 해당
+  if (ilvl >= 3500) {
+    weeklyDots.push(`<div class="mini-dot ${wt.erosion_done?'done-weekly':''}" title="성역 - 침식${wt.erosion_done?' (완료)':''}"></div>`);
+  }
+  const weekly = weeklyDots.join('');
+
+  return `<div class="mini-dots-daily">${daily}</div><div class="mini-dots-weekly">${weekly}</div>`;
+}
+
+function calcCompletionPct(char, dt, wt) {
+  let done = 0, total = 0;
+  const ilvl = char.item_level || 0;
+  total += 2; if (dt.mission_done) done++; if (dt.supply_done) done++;
+  total += 1; if ((char.nightmare_base||0) <= 12) done++;
+  total += 1; if ((char.awakening_done||0) >= 3) done++;
+  if (ilvl >= 2700) { total++; if (wt.ludra_done) done++; }
+  if (ilvl >= 3500) { total++; if (wt.erosion_done) done++; }
+
+  return total > 0 ? Math.round(done/total*100) : 0;
+}
+
+let _abyssViewMode = 'zone';  // 'zone' | 'char'
+
+function toggleAbyssViewMode(mode) {
+  _abyssViewMode = mode;
+  lazyRenderOverview();
+}
+
+function renderAbyssSection() {
+  const warDate = getLastWarDate();
+  const { text: cdText, urgent: cdUrgent } = getCountdown();
+  const warLabel = formatWarDate(warDate);
+  const acquiredZones = ZONES.filter(z => {
+    const c = abyssCorridors.find(c => c.zone === z.name);
+    return c?.acquired;
+  });
+
+  let html = `<div class="abyss-section">
+    <div class="section-title">
+      <span>
+        어비스 회랑
+        <span class="abyss-view-toggle">
+          <button class="${_abyssViewMode==='zone'?'active':''}" onclick="toggleAbyssViewMode('zone')">회랑별</button>
+          <button class="${_abyssViewMode==='char'?'active':''}" onclick="toggleAbyssViewMode('char')">캐릭별</button>
+        </span>
+      </span>
+      <span style="font-size:0.72rem;color:var(--text-sub)">${warLabel} 전쟁 결과 ·
+        <span id="abyss-countdown" style="color:${cdUrgent?'#b85050':'var(--text-sub)'}">다음 전쟁까지 ${cdText}</span>
+      </span>
+    </div>`;
+
+  if (_abyssViewMode === 'char') {
+    html += renderAbyssCharMatrix(acquiredZones, warDate);
+  } else {
+    html += renderAbyssZoneGrid(warDate);
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+// ── 기존 zone별 뷰 ──
+function renderAbyssZoneGrid(warDate) {
+  let html = `<div class="abyss-grid">`;
+  for (const zone of ZONES) {
+    const corridor = abyssCorridors.find(c => c.zone === zone.name);
+    const acquired = corridor?.acquired || false;
+    const corId = corridor?.id;
+
+    let charDots = '';
+    if (acquired && corId) {
+      allChars.forEach(char => {
+        const ilvl = char.item_level || 0;
+        const ilvlReq = zone.layer === '하층' ? 1000 : zone.layer === '중층' ? 3000 : 0;
+        if (ilvl < ilvlReq) return;
+        const k = `${corId}_${char.id}`;
+        const cleared = abyssClears[k]?.cleared || false;
+        const doneClass = cleared
+          ? (char.owner === '설냥' ? 'done-cor-설냥' : 'done-cor-츄츄')
+          : '';
+        charDots += `<div class="mini-dot ${doneClass}" title="${char.owner} ${char.name||''}"></div>`;
+      });
+    }
+
+    html += `<div class="abyss-zone ${acquired?'acquired':''}">
+      <div class="abyss-zone-layer">${zone.layer}</div>
+      <div class="abyss-zone-name">${zone.name}</div>
+      <div class="abyss-toggle ${acquired?'on':''}" onclick="toggleAbyss('${zone.name}', ${!acquired}, '${warDate}')"></div>
+      <div class="abyss-char-dots">${charDots}</div>
+    </div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+// ── 캐릭별 매트릭스 뷰 ──
+function renderAbyssCharMatrix(acquiredZones, warDate) {
+  if (acquiredZones.length === 0) {
+    return `<div class="abyss-matrix-empty">획득된 회랑이 없어요</div>`;
+  }
+
+  // 쉬고 있지 않은 + 입장 가능한(하층이면 템1000+ / 중층이면 템3000+) 캐릭만
+  const hasLower = acquiredZones.some(z => z.layer === '하층');
+  const hasMiddle = acquiredZones.some(z => z.layer === '중층');
+  const eligibleChars = allChars.filter(c => {
+    if (c.resting) return false;
+    if (!c.name) return false;
+    const ilvl = c.item_level || 0;
+    if (hasLower && ilvl >= 1000) return true;
+    if (hasMiddle && ilvl >= 3000) return true;
+    return false;
+  });
+
+  if (eligibleChars.length === 0) {
+    return `<div class="abyss-matrix-empty">입장 가능한 캐릭이 없어요</div>`;
+  }
+
+  // 설냥 먼저 → 츄츄
+  eligibleChars.sort((a, b) => {
+    if (a.owner !== b.owner) return a.owner === '설냥' ? -1 : 1;
+    return (a.slot || 0) - (b.slot || 0);
+  });
+
+  // 그리드 컬럼: 이름 | zone1 | zone2 | ... (각 row와 헤더가 동일하게 사용)
+  const gridCols = `minmax(80px, 1.4fr) ${acquiredZones.map(() => 'minmax(36px, 1fr)').join(' ')}`;
+
+  // 헤더
+  let html = `<div class="abyss-matrix">`;
+  html += `<div class="abyss-matrix-header" style="grid-template-columns:${gridCols}">`;
+  html += `<div class="abyss-matrix-header-cell" style="text-align:left;padding-left:4px">캐릭</div>`;
+  acquiredZones.forEach(z => {
+    html += `<div class="abyss-matrix-header-cell">${z.name}<span class="abyss-matrix-header-cell-layer">${z.layer}</span></div>`;
+  });
+  html += `</div>`;
+
+  // 각 캐릭 행
+  eligibleChars.forEach(char => {
+    const ilvl = char.item_level || 0;
+    let eligibleZoneCount = 0;
+    let clearedCount = 0;
+    const cells = acquiredZones.map(zone => {
+      const ilvlReq = zone.layer === '하층' ? 1000 : 3000;
+      if (ilvl < ilvlReq) {
+        return `<div class="abyss-matrix-cell locked" title="${zone.name} 입장 불가 (템 ${ilvlReq}↑)"></div>`;
+      }
+      eligibleZoneCount++;
+      const corridor = abyssCorridors.find(c => c.zone === zone.name);
+      const corId = corridor?.id;
+      const k = corId ? `${corId}_${char.id}` : null;
+      const cleared = k ? (abyssClears[k]?.cleared || false) : false;
+      if (cleared) clearedCount++;
+      return `<div class="abyss-matrix-cell ${cleared?'done':''}"
+        onclick="event.stopPropagation();toggleAbyssCharMatrix('${corId}','${char.id}',${!cleared})"
+        title="${zone.name}${cleared?' (완료)':''}">${cleared?'✓':''}</div>`;
+    }).join('');
+
+    const allDone = eligibleZoneCount > 0 && clearedCount === eligibleZoneCount;
+    html += `<div class="abyss-matrix-row ${allDone?'all-done':''}" style="grid-template-columns:${gridCols}"
+      onclick="openDetail('${char.id}')">
+      <div class="abyss-matrix-name">
+        <span class="abyss-matrix-owner-dot" style="background:var(--owner-${char.owner})"></span>${char.name}
+      </div>
+      ${cells}
+    </div>`;
+  });
+
+  html += `</div>`;
+  return html;
+}
+
+// 매트릭스 셀 클릭 — zone별 뷰의 toggleAbyssChar와 동일 로직
+async function toggleAbyssCharMatrix(corridorId, charId, cleared) {
+  if (!corridorId) return;
+  await toggleAbyssChar(corridorId, charId, cleared);
+}
+
+// ── ADD CHAR FORM ──
+function openAddChar(owner, slot) {
+  currentCharId = null;
+  // Show a small inline form at top of overview
+  let formHtml = `<div class="add-char-form open" id="add-char-form">
+    <div class="card-title"><div class="card-title-icon icon-info">✎</div>${owner} ${slot}번 캐릭터 추가</div>
+    <div class="form-row">
+      <div><div class="form-label">캐릭터명</div><input class="text-input" id="fc-name" placeholder="캐릭명" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"></div>
+      <div><div class="form-label">템레벨</div><input class="text-input" id="fc-ilvl" type="number" placeholder="0" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"></div>
+    </div>
+    <div class="form-row">
+      <div><div class="form-label">전투력 (k)</div><input class="text-input" id="fc-cp" type="text" inputmode="decimal" placeholder="0" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"></div>
+      <div><div class="form-label">오드에너지</div><input class="text-input" id="fc-odd" type="number" placeholder="0" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closeAddChar()">취소</button>
+      <button class="btn-primary" onclick="submitAddChar('${owner}',${slot})">추가</button>
+    </div>
+  </div>`;
+  const el = document.getElementById('overview-content');
+  el.insertAdjacentHTML('afterbegin', formHtml);
+  setTimeout(() => document.getElementById('fc-name')?.focus(), 100);
+}
+
+function closeAddChar() {
+  document.getElementById('add-char-form')?.remove();
+}
+
+async function submitAddChar(owner, slot) {
+  if (currentActor === 'guest') return;
+
+  const name = document.getElementById('fc-name').value.trim();
+  const ilvl = parseInt(document.getElementById('fc-ilvl').value) || 0;
+  const cp = Math.round((parseFloat(document.getElementById('fc-cp').value.replace(',','.')) || 0) * 10);
+  const odd = parseInt(document.getElementById('fc-odd').value) || 0;
+  if (!name) { showToast('캐릭터명을 입력해줘!'); return; }
+  const { error } = await sb.from('characters').insert({
+    owner, slot, name, item_level: ilvl, combat_power: cp, odd_energy_base: odd
+  });
+  if (error) { showToast('저장 실패 😢'); console.error(error); return; }
+  showToast(`${name} 추가 완료!`);
+  closeAddChar();
+  await loadAll();
+  renderOverview();
+}
+
+// ── DETAIL ──
+async function openDetail(charId) {
+  currentCharId = charId;
+  const char = allChars.find(c => c.id === charId);
+  if (!char) return;
+
+  document.getElementById('subbar-char-name').textContent = char.name || '(이름없음)';
+  document.getElementById('subbar-char-meta').textContent = `템 ${char.item_level||0} · ${formatCp(char.combat_power||0)}`;
+  const badge = document.getElementById('subbar-owner-badge');
+  badge.textContent = char.owner;
+  badge.className = `detail-owner-badge badge-${char.owner}`;
+  document.getElementById('detail-subbar').style.display = 'flex';
+
+  document.getElementById('detail-tab').style.display = '';
+  showPage('detail-page');
+  document.getElementById('detail-content').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+  renderDetail(char);
+}
+
+function renderDetail(char) {
+  const dt = dailyTasks[char.id] || {};
+  const wt = weeklyTasks[char.id] || {};
+  const ilvl = char.item_level || 0;
+  const today = getTodayKST();
+  const week = getWeekStart();
+
+  const nmBase = char.nightmare_base || 0;
+  const nmCharged = char.nightmare_charged || 0;
+  const nmWarn = nmBase > 12;
+
+  let html = '';
+
+  const isResting = !!char.resting;
+
+  // ── 기본 정보 ──
+  html += `<div class="card">
+    <div class="card-title">
+      <div class="card-title-icon icon-info">ℹ</div>기본 정보
+      <button class="toggle-btn ${isResting ? 'done-peach' : ''}"
+        style="margin-left:auto;font-size:0.72rem"
+        onclick="toggleResting('${char.id}', ${!isResting})">${isResting ? '💤 휴식중' : '휴식'}</button>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">캐릭터명</span>
+      <input class="text-input" style="width:130px" tabindex="0" value="${char.name||''}"
+        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+        onfocus="this.select()"
+        onchange="updateCharField('${char.id}','name',this.value)">
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">템레벨</span>
+      <input class="text-input" style="width:80px" type="number" tabindex="0" value="${char.item_level||0}"
+        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+        onfocus="this.select()"
+        onchange="updateCharField('${char.id}','item_level',parseInt(this.value)||0)">
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">전투력</span>
+      <div class="cp-input-wrap" id="cpwrap-${char.id}">
+        <input class="text-input cp-input" id="cp-${char.id}" style="width:90px"
+          type="text" inputmode="decimal" tabindex="0" value="${(char.combat_power||0)/10}"
+          autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+          onfocus="this.select()"
+          oninput="validateCpInput(this)"
+          onblur="commitCpInput('${char.id}',this)">
+        <span class="cp-k">k</span>
+      </div>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">오드에너지<span class="stat-sublabel">기본 / 충전</span></span>
+      <div class="stat-inputs">
+        ${numInput(`odd_energy_base`, char.odd_energy_base||0, char.id, 0, 840)}
+        <span style="color:var(--text-sub);font-size:0.8rem">+</span>
+        ${numInput(`odd_energy_charged`, char.odd_energy_charged||0, char.id, 0, 9999)}
+      </div>
+    </div>
+    <div class="stat-row" id="odd-estimate-row-${char.id}">
+      <div style="flex:1;line-height:1.3">
+        <span style="font-size:0.78rem;color:var(--text-sub)">예상 기본 오드 &nbsp;<span id="odd-estimate-${char.id}" style="color:#3d5c2a">${char.odd_recorded_at ? '계산 중...' : '—'}</span> <span style="color:var(--text-sub);font-size:0.72rem">/ 840</span></span>
+        <span style="display:block;font-size:0.62rem;color:#b0a89a;margin-top:2px" id="odd-recorded-${char.id}">${char.odd_recorded_at ? formatKST(char.odd_recorded_at) + ' 기록 기준' : '기록 없음'}</span>
+      </div>
+      <button class="toggle-btn" style="font-size:0.72rem;padding:4px 10px"
+        onclick="recordOddNow('${char.id}')">기록</button>
+      <button class="toggle-btn done" style="font-size:0.72rem;padding:4px 10px"
+        onclick="applyOddEstimate('${char.id}')" ${char.odd_recorded_at?'':'disabled'}>적용</button>
+    </div>
+  </div>`;
+
+  // ── 일일 숙제 ──
+  html += `<div class="card">
+    <div class="card-title"><div class="card-title-icon icon-daily">일</div>일일 숙제 <span style="margin-left:auto;font-size:0.72rem;color:var(--text-sub)">05:00 리셋</span></div>
+    <div class="stat-row">
+      <span class="stat-label">사명</span>
+      <button class="toggle-btn ${dt.mission_done?'done':''}"
+        onclick="toggleDaily('${char.id}','mission_done',${!dt.mission_done},'${today}')">${dt.mission_done?'완료':'미완'}</button>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">보급</span>
+      <button class="toggle-btn ${dt.supply_done?'done':''}"
+        onclick="toggleDaily('${char.id}','supply_done',${!dt.supply_done},'${today}')">${dt.supply_done?'완료':'미완'}</button>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">악몽 <span class="stat-sublabel">기본 14 · 충전 30</span></span>
+      <div class="stat-inputs">
+        ${numInput('nightmare_base', nmBase, char.id, 0, 14)}
+        <span style="color:var(--text-sub);font-size:0.8rem">+</span>
+        ${numInput('nightmare_charged', nmCharged, char.id, 0, 30)}
+        ${nmWarn ? `<span class="warn-chip">주의!</span>` : `<span class="ok-chip">양호</span>`}
+      </div>
+    </div>
+  </div>`;
+
+  // ── 주간 숙제 ──
+  html += `<div class="card">
+    <div class="card-title"><div class="card-title-icon icon-weekly">주</div>주간 숙제 <span style="margin-left:auto;font-size:0.72rem;color:var(--text-sub)">수요일 05:00 리셋</span></div>`;
+
+  // 각성 pips
+  const awDone = char.awakening_done || 0;
+  const awCharged = char.awakening_charged || 0;
+  html += `<div class="stat-row">
+    <span class="stat-label">각성 <span class="stat-sublabel">${awDone}/3판</span></span>
+    <div class="stat-inputs">
+      <div class="pip-row">
+        ${[1,2,3].map(i => `<div class="pip ${awDone>=i?'done':''}"
+          onclick="cycleAwakening('${char.id}',${awDone},${i})">✓</div>`).join('')}
+      </div>
+      <span style="color:var(--text-sub);font-size:0.8rem">+</span>
+      ${numInput('awakening_charged', awCharged, char.id, 0, 99)}
+    </div>
+  </div>`;
+
+  // 일일던전 (충전권)
+  html += `<div class="stat-row">
+    <span class="stat-label">일일던전 충전권<span class="stat-sublabel">캐릭별</span></span>
+    <div class="stat-inputs">
+      ${numInput('dungeon_tickets', char.dungeon_tickets||0, char.id, 0, 99)}
+    </div>
+  </div>`;
+
+  // 성역
+  const ludraLocked = ilvl < 2700;
+  const erosionLocked = ilvl < 3500;
+  html += `<div class="stat-row ${ludraLocked?'locked-row':''}">
+    <span class="stat-label">성역 - 루드라 ${ludraLocked?`<span class="lock-badge">2700↑</span>`:''}</span>
+    <button class="toggle-btn ${wt.ludra_done?'done':''}"
+      onclick="toggleWeekly('${char.id}','ludra_done',${!wt.ludra_done},'${week}')">${wt.ludra_done?'완료':'미완'}</button>
+  </div>`;
+  html += `<div class="stat-row ${erosionLocked?'locked-row':''}">
+    <span class="stat-label">성역 - 침식 ${erosionLocked?`<span class="lock-badge">3500↑</span>`:''}</span>
+    <button class="toggle-btn ${wt.erosion_done?'done':''}"
+      onclick="toggleWeekly('${char.id}','erosion_done',${!wt.erosion_done},'${week}')">${wt.erosion_done?'완료':'미완'}</button>
+  </div>`;
+
+  html += `</div>`;
+
+  // ── 어비스 회랑 ──
+  const acquiredZones = abyssCorridors.filter(c => c.acquired);
+  if (acquiredZones.length > 0) {
+    html += `<div class="card">
+      <div class="card-title"><div class="card-title-icon" style="background:var(--lavender-light)">회</div>어비스 회랑</div>`;
+    acquiredZones.forEach(cor => {
+      const k = `${cor.id}_${char.id}`;
+      const cleared = abyssClears[k]?.cleared || false;
+      const layerInfo = ZONES.find(z => z.name === cor.zone);
+      const layer = layerInfo?.layer || '';
+      const ilvlReq = layer === '하층' ? 1000 : layer === '중층' ? 3000 : 0;
+      const locked = (char.item_level || 0) < ilvlReq;
+      html += `<div class="stat-row ${locked?'locked-row':''}">
+        <span class="stat-label">${layer} - ${cor.zone} ${locked?`<span class="lock-badge">${ilvlReq}↑</span>`:''}</span>
+        <button class="toggle-btn ${cleared?'done':''}"
+          onclick="toggleAbyssChar('${cor.id}','${char.id}',${!cleared})">${cleared?'완료':'미완'}</button>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  document.getElementById('detail-content').innerHTML = html;
+  // innerHTML 세팅 후 즉시 오드 예상 타이머 시작
+  startOddTimer(char.id);
+}
+
+// ── NUM INPUT HELPER ──
+function numInput(field, val, charId, min, max) {
+  const id = `nv-${charId}-${field}`;
+  return `<div class="num-input-wrap">
+    <button class="num-btn" onclick="stepCharById('${charId}','${field}','${id}',-1,${min},${max})">−</button>
+    <input class="num-val-input" id="${id}" name="${id}" type="number" value="${val}" min="${min}" max="${max}"
+      autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+      onchange="commitNumInput('${charId}','${field}','${id}',${min},${max})"
+      onblur="commitNumInput('${charId}','${field}','${id}',${min},${max})">
+    <button class="num-btn" onclick="stepCharById('${charId}','${field}','${id}',1,${min},${max})">+</button>
+  </div>`;
+}
+
+// +/- 버튼: DOM에서 현재 값 읽어서 증감
+function stepCharById(charId, field, inputId, delta, min, max) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  const cur = parseInt(el.value) || 0;
+  const newVal = Math.min(max, Math.max(min, cur + delta));
+  el.value = newVal;
+  saveNumInput(charId, field, newVal);
+}
+
+// 직접 입력 후 포커스 벗어날 때 저장
+function commitNumInput(charId, field, inputId, min, max) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  let newVal = parseInt(el.value);
+  if (isNaN(newVal)) newVal = min;
+  newVal = Math.min(max, Math.max(min, newVal));
+  el.value = newVal;
+  saveNumInput(charId, field, newVal);
+}
+
+// ── CP HELPERS ──
+// DB 저장값: 소수점 1자리를 정수로 (예: 525.2k → 5252)
+function formatCp(stored) {
+  if (!stored) return '0k';
+  const v = stored / 10;
+  return (Number.isInteger(v) ? v.toString() : v.toFixed(1)) + 'k';
+}
+
+function validateCpInput(input) {
+  // 숫자, 점, 쉼표만 허용 / 소수점 1자리까지
+  let val = input.value.replace(',', '.').replace(/[^0-9.]/g, '');
+  // 점 두 개 이상 제거
+  const parts = val.split('.');
+  if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
+  // 소수점 이하 1자리까지만
+  if (parts.length === 2 && parts[1].length > 1) val = parts[0] + '.' + parts[1].slice(0,1);
+  input.value = val;
+}
+
+async function commitCpInput(charId, input) {
+  let raw = parseFloat(input.value.replace(',', '.'));
+  if (isNaN(raw)) raw = 0;
+  // 소수점 1자리 강제
+  raw = Math.round(raw * 10) / 10;
+  input.value = raw;
+  const stored = Math.round(raw * 10); // DB 저장값
+  const char = allChars.find(c => c.id === charId);
+  if (char) {
+    char.combat_power = stored;
+    document.getElementById('subbar-char-meta').textContent =
+      `템 ${char.item_level||0} · ${formatCp(stored)}`;
+  }
+  markSelfChange('characters', charId);
+  const { error } = await sb.from('characters').update({combat_power: stored}).eq('id', charId);
+  if (error) showToast('저장 실패');
+}
+
+async function saveNumInput(charId, field, newVal) {
+  if (currentActor === 'guest') return;
+
+  const char = allChars.find(c => c.id === charId);
+  const prevVal = char ? (char[field] || 0) : 0;
+  if (char) char[field] = newVal;
+  markSelfChange('characters', charId);
+  const { error } = await sb.from('characters').update({[field]: newVal}).eq('id', charId);
+  if (error) { showToast('저장 실패'); return; }
+
+  // 악몽만 +/- 양방향 로그 (오드는 로그 안 찍음)
+  if (char && field === 'nightmare_base' && newVal !== prevVal) {
+    const diff = newVal - prevVal;
+    const sign = diff > 0 ? '+' : '';
+    writeLog(char.owner, char.name, `악몽 ${sign}${diff} (${prevVal}→${newVal})`, char.id, null);
+  }
+
+  lazyRenderOverview();
+}
+
+// ── DB ACTIONS ──
+async function updateCharField(charId, field, value) {
+  if (currentActor === 'guest') return;
+
+  markSelfChange('characters', charId);
+  const { error } = await sb.from('characters').update({[field]: value}).eq('id', charId);
+  if (error) { showToast('저장 실패'); return; }
+  const char = allChars.find(c => c.id === charId);
+  if (char) char[field] = value;
+  showToast('저장 완료');
+  lazyRenderOverview();
+}
+
+async function toggleResting(charId, value) {
+  if (currentActor === 'guest') return;
+  markSelfChange('characters', charId);
+  const { error } = await sb.from('characters').update({ resting: value }).eq('id', charId);
+  if (error) { showToast('저장 실패'); return; }
+  const char = allChars.find(c => c.id === charId);
+  if (char) {
+    char.resting = value;
+    renderDetail(char);
+    lazyRenderOverview();
+    writeLog(char.owner, char.name, value ? '휴식 시작' : '휴식 해제', char.id, null);
+  }
+}
+
+
+
+async function toggleDaily(charId, field, value, today) {
+  if (currentActor === 'guest') return;
+
+  const existing = dailyTasks[charId];
+  let error;
+  if (existing) {
+    markSelfChange('daily_tasks', existing.id);
+    ({ error } = await sb.from('daily_tasks').update({[field]: value}).eq('id', existing.id));
+    if (!error) existing[field] = value;
+  } else {
+    const { data, error: err } = await sb.from('daily_tasks')
+      .insert({ character_id: charId, task_date: today, [field]: value })
+      .select().single();
+    error = err;
+    if (!error) dailyTasks[charId] = data;
+  }
+  if (error) { showToast('저장 실패'); return; }
+  const char = allChars.find(c => c.id === charId);
+  if (char) {
+    renderDetail(char);
+    lazyRenderOverview();
+    const actionMap = { mission_done:'사명 완료', supply_done:'보급 완료' };
+    if (actionMap[field]) {
+      if (value) writeLog(char.owner, char.name, actionMap[field], char.id, field);
+      else deleteLog(char.id, field);
+    }
+  }
+}
+
+async function toggleWeekly(charId, field, value, week) {
+  if (currentActor === 'guest') return;
+
+  const existing = weeklyTasks[charId];
+  let error;
+  if (existing) {
+    markSelfChange('weekly_tasks', existing.id);
+    ({ error } = await sb.from('weekly_tasks').update({[field]: value}).eq('id', existing.id));
+    if (!error) existing[field] = value;
+  } else {
+    const { data, error: err } = await sb.from('weekly_tasks')
+      .insert({ character_id: charId, week_start: week, [field]: value })
+      .select().single();
+    error = err;
+    if (!error) weeklyTasks[charId] = data;
+  }
+  if (error) { showToast('저장 실패'); return; }
+  const char = allChars.find(c => c.id === charId);
+  if (char) {
+    renderDetail(char);
+    lazyRenderOverview();
+    const actionMap = { ludra_done:'성역-루드라 완료', erosion_done:'성역-침식 완료' };
+    if (actionMap[field]) {
+      if (value) writeLog(char.owner, char.name, actionMap[field], char.id, field);
+      else deleteLog(char.id, field);
+    }
+  }
+}
+
+async function cycleAwakening(charId, cur, pip) {
+  if (currentActor === 'guest') return;
+
+  const newVal = cur === pip ? pip - 1 : pip;
+  markSelfChange('characters', charId);
+  const { error } = await sb.from('characters').update({awakening_done: newVal}).eq('id', charId);
+  if (error) { showToast('저장 실패'); return; }
+  const char = allChars.find(c => c.id === charId);
+  if (char) {
+    char.awakening_done = newVal;
+    renderDetail(char);
+    lazyRenderOverview();
+    if (newVal > cur) writeLog(char.owner, char.name, `각성 ${newVal}회 완료`, char.id, `awakening_${newVal}`);
+    else if (newVal < cur) deleteLog(char.id, `awakening_${cur}`);
+  }
+}
+
+// ── ACCOUNT MODAL ──
+function accModalNumInput(field, val, owner, min, max) {
+  const id = `amn-${owner}-${field}`;
+  return `<div class="num-input-wrap">
+    <button class="num-btn" onclick="stepAccModal('${owner}','${field}','${id}',-1,${min},${max})">−</button>
+    <input class="num-val-input" id="${id}" name="${id}" type="number" value="${val}" min="${min}" max="${max}"
+      autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+      onfocus="this.select()"
+      oninput="liveAccModal('${owner}','${field}','${id}',${min},${max})">
+    <button class="num-btn" onclick="stepAccModal('${owner}','${field}','${id}',1,${min},${max})">+</button>
+  </div>`;
+}
+
+function stepAccModal(owner, field, inputId, delta, min, max) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  const newVal = Math.min(max, Math.max(min, (parseInt(el.value)||0) + delta));
+  el.value = newVal;
+  commitAccModal(owner, field, newVal);
+}
+
+function liveAccModal(owner, field, inputId, min, max) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  let val = parseInt(el.value);
+  if (isNaN(val)) return;
+  val = Math.min(max, Math.max(min, val));
+  commitAccModal(owner, field, val);
+}
+
+function commitAccModal(owner, field, val) {
+  const acc = accountData[owner];
+  const prevVal = acc ? (acc[field] || 0) : 0;
+  if (acc) acc[field] = val;
+  // 카드 숫자 즉시 갱신
+  renderOverview();
+  debounce(`acc-${owner}-${field}`, async () => {
+    markSelfChange('account_data', owner);
+    const { error } = await sb.from('account_data').update({[field]: val}).eq('owner', owner);
+    if (error) { showToast('저장 실패'); return; }
+
+    // 슈고/일일던전 +/- 양방향 로그
+    const LABELS = {
+      shugo_key_base:    '슈고 열쇠',
+      dungeon_remaining: '일일던전',
+    };
+    const label = LABELS[field];
+    if (label && val !== prevVal) {
+      const diff = val - prevVal;
+      const sign = diff > 0 ? '+' : '';
+      writeLog(owner, null, `${label} ${sign}${diff} (${prevVal}→${val})`, null, null);
+    }
+  });
+}
+
+function openAccountModal(owner) {
+  const acc = accountData[owner] || {};
+  document.getElementById('acc-modal-title').textContent = `${owner} 계정 수정`;
+
+  const skWarn = (acc.shugo_key_base||0) > 12;
+
+  document.getElementById('acc-modal-body').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
+        <div style="font-size:0.75rem;color:var(--text-sub);margin-bottom:8px">슈고열쇠 <span style="font-size:0.7rem">(계정 공유 · 최대 14장)</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1.35fr 1fr 1.35fr;align-items:center;gap:6px">
+          <span style="font-size:0.72rem;color:var(--text-sub);text-align:center">기본</span>
+          ${accModalNumInput('shugo_key_base', acc.shugo_key_base||0, owner, 0, 14)}
+          <span style="font-size:0.72rem;color:var(--text-sub);text-align:center">충전</span>
+          ${accModalNumInput('shugo_key_charged', acc.shugo_key_charged||0, owner, 0, 99)}
+        </div>
+        ${skWarn ? `<div style="margin-top:6px;font-size:0.72rem;color:#b85050">⚠ 14장 초과! 충전이 낭비돼요</div>` : ''}
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
+        <div style="font-size:0.75rem;color:var(--text-sub);margin-bottom:8px">일일던전 <span style="font-size:0.7rem">(계정 공유 · 주간 14회)</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1.35fr 1fr 1.35fr;align-items:center;gap:6px">
+          <span style="font-size:0.72rem;color:var(--text-sub);text-align:center">남은판</span>
+          ${accModalNumInput('dungeon_remaining', acc.dungeon_remaining||0, owner, 0, 14)}
+          <span style="font-size:0.72rem;color:var(--text-sub);text-align:center">충전</span>
+          ${accModalNumInput('dungeon_charged', acc.dungeon_charged||0, owner, 0, 99)}
+        </div>
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
+        <div style="font-size:0.75rem;color:var(--text-sub);margin-bottom:8px">지령서 <span style="font-size:0.7rem">(주간 리셋)</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${[['order_lower','하층'],['order_middle','중층'],['order_town','마을']].map(([key,label]) => `
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:0.8rem;color:var(--text)">${label} 지령서</span>
+            <button class="toggle-btn ${acc[key]?'done':''}" style="font-size:0.78rem;padding:4px 12px"
+              onclick="toggleAccOrder('${owner}','${key}',${!acc[key]})">${acc[key]?'구매':'미구매'}</button>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  const overlay = document.getElementById('acc-modal-overlay');
+  overlay.style.display = 'flex';
+}
+
+async function toggleAllOrders(owner, value) {
+  if (currentActor === 'guest') return;
+
+  const acc = accountData[owner];
+  if (!acc) return;
+  const { error } = await sb.from('account_data')
+    .update({ order_lower: value, order_middle: value, order_town: value })
+    .eq('owner', owner);
+  if (error) { showToast('저장 실패'); return; }
+  acc.order_lower = value;
+  acc.order_middle = value;
+  acc.order_town = value;
+  renderOverview();
+}
+
+async function toggleAccOrder(owner, field, value) {
+  if (currentActor === 'guest') return;
+
+  const acc = accountData[owner];
+  if (!acc) return;
+  const { error } = await sb.from('account_data').update({[field]: value}).eq('owner', owner);
+  if (error) { showToast('저장 실패'); return; }
+  acc[field] = value;
+  openAccountModal(owner); // 모달 버튼 즉시 갱신
+  renderOverview();        // 겉 버튼도 연동
+}
+
+function closeAccountModal() {
+  document.getElementById('acc-modal-overlay').style.display = 'none';
+}
+
+// 디바운스 (모달용 - 아직 없으면 추가)
+if (typeof _debounceTimers === 'undefined') var _debounceTimers = {};
+if (typeof debounce !== 'function') {
+  function debounce(key, fn, delay=600) {
+    clearTimeout(_debounceTimers[key]);
+    _debounceTimers[key] = setTimeout(fn, delay);
+  }
+}
+
+async function toggleAccount(owner, field, value) {
+  if (currentActor === 'guest') return;
+
+  const acc = accountData[owner];
+  if (!acc) return;
+  const { error } = await sb.from('account_data').update({[field]: value}).eq('owner', owner);
+  if (error) { showToast('저장 실패'); return; }
+  acc[field] = value;
+  renderOverview();
+}
+
+async function toggleAbyss(zoneName, acquired, warDate) {
+  if (currentActor === 'guest') return;
+
+  const existing = abyssCorridors.find(c => c.zone === zoneName);
+  if (existing) {
+    markSelfChange('abyss_corridors', existing.id);
+    const { error } = await sb.from('abyss_corridors').update({acquired}).eq('id', existing.id);
+    if (error) { showToast('저장 실패'); return; }
+    existing.acquired = acquired;
+  } else {
+    const zone = ZONES.find(z => z.name === zoneName);
+    const { data, error } = await sb.from('abyss_corridors')
+      .insert({ war_date: warDate, zone: zoneName, layer: zone?.layer||'', acquired })
+      .select().single();
+    if (error) { showToast('저장 실패'); return; }
+    abyssCorridors.push(data);
+  }
+  renderOverview();
+}
+
+async function toggleAbyssChar(corridorId, charId, cleared) {
+  if (currentActor === 'guest') return;
+
+  const k = `${corridorId}_${charId}`;
+  const existing = abyssClears[k];
+  if (existing) {
+    markSelfChange('abyss_clears', existing.id);
+    const { error } = await sb.from('abyss_clears').update({cleared}).eq('id', existing.id);
+    if (error) { showToast('저장 실패'); return; }
+    existing.cleared = cleared;
+  } else {
+    const { data, error } = await sb.from('abyss_clears')
+      .insert({ corridor_id: corridorId, character_id: charId, cleared })
+      .select().single();
+    if (error) { showToast('저장 실패'); return; }
+    abyssClears[k] = data;
+  }
+  const char = allChars.find(c => c.id === charId);
+  if (char) {
+    renderDetail(char);
+    const cor = abyssCorridors.find(c => c.id === corridorId);
+    if (cor) {
+      if (cleared) writeLog(char.owner, char.name, `어비스 회랑-${cor.zone} 완료`, char.id, `abyss_${cor.zone}`);
+      else deleteLog(char.id, `abyss_${cor.zone}`);
+    }
+    lazyRenderOverview();
+  }
+}
+
+// ── REALTIME ──
+function subscribeRealtime() {
+  const dot = document.getElementById('rt-dot');
+
+  sb.channel('aion2-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'characters' }, async (payload) => {
+      await handleRealtimeChange('characters', payload);
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'account_data' }, async (payload) => {
+      await handleRealtimeChange('account_data', payload);
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_tasks' }, async (payload) => {
+      await handleRealtimeChange('daily_tasks', payload);
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_tasks' }, async (payload) => {
+      await handleRealtimeChange('weekly_tasks', payload);
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'abyss_corridors' }, async (payload) => {
+      await handleRealtimeChange('abyss_corridors', payload);
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'abyss_clears' }, async (payload) => {
+      await handleRealtimeChange('abyss_clears', payload);
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'expedition_supply' }, async (payload) => {
+      await handleRealtimeChange('expedition_supply', payload);
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_log' }, async () => {
+      if (document.getElementById('log-page').classList.contains('active')) renderLogPage();
+    })
+    .subscribe(status => {
+      if (status === 'SUBSCRIBED') dot.classList.add('connected');
+      else { dot.classList.remove('connected'); if (status === 'CHANNEL_ERROR') dot.classList.add('error'); }
+    });
+}
+
+// ── 내가 방금 바꾼 row 캐시 (self-echo 무시용) ──
+// key: `table:id`, value: timestamp
+const _selfChanges = new Map();
+const SELF_ECHO_WINDOW_MS = 3000;  // 3초 내 돌아오는 내 변경은 무시
+
+function markSelfChange(table, id) {
+  if (!id) return;
+  _selfChanges.set(`${table}:${id}`, Date.now());
+  // 오래된 것 정리
+  for (const [k, t] of _selfChanges) {
+    if (Date.now() - t > SELF_ECHO_WINDOW_MS) _selfChanges.delete(k);
+  }
+}
+
+function isSelfEcho(table, id) {
+  if (!id) return false;
+  const t = _selfChanges.get(`${table}:${id}`);
+  if (!t) return false;
+  if (Date.now() - t > SELF_ECHO_WINDOW_MS) {
+    _selfChanges.delete(`${table}:${id}`);
+    return false;
+  }
+  return true;
+}
+
+// ── realtime 이벤트 처리 ──
+// UPDATE: 해당 row만 메모리에서 교체 → 렌더
+// INSERT/DELETE: 구조 변경이니 전체 재조회
+async function handleRealtimeChange(table, payload) {
+  const eventType = payload.eventType;
+  const newRow = payload.new;
+  const oldRow = payload.old;
+  // account_data는 owner가 PK 역할, 나머지는 id
+  const rowKey = table === 'account_data'
+    ? ((newRow && newRow.owner) || (oldRow && oldRow.owner))
+    : ((newRow && newRow.id) || (oldRow && oldRow.id));
+
+  if (isSelfEcho(table, rowKey)) return;
+
+  if (eventType === 'UPDATE' && newRow) {
+    applyRowUpdate(table, newRow);
+    scheduleLocalRerender();
+    return;
+  }
+
+  // INSERT/DELETE는 전체 재조회 (구조 변경)
+  await reloadTable(table);
+}
+
+// 메모리의 해당 row만 교체
+function applyRowUpdate(table, row) {
+  if (table === 'characters') {
+    const idx = allChars.findIndex(c => c.id === row.id);
+    if (idx >= 0) allChars[idx] = row;
+    else allChars.push(row);
+  } else if (table === 'account_data') {
+    accountData[row.owner] = row;
+  } else if (table === 'daily_tasks') {
+    dailyTasks[row.character_id] = row;
+  } else if (table === 'weekly_tasks') {
+    weeklyTasks[row.character_id] = row;
+  } else if (table === 'abyss_corridors') {
+    const idx = abyssCorridors.findIndex(c => c.id === row.id);
+    if (idx >= 0) abyssCorridors[idx] = row;
+    else abyssCorridors.push(row);
+  } else if (table === 'abyss_clears') {
+    abyssClears[`${row.corridor_id}_${row.character_id}`] = row;
+  } else if (table === 'expedition_supply') {
+    _expChecked.add(row.dungeon_key);
+  }
+}
+
+// 렌더 debounce (연속 이벤트 모아서 한 번만)
+let _rerenderTimer = null;
+function scheduleLocalRerender() {
+  if (_rerenderTimer) return;
+  _rerenderTimer = setTimeout(() => {
+    _rerenderTimer = null;
+    if (document.getElementById('overview').classList.contains('active')) {
+      renderOverview();
+    } else if (document.getElementById('expedition-page').classList.contains('active')) {
+      renderExpeditionPage();
+    } else if (currentCharId) {
+      const char = allChars.find(c => c.id === currentCharId);
+      if (char) renderDetail(char);
+    }
+  }, 50);
+}
+
+async function reloadTable(table) {
+  const today = getTodayKST();
+  const week = getWeekStart();
+  const warDate = getLastWarDate();
+
+  if (table === 'characters') {
+    const { data } = await sb.from('characters').select('*').order('owner').order('slot');
+    allChars = data || [];
+  } else if (table === 'account_data') {
+    const { data } = await sb.from('account_data').select('*');
+    accountData = {};
+    (data||[]).forEach(a => accountData[a.owner] = a);
+  } else if (table === 'daily_tasks') {
+    const { data } = await sb.from('daily_tasks').select('*').eq('task_date', today);
+    dailyTasks = {};
+    (data||[]).forEach(t => dailyTasks[t.character_id] = t);
+  } else if (table === 'weekly_tasks') {
+    const { data } = await sb.from('weekly_tasks').select('*').eq('week_start', week);
+    weeklyTasks = {};
+    (data||[]).forEach(t => weeklyTasks[t.character_id] = t);
+  } else if (table === 'abyss_corridors') {
+    const { data } = await sb.from('abyss_corridors').select('*').eq('war_date', warDate);
+    abyssCorridors = data || [];
+  } else if (table === 'abyss_clears') {
+    const { data } = await sb.from('abyss_clears').select('*, abyss_corridors(war_date)');
+    abyssClears = {};
+    (data||[]).forEach(c => { abyssClears[`${c.corridor_id}_${c.character_id}`] = c; });
+  } else if (table === 'expedition_supply') {
+    const { data } = await sb.from('expedition_supply').select('dungeon_key');
+    const newSet = new Set((data || []).map(r => r.dungeon_key));
+    // 파티 타겟이 더 이상 체크되지 않은 던전을 가리키면 정리
+    _expChecked = newSet;
+    for (const k of [..._expPartyTarget]) {
+      if (!newSet.has(k)) _expPartyTarget.delete(k);
+    }
+    // 타겟이 비었는데 체크된 게 있으면 첫 번째 자동 선택
+    if (_expPartyTarget.size === 0 && _expChecked.size > 0) {
+      _expPartyTarget.add([..._expChecked][0]);
+    }
+  }
+
+  // re-render current view
+  if (document.getElementById('overview').classList.contains('active')) {
+    renderOverview();
+  } else if (document.getElementById('expedition-page').classList.contains('active')) {
+    renderExpeditionPage();
+  } else if (currentCharId) {
+    const char = allChars.find(c => c.id === currentCharId);
+    if (char) renderDetail(char);
+  }
+}
+
+// ── ACTOR (누가 쓰는지) ──
+let currentActor = localStorage.getItem('aion2_actor') || null;
+
+let _pendingActor = null;
+
+function selectActorName(name) {
+  _pendingActor = name;
+  document.getElementById('actor-step1').style.display = 'none';
+  document.getElementById('actor-step2').style.display = 'block';
+  document.getElementById('actor-pin-title').textContent = name;
+  document.getElementById('actor-pin-input').value = '';
+  document.getElementById('actor-pin-error').textContent = '';
+  setTimeout(() => document.getElementById('actor-pin-input').focus(), 100);
+}
+
+function backToStep1() {
+  _pendingActor = null;
+  document.getElementById('actor-step2').style.display = 'none';
+  document.getElementById('actor-step1').style.display = 'block';
+}
+
+async function confirmPin() {
+  const input = document.getElementById('actor-pin-input').value.trim();
+  const acc = accountData[_pendingActor];
+  if (!acc) { document.getElementById('actor-pin-error').textContent = '계정 정보를 불러오는 중...'; return; }
+  if (input !== acc.pin) {
+    document.getElementById('actor-pin-error').textContent = '비밀번호가 틀렸어요';
+    document.getElementById('actor-pin-input').value = '';
+    return;
+  }
+  setActor(_pendingActor);
+}
+
+function setActor(name) {
+  currentActor = name;
+  localStorage.setItem('aion2_actor', name);
+  document.getElementById('user-modal-overlay').style.display = 'none';
+  document.getElementById('actor-step2').style.display = 'none';
+  document.getElementById('actor-step1').style.display = 'block';
+
+  // 손님이면 읽기전용 배너 표시 + 전체 편집 차단
+  const banner = document.getElementById('guest-banner');
+  if (banner) banner.style.display = name === 'guest' ? 'block' : 'none';
+  if (name === 'guest') {
+    document.body.classList.add('guest-mode');
+  } else {
+    document.body.classList.remove('guest-mode');
+  }
+}
+
+function checkActor() {
+  if (!currentActor) {
+    document.getElementById('user-modal-overlay').style.display = 'flex';
+    return false;
+  }
+  return true;
+}
+
+// ── ACTIVITY LOG ──
+async function writeLog(owner, characterName, action, charId=null, field=null) {
+  if (!checkActor()) return;
+  const gameDate = getTodayKST();
+  await sb.from('activity_log').insert({
+    game_date: gameDate,
+    actor: currentActor,
+    owner,
+    character_name: characterName,
+    action,
+    character_id: charId,
+    field,
+  });
+}
+
+async function deleteLog(charId, field) {
+  const gameDate = getTodayKST();
+  await sb.from('activity_log')
+    .delete()
+    .eq('character_id', charId)
+    .eq('field', field)
+    .eq('game_date', gameDate);
+}
+
+// ── 로그 × 버튼 삭제 (PIN 확인) ──
+let _logDeleteId = null;
+
+function openLogDeleteModal(logId) {
+  if (currentActor === 'guest') return;
+  _logDeleteId = logId;
+  document.getElementById('log-delete-pin').value = '';
+  document.getElementById('log-delete-error').textContent = '';
+  document.getElementById('log-delete-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('log-delete-pin').focus(), 100);
+}
+
+function closeLogDeleteModal() {
+  _logDeleteId = null;
+  document.getElementById('log-delete-overlay').style.display = 'none';
+}
+
+async function confirmLogDelete() {
+  if (!_logDeleteId) return;
+  const pin = document.getElementById('log-delete-pin').value.trim();
+  const errEl = document.getElementById('log-delete-error');
+
+  if (pin.length !== 4) {
+    errEl.textContent = '4자리를 입력해주세요';
+    return;
+  }
+
+  // 본인(currentActor) PIN 확인 — account_data.pin
+  const acc = accountData[currentActor];
+  if (!acc) {
+    errEl.textContent = '계정 정보 로딩 중...';
+    return;
+  }
+  if (pin !== acc.pin) {
+    errEl.textContent = '비밀번호가 틀려요';
+    document.getElementById('log-delete-pin').value = '';
+    return;
+  }
+
+  // 삭제
+  const { error } = await sb.from('activity_log').delete().eq('id', _logDeleteId);
+  if (error) {
+    errEl.textContent = '삭제 실패';
+    console.error(error);
+    return;
+  }
+
+  closeLogDeleteModal();
+  showToast('로그 삭제됨');
+  renderLogPage();
+}
+
+// 로그 페이지 날짜 상태
+let logCurrentDate = null;
+
+async function renderLogPage() {
+  logCurrentDate = logCurrentDate || getTodayKST();
+  const el = document.getElementById('log-content');
+
+  const { data: logs } = await sb.from('activity_log')
+    .select('*')
+    .eq('game_date', logCurrentDate)
+    .order('created_at', { ascending: false });
+
+  const dateLabel = formatLogDate(logCurrentDate);
+  const today = getTodayKST();
+  const isToday = logCurrentDate === today;
+
+  // 이전/다음 날짜 계산
+  const prev = offsetDate(logCurrentDate, -1);
+  const next = offsetDate(logCurrentDate, 1);
+  const hasNext = logCurrentDate < today;
+
+  let html = `
+    <div class="log-nav">
+      <button class="log-nav-btn" onclick="changeLogDate('${prev}')">◀ 전날</button>
+      <div class="log-nav-date">${dateLabel}${isToday ? ' <span style="font-size:0.72rem;color:var(--sage)">오늘</span>' : ''}</div>
+      <button class="log-nav-btn" onclick="changeLogDate('${next}')" ${hasNext?'':'disabled'}>다음날 ▶</button>
+    </div>`;
+
+  if (!logs || logs.length === 0) {
+    html += `<div style="text-align:center;padding:40px 0;font-size:0.85rem;color:var(--text-sub)">이 날의 활동 기록이 없어요</div>`;
+  } else {
+    logs.forEach(log => {
+      const time = formatLogTime(log.created_at);
+      const actorDisplay = log.actor === '설냥' ? '냥이' : '츄츄';
+      const actorClass = log.actor === '설냥' ? 'log-actor-냥이' : 'log-actor-츄츄';
+      const ownerClass = log.owner === '설냥' ? 'log-owner-설냥' : 'log-owner-츄츄';
+      const delBtn = currentActor === 'guest' ? '' :
+        `<button class="log-delete-btn" onclick="openLogDeleteModal('${log.id}')" title="삭제">×</button>`;
+
+      let textHtml;
+      // 오드 일괄 적용 로그 - 전용 포맷 + 클릭 가능
+      if (log.field === 'odd_batch' && log.meta && log.meta.type === 'odd_batch') {
+        textHtml = `<span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerClass}">[${log.owner}]</span> 계정의 <span class="log-odd-batch-link" onclick="openOddBatchDetailModal('${log.id}')">오드를 일괄 적용했습니다</span>`;
+      } else {
+        textHtml = `<span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerClass}">[${log.owner}]</span> 계정의 <span class="log-char">[${log.character_name || '계정'}]</span><span class="log-action-done"> ${log.action}</span>`;
+      }
+
+      html += `<div class="log-card">
+        <div class="log-card-text">${textHtml}</div>
+        <div class="log-time">${time}</div>
+        ${delBtn}
+      </div>`;
+    });
+  }
+
+  el.innerHTML = html;
+}
+
+function changeLogDate(date) {
+  logCurrentDate = date;
+  renderLogPage();
+}
+
+function offsetDate(dateStr, days) {
+  const d = new Date(dateStr + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function formatLogDate(dateStr) {
+  const days = ['일','월','화','수','목','금','토'];
+  const d = new Date(dateStr + 'T12:00:00Z');
+  const m = d.getUTCMonth() + 1;
+  const day = d.getUTCDate();
+  const wd = days[d.getUTCDay()];
+  return `${m}월 ${day}일 (${wd})`;
+}
+
+function formatLogTime(isoStr) {
+  const d = new Date(isoStr);
+  const kst = new Date(d.getTime() + 9*3600*1000);
+  const mo = kst.getUTCMonth() + 1;
+  const day = kst.getUTCDate();
+  const h = kst.getUTCHours();
+  const m = kst.getUTCMinutes();
+  return `${mo}월 ${day}일 ${h}시 ${m}분`;
+}
+
+// ── ODD ENERGY ESTIMATE ──
+let _oddTimers = {};
+
+function formatKST(isoStr) {
+  const d = new Date(isoStr);
+  const kst = new Date(d.getTime() + 9*3600*1000);
+  const m = kst.getUTCMonth()+1;
+  const day = kst.getUTCDate();
+  const h = String(kst.getUTCHours()).padStart(2,'0');
+  const min = String(kst.getUTCMinutes()).padStart(2,'0');
+  return `${m}/${day} ${h}:${min}`;
+}
+
+// KST 05:00 기준 충전 스케줄 - 3시간마다
+// 05:00, 08:00, 11:00, 14:00, 17:00, 20:00, 23:00, 02:00
+function calcOddEstimate(charId) {
+  const char = allChars.find(c => c.id === charId);
+  if (!char || !char.odd_recorded_at) return null;
+
+  const recorded = new Date(char.odd_recorded_at);
+  const now = new Date();
+  const baseVal = char.odd_energy_base || 0;
+
+  // KST 기준 충전 시각: 02,05,08,11,14,17,20,23시
+  const chargeHoursKST = [2,5,8,11,14,17,20,23];
+
+  // 기록 시각의 KST 날짜부터 오늘까지 각 충전 시각이 몇 번 지났는지
+  const recKST = new Date(recorded.getTime() + 9*3600*1000);
+  const nowKST = new Date(now.getTime() + 9*3600*1000);
+  const startDay = new Date(Date.UTC(recKST.getUTCFullYear(), recKST.getUTCMonth(), recKST.getUTCDate()));
+  const endDay = new Date(Date.UTC(nowKST.getUTCFullYear(), nowKST.getUTCMonth(), nowKST.getUTCDate()));
+
+  let count = 0;
+  for (let d = new Date(startDay); d <= endDay; d.setUTCDate(d.getUTCDate() + 1)) {
+    for (const h of chargeHoursKST) {
+      const chargeUTC = new Date(d.getTime() + (h - 9) * 3600 * 1000);
+      if (chargeUTC > recorded && chargeUTC <= now) count++;
+    }
+  }
+
+  return Math.min(840, baseVal + count * 15);
+}
+
+function updateOddEstimateUI(charId) {
+  const estimated = calcOddEstimate(charId);
+  if (estimated === null) return;
+  const el = document.getElementById(`odd-estimate-${charId}`);
+  if (el) el.textContent = estimated;
+}
+
+function getNextChargeMs() {
+  // 다음 충전 시각까지 남은 ms
+  // KST 05시 기준 3시간마다: 05,08,11,14,17,20,23,02
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9*3600*1000);
+  const h = kst.getUTCHours();
+  const m = kst.getUTCMinutes();
+  const s = kst.getUTCSeconds();
+  const ms = kst.getUTCMilliseconds();
+  // 05:00 기준으로 몇 분 지났는지
+  const minutesSince5 = ((h - 5 + 24) % 24) * 60 + m;
+  const minutesInCycle = minutesSince5 % 180; // 3시간 = 180분
+  const minutesLeft = 180 - minutesInCycle;
+  return (minutesLeft * 60 - s) * 1000 - ms;
+}
+
+function startOddTimer(charId) {
+  if (_oddTimers[charId]) clearTimeout(_oddTimers[charId]);
+  updateOddEstimateUI(charId);
+
+  function scheduleNext() {
+    const delay = getNextChargeMs();
+    _oddTimers[charId] = setTimeout(() => {
+      updateOddEstimateUI(charId);
+      scheduleNext(); // 다음 충전 시각 예약
+    }, delay);
+  }
+  scheduleNext();
+}
+
+async function recordOddNow(charId) {
+  if (currentActor === 'guest') return;
+
+  const now = new Date().toISOString();
+  markSelfChange('characters', charId);
+  const { error } = await sb.from('characters').update({odd_recorded_at: now}).eq('id', charId);
+  if (error) { showToast('저장 실패'); return; }
+  const char = allChars.find(c => c.id === charId);
+  if (char) char.odd_recorded_at = now;
+  // UI 갱신
+  const recEl = document.getElementById(`odd-recorded-${charId}`);
+  if (recEl) recEl.textContent = formatKST(now) + ' 기록 기준';
+  startOddTimer(charId);
+  showToast('기록 완료!');
+}
+
+async function applyOddEstimate(charId) {
+  if (currentActor === 'guest') return;
+
+  const estimated = calcOddEstimate(charId);
+  if (estimated === null) return;
+  // 기본량 입력칸에 적용
+  const inputEl = document.getElementById(`nv-${charId}-odd_energy_base`);
+  if (inputEl) inputEl.value = estimated;
+  // 저장
+  const now = new Date().toISOString();
+  markSelfChange('characters', charId);
+  const { error } = await sb.from('characters')
+    .update({ odd_energy_base: estimated, odd_recorded_at: now })
+    .eq('id', charId);
+  if (error) { showToast('저장 실패'); return; }
+  const char = allChars.find(c => c.id === charId);
+  if (char) { char.odd_energy_base = estimated; char.odd_recorded_at = now; }
+  const recEl = document.getElementById(`odd-recorded-${charId}`);
+  if (recEl) recEl.textContent = formatKST(now) + ' 기록 기준';
+  startOddTimer(charId);
+  renderOverview();
+  showToast(`오드 ${estimated} 적용!`);
+}
+
+// ═══════════════════════════════════════════════
+// 오드 일괄 적용
+// ═══════════════════════════════════════════════
+let _oddBatchOwner = null;
+let _oddBatchPlan = null;  // [{ charId, name, before, after, hasRecord }]
+
+function openOddBatchModal(owner) {
+  if (currentActor === 'guest') return;
+  _oddBatchOwner = owner;
+
+  // 해당 owner 캐릭 전원 대상 (휴식 포함, slot 순)
+  const chars = allChars
+    .filter(c => c.owner === owner && c.name)
+    .sort((a, b) => (a.slot || 0) - (b.slot || 0));
+
+  _oddBatchPlan = chars.map(c => {
+    const before = c.odd_energy_base || 0;
+    const hasRecord = !!c.odd_recorded_at;
+    const estimated = hasRecord ? calcOddEstimate(c.id) : null;
+    return {
+      charId: c.id,
+      name: c.name,
+      before,
+      after: estimated !== null ? estimated : before,
+      hasRecord,
+    };
+  });
+
+  document.getElementById('odd-batch-title').textContent = `${owner} 오드 일괄 적용`;
+
+  const rows = _oddBatchPlan.map(p => {
+    if (!p.hasRecord) {
+      return `<div style="display:grid;grid-template-columns:1fr auto;gap:8px;padding:6px 8px;border-radius:6px;font-size:0.8rem;align-items:center">
+        <span style="color:var(--text)">${p.name}</span>
+        <span style="color:var(--text-sub);font-size:0.72rem">기록 필요</span>
+      </div>
+      <div style="padding:0 8px 6px;font-size:0.66rem;color:#b85050">${p.name} 상세페이지에서 기록을 1회 눌러주신 후 가능해요</div>`;
+    }
+    const changed = p.after !== p.before;
+    const diff = p.after - p.before;
+    const afterColor = changed ? '#5a7a42' : 'var(--text-sub)';
+    const diffText = diff > 0 ? `(+${diff})` : diff < 0 ? `(${diff})` : '';
+    const diffColor = diff > 0 ? '#5a7a42' : diff < 0 ? '#b85050' : 'transparent';
+    return `<div style="display:grid;grid-template-columns:1fr auto auto auto 40px;gap:8px;padding:6px 8px;border-radius:6px;font-size:0.8rem;align-items:center">
+      <span style="color:var(--text)">${p.name}</span>
+      <span style="color:var(--text-sub);font-variant-numeric:tabular-nums">${p.before}</span>
+      <span style="color:var(--text-sub);font-size:0.72rem">→</span>
+      <span style="color:${afterColor};font-variant-numeric:tabular-nums">${p.after}</span>
+      <span style="color:${diffColor};font-size:0.7rem;font-variant-numeric:tabular-nums;text-align:right">${diffText}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('odd-batch-body').innerHTML = rows || `<div style="text-align:center;padding:20px;color:var(--text-sub);font-size:0.8rem">적용할 캐릭이 없어요</div>`;
+
+  // 기록이 하나도 없으면 확인 버튼 비활성화
+  const anyApplicable = _oddBatchPlan.some(p => p.hasRecord);
+  const confirmBtn = document.getElementById('odd-batch-confirm');
+  confirmBtn.disabled = !anyApplicable;
+  confirmBtn.style.opacity = anyApplicable ? '1' : '0.4';
+  confirmBtn.style.cursor = anyApplicable ? 'pointer' : 'not-allowed';
+
+  document.getElementById('odd-batch-overlay').style.display = 'flex';
+}
+
+function closeOddBatchModal() {
+  _oddBatchOwner = null;
+  _oddBatchPlan = null;
+  document.getElementById('odd-batch-overlay').style.display = 'none';
+}
+
+async function confirmOddBatchApply() {
+  if (currentActor === 'guest') return;
+  if (!_oddBatchOwner || !_oddBatchPlan) return;
+
+  const owner = _oddBatchOwner;
+  const plan = _oddBatchPlan;
+  const applicable = plan.filter(p => p.hasRecord);
+  if (applicable.length === 0) return;
+
+  const now = new Date().toISOString();
+
+  // 각 캐릭 업데이트 (병렬)
+  applicable.forEach(p => markSelfChange('characters', p.charId));
+  const updates = applicable.map(p =>
+    sb.from('characters')
+      .update({ odd_energy_base: p.after, odd_recorded_at: now })
+      .eq('id', p.charId)
+  );
+  const results = await Promise.all(updates);
+  const anyError = results.some(r => r.error);
+  if (anyError) {
+    showToast('일부 저장 실패');
+    console.error(results.filter(r => r.error));
+    return;
+  }
+
+  // 로컬 상태 업데이트
+  applicable.forEach(p => {
+    const c = allChars.find(c => c.id === p.charId);
+    if (c) {
+      c.odd_energy_base = p.after;
+      c.odd_recorded_at = now;
+    }
+  });
+
+  // 로그 기록 — meta에 전체 plan (기록없는 캐릭 포함) 저장
+  // 기록없는 캐릭도 포함해서 저장해야 나중에 상세보기에서 전체 목록 확인 가능
+  await sb.from('activity_log').insert({
+    game_date: getTodayKST(),
+    actor: currentActor,
+    owner,
+    character_name: null,
+    action: '오드 일괄 적용',
+    character_id: null,
+    field: 'odd_batch',
+    meta: {
+      type: 'odd_batch',
+      applied_at: now,
+      changes: plan.map(p => ({
+        name: p.name,
+        before: p.before,
+        after: p.after,
+        hasRecord: p.hasRecord,
+      })),
+    },
+  });
+
+  closeOddBatchModal();
+  showToast(`${owner} 오드 일괄 적용 완료`);
+  renderOverview();
+}
+
+// ── 로그에서 "오드 일괄 적용" 링크 클릭 시 상세보기 ──
+function openOddBatchDetailModal(logId) {
+  // activity_log에서 meta 가져와서 표시
+  (async () => {
+    const { data, error } = await sb.from('activity_log')
+      .select('*')
+      .eq('id', logId)
+      .single();
+    if (error || !data || !data.meta) {
+      showToast('로그 데이터를 찾을 수 없어요');
+      return;
+    }
+    const meta = data.meta;
+    const changes = meta.changes || [];
+
+    const dateStr = data.created_at ? formatKST(data.created_at) : '';
+    document.getElementById('odd-batch-detail-meta').textContent = `${data.owner} · ${dateStr}`;
+
+    const rows = changes.map(c => {
+      if (!c.hasRecord) {
+        return `<div style="display:grid;grid-template-columns:1fr auto;gap:8px;padding:6px 8px;font-size:0.8rem;align-items:center">
+          <span style="color:var(--text)">${c.name}</span>
+          <span style="color:var(--text-sub);font-size:0.72rem">기록 없음 (미적용)</span>
+        </div>`;
+      }
+      const changed = c.after !== c.before;
+      const diff = c.after - c.before;
+      const afterColor = changed ? '#5a7a42' : 'var(--text-sub)';
+      const diffText = diff > 0 ? `(+${diff})` : diff < 0 ? `(${diff})` : '';
+      const diffColor = diff > 0 ? '#5a7a42' : diff < 0 ? '#b85050' : 'transparent';
+      return `<div style="display:grid;grid-template-columns:1fr auto auto auto 40px;gap:8px;padding:6px 8px;font-size:0.8rem;align-items:center">
+        <span style="color:var(--text)">${c.name}</span>
+        <span style="color:var(--text-sub);font-variant-numeric:tabular-nums">${c.before}</span>
+        <span style="color:var(--text-sub);font-size:0.72rem">→</span>
+        <span style="color:${afterColor};font-variant-numeric:tabular-nums">${c.after}</span>
+        <span style="color:${diffColor};font-size:0.7rem;font-variant-numeric:tabular-nums;text-align:right">${diffText}</span>
+      </div>`;
+    }).join('');
+
+    document.getElementById('odd-batch-detail-body').innerHTML = rows;
+    document.getElementById('odd-batch-detail-overlay').style.display = 'flex';
+  })();
+}
+
+function closeOddBatchDetailModal() {
+  document.getElementById('odd-batch-detail-overlay').style.display = 'none';
+}
+
+// ── DRAG AND DROP ──
+let _dragCharId = null;
+let _dragOwner = null;
+let _dragSlot = null;
+
+function dragStart(e, charId, owner, slot) {
+  _dragCharId = charId;
+  _dragOwner = owner;
+  _dragSlot = slot;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function dragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+
+function dragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+}
+
+async function dropChar(e, targetOwner, targetSlot) {
+  if (currentActor === 'guest') return;
+
+  e.preventDefault();
+  document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+  if (!_dragCharId || _dragOwner !== targetOwner) return; // 다른 계정끼리 이동 불가
+  if (_dragSlot === targetSlot) return; // 같은 자리
+
+  // 대상 슬롯에 캐릭터가 있는지 확인
+  const targetChar = allChars.find(c => c.owner === targetOwner && c.slot === targetSlot);
+
+  if (targetChar) {
+    // 두 캐릭터 슬롯 교환
+    markSelfChange('characters', _dragCharId);
+    markSelfChange('characters', targetChar.id);
+    await Promise.all([
+      sb.from('characters').update({slot: targetSlot}).eq('id', _dragCharId),
+      sb.from('characters').update({slot: _dragSlot}).eq('id', targetChar.id),
+    ]);
+    const dragChar = allChars.find(c => c.id === _dragCharId);
+    if (dragChar) dragChar.slot = targetSlot;
+    targetChar.slot = _dragSlot;
+  } else {
+    // 빈 슬롯으로 이동
+    markSelfChange('characters', _dragCharId);
+    await sb.from('characters').update({slot: targetSlot}).eq('id', _dragCharId);
+    const dragChar = allChars.find(c => c.id === _dragCharId);
+    if (dragChar) dragChar.slot = targetSlot;
+  }
+
+  _dragCharId = null;
+  _dragOwner = null;
+  _dragSlot = null;
+
+  renderOverview();
+}
+
+// ── START ──
+init();
+
+// ── 5초마다 백업 sync (realtime 이벤트 놓친 경우 보정) ──
+// 탭이 화면에 보일 때만 돌림
+let _backupSyncTimer = null;
+async function backupSyncTick() {
+  if (document.visibilityState !== 'visible') return;
+  if (currentActor === 'guest' && !allChars.length) return;
+  // 가벼운 전체 재조회 — 캐릭/계정/오늘자 일일/주간
+  const today = getTodayKST();
+  const week = getWeekStart();
+  const warDate = getLastWarDate();
+  try {
+    const [chars, accs, dailies, weeklies, corridors, clears] = await Promise.all([
+      sb.from('characters').select('*').order('owner').order('slot'),
+      sb.from('account_data').select('*'),
+      sb.from('daily_tasks').select('*').eq('task_date', today),
+      sb.from('weekly_tasks').select('*').eq('week_start', week),
+      sb.from('abyss_corridors').select('*').eq('war_date', warDate),
+      sb.from('abyss_clears').select('*'),
+    ]);
+    if (chars.data) allChars = chars.data;
+    if (accs.data) { accountData = {}; accs.data.forEach(a => accountData[a.owner] = a); }
+    if (dailies.data) { dailyTasks = {}; dailies.data.forEach(t => dailyTasks[t.character_id] = t); }
+    if (weeklies.data) { weeklyTasks = {}; weeklies.data.forEach(t => weeklyTasks[t.character_id] = t); }
+    if (corridors.data) abyssCorridors = corridors.data;
+    if (clears.data) { abyssClears = {}; clears.data.forEach(c => { abyssClears[`${c.corridor_id}_${c.character_id}`] = c; }); }
+    scheduleLocalRerender();
+  } catch (e) {
+    console.warn('backup sync failed', e);
+  }
+}
+function startBackupSync() {
+  if (_backupSyncTimer) return;
+  _backupSyncTimer = setInterval(backupSyncTick, 5000);
+}
+function stopBackupSync() {
+  if (_backupSyncTimer) {
+    clearInterval(_backupSyncTimer);
+    _backupSyncTimer = null;
+  }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    startBackupSync();
+    // 탭 돌아오면 즉시 한 번
+    backupSyncTick();
+  } else {
+    stopBackupSync();
+  }
+});
+if (document.visibilityState === 'visible') startBackupSync();
+
+// actor 미설정 시 모달 표시
+if (!currentActor) {
+  document.getElementById('user-modal-overlay').style.display = 'flex';
+} else if (currentActor === 'guest') {
+  const banner = document.getElementById('guest-banner');
+  if (banner) banner.style.display = 'block';
+  document.body.classList.add('guest-mode');
+}
+
+// 카운트다운 1분마다 갱신
+setInterval(() => {
+  const el = document.getElementById('abyss-countdown');
+  if (!el) return;
+  const { text, urgent } = getCountdown();
+  el.textContent = `다음 전쟁까지 ${text}`;
+  el.style.color = urgent ? '#b85050' : 'var(--text-sub)';
+}, 60000);
+
+// ═══════════════════════════════════════════════════════════════
+// EXPEDITION TAB
+// ═══════════════════════════════════════════════════════════════
+const EXP_DUNGEONS = [
+  { name: '크라오동굴',           explo: 200,  normal: 1000, hard: 2400, star: 1 },
+  { name: '드라웁니르',           explo: 900,  normal: 1000, hard: 2400, star: 1 },
+  { name: '우루구구 협곡',        explo: 350,  normal: 1600, hard: 2500, star: 2 },
+  { name: '바크론의 공중섬',      explo: 1600, normal: 1600, hard: 2500, star: 2 },
+  { name: '불의 신전',            explo: 600,  normal: 2200, hard: 2600, star: 3 },
+  { name: '사나운 뿔 암굴',       explo: 2200, normal: 2200, hard: 2600, star: 3 },
+  { name: '죽은 드라마타의 둥지', explo: 2800, normal: 2800, hard: 3000, star: 4 },
+  { name: '무의 요람',            explo: 2800, normal: 2800, hard: 3000, star: 4 },
+  { name: '환영의 회랑',          explo: 3000, normal: 3000, hard: 3500, star: 5 },
+];
+
+// STATE — 체크 상태는 Supabase expedition_supply 테이블에서 실시간 동기화
+let _expChecked = new Set();          // 체크된 던전 키들 ('name::mode::ilvl')
+let _expPartyTarget = new Set();      // 파티 찾기용 선택된 던전 (로컬, 공유 안 함)
+let _expParty = 'both';
+let _expExcluded = new Set();         // 세션 범위(저장 안 함)
+let _expResultExpanded = true;
+let _expSortMode = 'odd';             // 'odd' | 'cp'
+let _expSupplyExpanded = null;        // 첫 렌더 때 체크 유무로 자동 결정
+
+function expKey(name, mode, ilvl) { return `${name}::${mode}::${ilvl}`; }
+function expParseKey(key) {
+  const [name, mode, ilvlStr] = key.split('::');
+  return { name, mode, ilvl: parseInt(ilvlStr) };
+}
+
+// 오드 4단계
+function expOddLevel(odd) {
+  if (odd <= 0)  return 'empty';
+  if (odd < 420) return 'low';
+  if (odd < 780) return 'mid';
+  return 'full';
+}
+function expOddColor(odd) {
+  return { empty:'var(--odd-empty)', low:'var(--odd-low)',
+           mid:'var(--odd-mid)', full:'var(--odd-full)' }[expOddLevel(odd)];
+}
+// "예상 기본 오드" 가져오기 — calcOddEstimate 있으면 사용, 없으면 base
+function expCurrentOdd(char) {
+  const est = (typeof calcOddEstimate === 'function') ? calcOddEstimate(char.id) : null;
+  if (est !== null && est !== undefined) return est;
+  return char.odd_energy_base || 0;
+}
+
+// 파티 타겟의 최대 템레벨 (AND 조건 - 다중 선택 시 모두 가능한 캐릭)
+function expRequiredIlvl() {
+  if (_expPartyTarget.size === 0) return null;
+  let max = 0;
+  for (const key of _expPartyTarget) {
+    const { ilvl } = expParseKey(key);
+    if (ilvl > max) max = ilvl;
+  }
+  return max;
+}
+
+// EVENTS
+async function expToggleCell(name, mode, ilvl) {
+  if (currentActor === 'guest') return;
+  const key = expKey(name, mode, ilvl);
+  const wasChecked = _expChecked.has(key);
+
+  // 낙관적 로컬 업데이트 (반응성)
+  if (wasChecked) {
+    _expChecked.delete(key);
+    _expPartyTarget.delete(key);
+    if (_expPartyTarget.size === 0 && _expChecked.size > 0) {
+      _expPartyTarget.add([..._expChecked][0]);
+    }
+  } else {
+    _expChecked.add(key);
+    if (_expPartyTarget.size === 0) {
+      _expPartyTarget.add(key);
+    }
+  }
+  renderExpeditionPage();
+
+  // DB 반영 (realtime으로 다른 사용자에게 전파됨)
+  let error;
+  if (wasChecked) {
+    ({ error } = await sb.from('expedition_supply').delete().eq('dungeon_key', key));
+  } else {
+    ({ error } = await sb.from('expedition_supply').insert({
+      dungeon_key: key,
+      checked_by: currentActor || null,
+    }));
+  }
+
+  if (error) {
+    showToast('저장 실패 😢');
+    console.error(error);
+    // 원복
+    if (wasChecked) _expChecked.add(key);
+    else _expChecked.delete(key);
+    renderExpeditionPage();
+  }
+}
+
+async function expClearAll() {
+  if (currentActor === 'guest') return;
+  if (_expChecked.size === 0) return;
+  if (!confirm('체크한 던전을 모두 해제할까요?')) return;
+
+  const prev = new Set(_expChecked);
+  _expChecked.clear();
+  _expPartyTarget.clear();
+  renderExpeditionPage();
+
+  const { error } = await sb.from('expedition_supply').delete().neq('dungeon_key', '');
+  if (error) {
+    showToast('초기화 실패');
+    console.error(error);
+    _expChecked = prev;
+    renderExpeditionPage();
+  }
+}
+function expTogglePartyTarget(key) {
+  // 단일 선택: 같은 pill 다시 탭하면 해제, 다른 pill 탭하면 전환
+  if (_expPartyTarget.has(key)) {
+    _expPartyTarget.delete(key);
+  } else {
+    _expPartyTarget.clear();
+    _expPartyTarget.add(key);
+  }
+  renderExpeditionPage();
+}
+function expSetParty(party) {
+  _expParty = party;
+  renderExpeditionPage();
+}
+function expSetSortMode(mode) {
+  _expSortMode = mode;
+  renderExpeditionPage();
+}
+function expToggleSupply() {
+  _expSupplyExpanded = !_expSupplyExpanded;
+  renderExpeditionPage();
+}
+function expToggleExclude(charId) {
+  if (_expExcluded.has(charId)) _expExcluded.delete(charId);
+  else _expExcluded.add(charId);
+  renderExpeditionPage();
+}
+function expToggleResults() {
+  _expResultExpanded = !_expResultExpanded;
+  const wrap = document.querySelector('.exp-result-wrap');
+  const chevron = document.querySelector('.exp-result-chevron');
+  if (wrap) wrap.classList.toggle('collapsed', !_expResultExpanded);
+  if (chevron) chevron.classList.toggle('collapsed', !_expResultExpanded);
+}
+
+// RENDER
+function renderExpeditionPage() {
+  const el = document.getElementById('expedition-content');
+  if (!el) return;
+  if (typeof allChars === 'undefined' || !Array.isArray(allChars)) {
+    el.innerHTML = `<div class="loading"><div class="spinner"></div> 불러오는 중...</div>`;
+    return;
+  }
+
+  // 접힘 상태 초기화 (첫 렌더 시에만)
+  if (_expSupplyExpanded === null) {
+    _expSupplyExpanded = (_expChecked.size === 0);
+  }
+
+  // ── 1) Supply board ──
+  const modes = [
+    { key: 'explo',  label: '탐험',       dotCls: 'explo',  column: 'explo'  },
+    { key: 'normal', label: '정복 · 보통', dotCls: 'normal', column: 'normal' },
+    { key: 'hard',   label: '정복 · 어려움', dotCls: 'hard',   column: 'hard'   },
+  ];
+
+  const headerHtml = `
+    <div class="exp-supply-legend">
+      <div class="exp-supply-legend-group">
+        ${modes.map(m => `
+          <div class="exp-supply-legend-item">
+            <div class="exp-supply-legend-dot" style="background:${m.dotCls==='explo'?'var(--sky)':m.dotCls==='normal'?'var(--sage)':'var(--odd-full)'}"></div>
+            ${m.label}
+          </div>
+        `).join('')}
+      </div>
+      <span>${_expChecked.size > 0 ? `<strong style="color:var(--peach)">${_expChecked.size}개</strong> 선택` : '체크해 두세요'}</span>
+    </div>
+  `;
+
+  let tableHtml = `<div class="exp-supply-table">`;
+  tableHtml += `<div class="exp-supply-col-head">던전</div>`;
+  tableHtml += `<div class="exp-supply-col-head"><span class="exp-supply-col-head-dot explo"></span>탐험</div>`;
+  tableHtml += `<div class="exp-supply-col-head"><span class="exp-supply-col-head-dot normal"></span>보통</div>`;
+  tableHtml += `<div class="exp-supply-col-head"><span class="exp-supply-col-head-dot hard"></span>어려움</div>`;
+
+  EXP_DUNGEONS.forEach(d => {
+    tableHtml += `
+      <div class="exp-supply-row-name">
+        <span class="exp-supply-row-stars">${d.star}★</span>
+        <span class="exp-supply-row-text">${d.name}</span>
+      </div>
+    `;
+    modes.forEach(m => {
+      const ilvl = d[m.column];
+      const key = expKey(d.name, m.key, ilvl);
+      const checked = _expChecked.has(key);
+      tableHtml += `
+        <div class="exp-supply-cell ${checked ? 'checked' : ''}"
+             onclick="expToggleCell('${d.name.replace(/'/g,"\\'")}','${m.key}',${ilvl})">
+          ${checked ? '<span class="exp-supply-cell-check">✓</span>' : ''}
+          <span class="exp-supply-cell-ilvl">${ilvl}</span>
+        </div>
+      `;
+    });
+  });
+  tableHtml += `</div>`;
+
+  let selectedSummary = '';
+  if (_expChecked.size > 0) {
+    const items = [..._expChecked].map(k => {
+      const { name, mode, ilvl } = expParseKey(k);
+      const modeLabel = { explo: '탐험', normal: '보통', hard: '어려움' }[mode];
+      return `<strong>${name}</strong>·${modeLabel} <span style="opacity:0.7">${ilvl}</span>`;
+    }).join(' · ');
+    selectedSummary = `<div class="exp-supply-selected">오늘 갈 곳: ${items}</div>`;
+  }
+
+  const clearBtnHtml = `
+    <div style="display:flex;justify-content:flex-end;margin-top:8px">
+      <button class="exp-clear-btn" ${_expChecked.size === 0 ? 'disabled' : ''}
+              onclick="event.stopPropagation();expClearAll()">모두 해제</button>
+    </div>
+  `;
+
+  // 접힘 요약 (접혀있을 때만 표시)
+  let collapsedSummary = '';
+  if (!_expSupplyExpanded) {
+    if (_expChecked.size === 0) {
+      collapsedSummary = `<div class="exp-supply-collapsed-summary">체크된 던전 없음</div>`;
+    } else {
+      const items = [..._expChecked].map(k => {
+        const { name, mode, ilvl } = expParseKey(k);
+        const modeLabel = { explo: '탐험', normal: '보통', hard: '어려움' }[mode];
+        return `${name}·${modeLabel}`;
+      }).join(', ');
+      collapsedSummary = `<div class="exp-supply-collapsed-summary">${items}</div>`;
+    }
+  }
+
+  const titleBadge = _expChecked.size > 0
+    ? `<span class="exp-supply-count-badge">${_expChecked.size}</span>`
+    : '';
+
+  const supplyCard = `
+    <div class="exp-supply-card ${_expSupplyExpanded ? '' : 'collapsed'}">
+      <div class="exp-card-title exp-supply-header" onclick="expToggleSupply()">
+        <span class="exp-card-icon">📋</span>
+        <span>오늘 보급의뢰 던전</span>
+        ${titleBadge}
+        <span class="exp-supply-chevron ${!_expSupplyExpanded ? 'collapsed' : ''}">▼</span>
+      </div>
+      ${_expSupplyExpanded ? `
+        <div class="exp-card-body">
+          ${headerHtml}
+          ${tableHtml}
+          ${selectedSummary}
+          ${clearBtnHtml}
+        </div>
+      ` : collapsedSummary}
+    </div>
+  `;
+
+  // ── 2) Party finder ──
+  const reqIlvl = expRequiredIlvl();
+
+  const partyPillsHtml = `
+    <div class="exp-party-label">파티 구성</div>
+    <div class="exp-party-pills">
+      <button class="exp-party-pill ${_expParty === 'both' ? 'active' : ''}" onclick="expSetParty('both')"><span class="exp-party-pill-check">✓</span>둘다</button>
+      <button class="exp-party-pill ${_expParty === '설냥' ? 'active' : ''}" onclick="expSetParty('설냥')"><span class="exp-party-pill-check">✓</span>설냥혼자</button>
+      <button class="exp-party-pill ${_expParty === '츄츄' ? 'active' : ''}" onclick="expSetParty('츄츄')"><span class="exp-party-pill-check">✓</span>츄츄혼자</button>
+    </div>
+  `;
+
+  // 체크된 보급의뢰 던전들을 파티 찾기 pill로 표시 (단일 선택)
+  let targetPillsHtml = '';
+  if (_expChecked.size > 0) {
+    const checkedList = [..._expChecked].map(k => {
+      const { name, mode, ilvl } = expParseKey(k);
+      const modeLabel = { explo: '탐험', normal: '보통', hard: '어려움' }[mode];
+      const modeDotCls = { explo: 'explo', normal: 'normal', hard: 'hard' }[mode];
+      return { key: k, name, mode, ilvl, modeLabel, modeDotCls };
+    });
+    targetPillsHtml = `
+      <div class="exp-party-label">어느 던전으로 파티 찾기? <span style="opacity:0.6;font-size:0.66rem">· 하나 탭하세요</span></div>
+      <div class="exp-party-pills">
+        ${checkedList.map(t => `
+          <button class="exp-target-pill ${_expPartyTarget.has(t.key) ? 'active' : ''}"
+                  onclick="expTogglePartyTarget('${t.key}')">
+            <span class="exp-target-pill-check">✓</span>
+            <span class="exp-target-pill-dot ${t.modeDotCls}"></span>
+            ${t.name} <span class="exp-target-pill-mode">${t.modeLabel} ${t.ilvl}</span>
+          </button>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  let partyBodyHtml;
+  if (_expChecked.size === 0) {
+    partyBodyHtml = `
+      <div class="exp-party-empty-hint">위에서 오늘 갈 던전을 먼저 체크해 주세요</div>
+    `;
+  } else if (reqIlvl === null) {
+    partyBodyHtml = `
+      ${targetPillsHtml}
+      ${partyPillsHtml}
+      <div class="exp-party-empty-hint">위 던전 중 하나를 골라주세요</div>
+    `;
+  } else {
+    // 입장 가능한 캐릭 풀 (템레벨 충족)
+    const pool = allChars.filter(c => c.name && (c.item_level || 0) >= reqIlvl);
+
+    const sortFn = _expSortMode === 'cp'
+      ? (a, b) => {
+          const diff = (b.combat_power || 0) - (a.combat_power || 0);
+          return diff !== 0 ? diff : expCurrentOdd(b) - expCurrentOdd(a);
+        }
+      : (a, b) => {
+          const diff = expCurrentOdd(b) - expCurrentOdd(a);
+          return diff !== 0 ? diff : (b.combat_power || 0) - (a.combat_power || 0);
+        };
+
+    const sortPillsHtml = `
+      <div class="exp-party-label">정렬 기준</div>
+      <div class="exp-party-pills">
+        <button class="exp-party-pill ${_expSortMode === 'odd' ? 'active' : ''}" onclick="expSetSortMode('odd')">
+          <span class="exp-party-pill-check">✓</span>오드 많은 순
+        </button>
+        <button class="exp-party-pill ${_expSortMode === 'cp' ? 'active' : ''}" onclick="expSetSortMode('cp')">
+          <span class="exp-party-pill-check">✓</span>전투력 높은 순
+        </button>
+      </div>
+    `;
+
+    const reqInfo = (() => {
+      const targets = [..._expPartyTarget].map(k => {
+        const { name, mode, ilvl } = expParseKey(k);
+        const modeLabel = { explo: '탐험', normal: '보통', hard: '어려움' }[mode];
+        return `${name} · ${modeLabel} ${ilvl}`;
+      }).join(' + ');
+      return `
+        <div class="exp-party-req">
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0"><strong>${targets}</strong></span>
+          <span style="flex-shrink:0">필요 템 <strong>${reqIlvl}</strong>+</span>
+        </div>
+      `;
+    })();
+
+    if (pool.length === 0) {
+      partyBodyHtml = `
+        ${reqInfo}
+        ${targetPillsHtml}
+        ${partyPillsHtml}
+        ${sortPillsHtml}
+        <div class="exp-party-empty-hint">조건에 맞는 캐릭터가 없어요 🥲</div>
+      `;
+    } else {
+      let resultArea;
+      if (_expParty === 'both') {
+        // 쌍 추천 - 오우너별로 분리, 각각 오드 내림차순
+        const seolList = pool.filter(c => c.owner === '설냥').sort(sortFn);
+        const chuList  = pool.filter(c => c.owner === '츄츄').sort(sortFn);
+        const topSeol = seolList.find(c => !_expExcluded.has(c.id)) || null;
+        const topChu  = chuList.find(c => !_expExcluded.has(c.id)) || null;
+
+        const hasCandidates = (seolList.length > 1) || (chuList.length > 1);
+
+        resultArea = `
+          <div class="exp-recommend-title">
+            <span class="exp-recommend-medal">🥇</span>추천 파티 (오드 많은 순)
+          </div>
+          <div class="exp-recommend-row">
+            ${expRecommendCard(topSeol, '설냥')}
+            <div class="exp-recommend-plus">+</div>
+            ${expRecommendCard(topChu, '츄츄')}
+          </div>
+          ${hasCandidates ? `
+            <div class="exp-result-toggle" onclick="expToggleResults()">
+              <div class="exp-result-toggle-label">
+                <span>다른 후보</span>
+                <span class="exp-count-badge-ok">설냥 ${seolList.length} · 츄츄 ${chuList.length}</span>
+                ${_expExcluded.size > 0 ? `<span class="exp-count-badge-excl">제외 ${_expExcluded.size}</span>` : ''}
+              </div>
+              <span class="exp-result-chevron ${!_expResultExpanded ? 'collapsed' : ''}">▼</span>
+            </div>
+            <div class="exp-result-wrap ${!_expResultExpanded ? 'collapsed' : ''}">
+              <div class="exp-candidates-grid">
+                <div class="exp-candidates-col">
+                  <div class="exp-candidates-col-title">
+                    <span class="exp-candidates-col-dot" style="background:var(--owner-설냥)"></span>설냥 · ${seolList.length}명
+                  </div>
+                  ${seolList.length === 0
+                    ? `<div class="exp-candidates-col-empty">없음</div>`
+                    : seolList.map((c, i) => expCandidateItem(c, i, topSeol)).join('')}
+                </div>
+                <div class="exp-candidates-col">
+                  <div class="exp-candidates-col-title">
+                    <span class="exp-candidates-col-dot" style="background:var(--owner-츄츄)"></span>츄츄 · ${chuList.length}명
+                  </div>
+                  ${chuList.length === 0
+                    ? `<div class="exp-candidates-col-empty">없음</div>`
+                    : chuList.map((c, i) => expCandidateItem(c, i, topChu)).join('')}
+                </div>
+              </div>
+            </div>
+          ` : ''}
+        `;
+      } else {
+        // 단일 오우너 모드
+        const soloList = pool.filter(c => c.owner === _expParty).sort(sortFn);
+        const top = soloList.find(c => !_expExcluded.has(c.id)) || null;
+
+        if (soloList.length === 0) {
+          resultArea = `<div class="exp-party-empty-hint">${_expParty} 계정에 조건 맞는 캐릭이 없어요</div>`;
+        } else {
+          resultArea = `
+            <div class="exp-recommend-title">
+              <span class="exp-recommend-medal">🥇</span>추천 캐릭 (${_expParty})
+            </div>
+            <div class="exp-recommend-solo">
+              ${expRecommendCard(top, _expParty)}
+            </div>
+            ${soloList.length > 1 ? `
+              <div class="exp-result-toggle" onclick="expToggleResults()">
+                <div class="exp-result-toggle-label">
+                  <span>다른 후보</span>
+                  <span class="exp-count-badge-ok">${soloList.length}명</span>
+                  ${_expExcluded.size > 0 ? `<span class="exp-count-badge-excl">제외 ${_expExcluded.size}</span>` : ''}
+                </div>
+                <span class="exp-result-chevron ${!_expResultExpanded ? 'collapsed' : ''}">▼</span>
+              </div>
+              <div class="exp-result-wrap ${!_expResultExpanded ? 'collapsed' : ''}">
+                <div class="exp-candidates-col" style="max-width:60%;margin-top:6px">
+                  ${soloList.map((c, i) => expCandidateItem(c, i, top)).join('')}
+                </div>
+              </div>
+            ` : ''}
+          `;
+        }
+      }
+
+      partyBodyHtml = `
+        ${reqInfo}
+        ${targetPillsHtml}
+        ${partyPillsHtml}
+        ${sortPillsHtml}
+        ${resultArea}
+      `;
+    }
+  }
+
+  const partyCard = `
+    <div class="exp-party-card">
+      <div class="exp-card-title">
+        <span class="exp-card-icon sage">🎯</span>오늘 던전 찾기
+      </div>
+      <div class="exp-card-body">
+        ${partyBodyHtml}
+      </div>
+    </div>
+  `;
+
+  // ── Legend ──
+  const legend = `
+    <div class="exp-legend">
+      <div class="exp-legend-item"><div class="exp-legend-dot" style="background:var(--odd-empty)"></div>오드 0</div>
+      <div class="exp-legend-item"><div class="exp-legend-dot" style="background:var(--odd-low)"></div>낮음</div>
+      <div class="exp-legend-item"><div class="exp-legend-dot" style="background:var(--odd-mid)"></div>중간</div>
+      <div class="exp-legend-item"><div class="exp-legend-dot" style="background:var(--odd-full)"></div>가득 (빨리 써요)</div>
+      <div class="exp-legend-item"><div class="exp-legend-dot" style="background:var(--owner-설냥);border-radius:50%"></div>설냥</div>
+      <div class="exp-legend-item"><div class="exp-legend-dot" style="background:var(--owner-츄츄);border-radius:50%"></div>츄츄</div>
+    </div>
+  `;
+
+  el.innerHTML = supplyCard + partyCard + legend;
+}
+
+// ── 헬퍼: 추천 카드 1개 렌더 ──
+function expRecommendCard(c, ownerLabel) {
+  if (!c) {
+    return `<div class="exp-recommend-card empty">
+      ${ownerLabel} 가능 캐릭 없음
+    </div>`;
+  }
+  const odd = expCurrentOdd(c);
+  const pct = Math.min(100, (odd / 840) * 100);
+  const cp = c.combat_power || 0;
+  const cpText = (typeof formatCp === 'function') ? formatCp(cp) : cp;
+  return `
+    <div class="exp-recommend-card">
+      <div class="exp-recommend-card-strip" style="background:var(--owner-${c.owner})"></div>
+      <div class="exp-recommend-card-owner">
+        <span class="exp-recommend-card-owner-dot" style="background:var(--owner-${c.owner})"></span>${c.owner}
+      </div>
+      <div class="exp-recommend-card-name">${c.name}</div>
+      <div class="exp-recommend-card-stats">템 ${c.item_level||0} · ${cpText}</div>
+      <div class="exp-recommend-card-bar">
+        <div class="exp-recommend-card-bar-fill" style="width:${pct}%;background:${expOddColor(odd)}"></div>
+      </div>
+      <div class="exp-recommend-card-odd">
+        <span>오드</span>
+        <span><strong>${odd}</strong> / 840</span>
+      </div>
+    </div>
+  `;
+}
+
+// ── 헬퍼: 후보 아이템 1개 렌더 ──
+function expCandidateItem(c, idx, topChar) {
+  const excluded = _expExcluded.has(c.id);
+  const isTop = !excluded && topChar && c.id === topChar.id;
+  const odd = expCurrentOdd(c);
+  const pct = Math.min(100, (odd / 840) * 100);
+  const cp = c.combat_power || 0;
+  const cpText = (typeof formatCp === 'function') ? formatCp(cp) : cp;
+  return `
+    <div class="exp-candidate-item ${excluded ? 'excluded' : ''} ${isTop ? 'top' : ''}">
+      <div class="exp-candidate-rank">${idx + 1}</div>
+      <div class="exp-candidate-name">${c.name}</div>
+      <div class="exp-candidate-cp">${cpText}</div>
+      <div class="exp-candidate-bar">
+        <div class="exp-candidate-bar-fill" style="width:${pct}%;background:${expOddColor(odd)}"></div>
+      </div>
+      <div class="exp-candidate-odd">${odd}</div>
+      <button class="exp-candidate-exclude-btn ${excluded ? 'excluded' : ''}"
+              onclick="expToggleExclude('${c.id}')"
+              title="${excluded ? '다시 추가' : '추천에서 제외'}">
+        ${excluded ? '+' : '×'}
+      </button>
+    </div>
+  `;
+}
+</script>
+<!-- ── 계정 모달 ── -->
+<div id="acc-modal-overlay" style="
+  display:none;position:fixed;inset:0;z-index:200;
+  background:rgba(90,82,75,0.35);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:20px;
+" onclick="closeAccountModal()">
+  <div id="acc-modal" style="
+    background:var(--surface);border-radius:var(--radius);
+    border:1px solid var(--border);padding:20px;width:100%;max-width:320px;
+    box-shadow:0 12px 40px rgba(160,150,140,0.18);
+    animation:fadeUp 0.2s ease-out;
+  " onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:16px;position:relative">
+      <span id="acc-modal-title" style="font-size:0.95rem;color:var(--text)"></span>
+      <button onclick="closeAccountModal()" style="
+        position:absolute;right:0;
+        width:28px;height:28px;border-radius:50%;border:1px solid var(--border);
+        background:transparent;color:var(--text-sub);font-size:1rem;
+        cursor:pointer;display:flex;align-items:center;justify-content:center;
+        font-family:'Gowun Dodum',sans-serif;
+      ">×</button>
+    </div>
+    <div id="acc-modal-body"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     VERSION SWITCHER (v1.1)
+     ═══════════════════════════════════════════════════════════ -->
+<style>
+  #vsw-badge {
+    display: block;
+    margin-left: auto;
+    margin-right: 14px;
+    margin-bottom: 16px;
+    margin-top: 8px;
+    font-size: 0.72rem; color: var(--text-sub);
+    text-decoration: underline; text-underline-offset: 2px;
+    cursor: pointer;
+    font-family: 'Gowun Dodum', sans-serif;
+    background: transparent; border: none; padding: 0;
+    width: fit-content;
+  }
+  #vsw-badge:hover { color: var(--text); }
+  #vsw-overlay {
+    display: none; position: fixed; inset: 0; z-index: 400;
+    background: rgba(90,82,75,0.4); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  #vsw-overlay .vsw-card {
+    background: var(--surface); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 22px;
+    width: 100%; max-width: 340px; max-height: 80vh; overflow-y: auto;
+    box-shadow: 0 12px 40px rgba(160,150,140,0.18);
+  }
+  #vsw-overlay .vsw-title { text-align: center; font-size: 0.95rem; color: var(--text); margin-bottom: 4px; }
+  #vsw-overlay .vsw-sub { text-align: center; font-size: 0.72rem; color: var(--text-sub); margin-bottom: 16px; }
+  #vsw-overlay .vsw-pin-row { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; }
+  #vsw-overlay .vsw-pin {
+    flex: 1; padding: 8px 12px; font-size: 1rem; letter-spacing: 0.15em; text-align: center;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface2); font-family: 'Gowun Dodum', sans-serif;
+    -webkit-text-security: disc; text-security: disc;
+    color: var(--text); outline: none;
+  }
+  #vsw-overlay .vsw-err { font-size: 0.72rem; color: #b85050; min-height: 18px; text-align: center; margin-bottom: 12px; }
+  #vsw-overlay .vsw-list { display: none; flex-direction: column; gap: 6px; }
+  #vsw-overlay .vsw-item {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; cursor: pointer; background: var(--surface2);
+    transition: all 0.15s;
+  }
+  #vsw-overlay .vsw-item:hover { background: var(--hover); }
+  #vsw-overlay .vsw-item.current { opacity: 0.55; cursor: default; background: var(--surface); }
+  #vsw-overlay .vsw-item.current:hover { background: var(--surface); }
+  #vsw-overlay .vsw-item-head { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text); margin-bottom: 4px; }
+  #vsw-overlay .vsw-item-date { font-size: 0.68rem; color: var(--text-sub); }
+  #vsw-overlay .vsw-item-desc { font-size: 0.72rem; color: var(--text-sub); white-space: pre-line; line-height: 1.5; }
+  #vsw-overlay .vsw-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+  #vsw-overlay .vsw-btn {
+    padding: 6px 16px; border-radius: 20px; font-family: 'Gowun Dodum', sans-serif; font-size: 0.8rem;
+    border: 1px solid var(--border); background: transparent; color: var(--text-sub); cursor: pointer;
+  }
+  #vsw-overlay .vsw-btn.primary { background: var(--sage); color: white; border-color: var(--sage); }
+</style>
+
+<button id="vsw-badge" onclick="vswOpen()">v1.1</button>
+
+<div id="vsw-overlay" onclick="vswClose()">
+  <div class="vsw-card" onclick="event.stopPropagation()">
+    <div class="vsw-title">버전 전환</div>
+    <div class="vsw-sub">다른 버전으로 이동하려면 비밀번호 입력</div>
+    <div class="vsw-pin-row">
+      <input id="vsw-pin-input" class="vsw-pin" type="text" inputmode="numeric" maxlength="8"
+        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+        placeholder="••••••••"
+        onkeydown="if(event.key==='Enter') vswCheckPin()">
+      <button class="vsw-btn primary" onclick="vswCheckPin()">확인</button>
+    </div>
+    <div id="vsw-err" class="vsw-err"></div>
+    <div id="vsw-list" class="vsw-list"></div>
+    <div class="vsw-btns">
+      <button class="vsw-btn" onclick="vswClose()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const CURRENT_VERSION = 'v1.1';
+  const VERSIONS_URL = '/aion_task/versions.json';
+
+  function openModal() {
+    document.getElementById('vsw-err').textContent = '';
+    document.getElementById('vsw-pin-input').value = '';
+    document.getElementById('vsw-list').style.display = 'none';
+    document.getElementById('vsw-overlay').style.display = 'flex';
+    setTimeout(() => document.getElementById('vsw-pin-input').focus(), 100);
+  }
+  function closeModal() {
+    document.getElementById('vsw-overlay').style.display = 'none';
+  }
+
+  async function checkPin() {
+    const input = document.getElementById('vsw-pin-input').value.trim();
+    const errEl = document.getElementById('vsw-err');
+    if (input.length !== 8) { errEl.textContent = '8자리를 입력해주세요'; return; }
+    try {
+      const { data, error } = await sb.from('app_config').select('value').eq('key', 'version_pin').single();
+      if (error || !data) { errEl.textContent = '설정을 불러올 수 없어요'; return; }
+      if (input !== data.value) {
+        errEl.textContent = '비밀번호가 틀려요';
+        document.getElementById('vsw-pin-input').value = '';
+        return;
+      }
+      errEl.textContent = '';
+      await renderList();
+    } catch (e) {
+      console.error(e);
+      errEl.textContent = '확인 실패';
+    }
+  }
+
+  async function renderList() {
+    const listEl = document.getElementById('vsw-list');
+    listEl.innerHTML = '<div style="text-align:center;font-size:0.75rem;color:var(--text-sub);padding:12px">목록 불러오는 중...</div>';
+    listEl.style.display = 'flex';
+    try {
+      const res = await fetch(VERSIONS_URL + '?t=' + Date.now());
+      if (!res.ok) throw new Error('fetch failed');
+      const versions = await res.json();
+      listEl.innerHTML = versions.map(v => {
+        const isCurrent = v.id === CURRENT_VERSION;
+        const cls = 'vsw-item' + (isCurrent ? ' current' : '');
+        const handler = isCurrent ? '' : `onclick="location.href='${v.file}'"`;
+        const badge = isCurrent ? '<span style="font-size:0.68rem;color:var(--sage)">(현재)</span>' : '';
+        return `
+          <div class="${cls}" ${handler}>
+            <div class="vsw-item-head"><span>${v.id} ${badge}</span><span class="vsw-item-date">${v.date || ''}</span></div>
+            <div class="vsw-item-desc">${(v.desc || '').replace(/</g,'&lt;')}</div>
+          </div>
+        `;
+      }).join('');
+    } catch (e) {
+      listEl.innerHTML = '<div style="text-align:center;font-size:0.75rem;color:#b85050;padding:12px">버전 목록을 불러올 수 없어요</div>';
+    }
+  }
+
+  window.vswOpen = openModal;
+  window.vswClose = closeModal;
+  window.vswCheckPin = checkPin;
+})();
+</script>
+
+</body>
+</html>
