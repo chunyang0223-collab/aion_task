@@ -2818,9 +2818,9 @@ function renderDetail(char) {
       <div class="card-title">
         <div class="card-title-icon icon-info">📈</div>성장 그래프
         <div class="growth-range-tabs" style="margin-left:auto">
-          <button class="growth-range-btn" data-range="7">7일</button>
+          <button class="growth-range-btn active" data-range="7">7일</button>
           <button class="growth-range-btn" data-range="30">30일</button>
-          <button class="growth-range-btn active" data-range="90">90일</button>
+          <button class="growth-range-btn" data-range="90">90일</button>
           <button class="growth-range-btn" data-range="all">전체</button>
         </div>
       </div>
@@ -2832,7 +2832,7 @@ function renderDetail(char) {
         <div id="growth-chart-empty" style="display:none;text-align:center;padding:28px 10px;color:var(--text-sub);font-size:0.8rem">
           아직 기록이 없어요. 템레벨이나 전투력을 수정하면 오늘부터 쌓여요.
         </div>
-        <svg id="growth-chart" viewBox="0 0 600 240" preserveAspectRatio="none" style="width:100%;height:240px;display:block"></svg>
+        <svg id="growth-chart" viewBox="0 0 800 300" style="width:100%;height:auto;display:block"></svg>
       </div>
     </div>`;
 
@@ -2938,7 +2938,7 @@ async function logGrowth(charId) {
 // ═══════════════════════════════════════════════
 // 성장 그래프 (이중 Y축: 왼쪽=템레벨, 오른쪽=전투력)
 // ═══════════════════════════════════════════════
-let _growthState = { charId: null, range: 90, showIlvl: true, showCp: true, data: [] };
+let _growthState = { charId: null, range: 7, showIlvl: true, showCp: true, data: [] };
 
 async function setupGrowthChart(charId) {
   _growthState.charId = charId;
@@ -2998,7 +2998,7 @@ function renderGrowthChart() {
   emptyEl.style.display = 'none';
 
   // SVG viewBox
-  const W = 600, H = 240;
+  const W = 800, H = 300;
   const padL = 42, padR = 48, padT = 14, padB = 28;
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
@@ -3006,7 +3006,7 @@ function renderGrowthChart() {
   // X축: 날짜
   const dates = rows.map(r => r.log_date);
   const xScale = (d) => {
-    if (rows.length === 1) return padL + plotW / 2;
+    if (rows.length === 1) return padL;
     const idx = dates.indexOf(d);
     return padL + (idx / (dates.length - 1)) * plotW;
   };
