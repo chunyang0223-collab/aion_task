@@ -1,20 +1,20 @@
 [
   {
     "id": "v1.2",
-    "date": "2026-04-18",
-    "desc": "- 캐릭 상세뷰에 성장 그래프 추가 (템레벨/전투력)",
-    "file": "/aion_task/index.html"
+    "date": "2026-04-19",
+    "desc": "- 캐릭 상세뷰에 성장 그래프 추가 (템레벨/전투력)\n- 브라우저 ESC 동작 기능 추가",
+    "file": "./index.html"
   },
   {
     "id": "v1.1",
     "date": "2026-04-18",
     "desc": "- 전체→개별 렌더링 변경\n- 5초마다 페이지 갱신 추가\n- 버전관리 추가",
-    "file": "/aion_task/v/v1.1.html"
+    "file": "./index.html"
   },
   {
     "id": "v1.0",
     "date": "2026-04-17",
     "desc": "- 전체 캐릭터 일괄 렌더링 기반",
-    "file": "/aion_task/v/v1.0.html"
+    "file": "./v/v1.0.html"
   }
 ]
