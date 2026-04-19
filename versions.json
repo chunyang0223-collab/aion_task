@@ -3,12 +3,12 @@
     "id": "v1.1",
     "date": "2026-04-18",
     "desc": "- 전체→개별 렌더링 변경\n- 5초마다 페이지 갱신 추가\n- 버전관리 추가",
-    "file": "./index.html"
+    "file": "/aion_task/index.html"
   },
   {
     "id": "v1.0",
     "date": "2026-04-17",
     "desc": "- 전체 캐릭터 일괄 렌더링 기반",
-    "file": "./v/v1.0.html"
+    "file": "/aion_task/v/v1.0.html"
   }
 ]
