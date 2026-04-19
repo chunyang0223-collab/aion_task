@@ -2010,13 +2010,24 @@ let currentCharId = null;
 
 function getTodayKST() {
   const now = new Date();
-  
+
   const kstMs = now.getTime() + 9 * 3600 * 1000;
   const kst = new Date(kstMs);
-  
+
   if (kst.getUTCHours() < 5) {
     kst.setUTCDate(kst.getUTCDate() - 1);
   }
+  const y = kst.getUTCFullYear();
+  const m = String(kst.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(kst.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// 성장 로그 전용: 5시 보정 없이 KST 달력 날짜 그대로 반환 (자정 0시 기준)
+function getTodayKST_Calendar() {
+  const now = new Date();
+  const kstMs = now.getTime() + 9 * 3600 * 1000;
+  const kst = new Date(kstMs);
   const y = kst.getUTCFullYear();
   const m = String(kst.getUTCMonth() + 1).padStart(2, '0');
   const d = String(kst.getUTCDate()).padStart(2, '0');
@@ -2616,7 +2627,7 @@ async function submitAddChar(owner, slot) {
   if (inserted && inserted.id && (ilvl > 0 || cp > 0)) {
     await sb.from('char_growth_log').insert({
       character_id: inserted.id,
-      log_date: getTodayKST(),
+      log_date: getTodayKST_Calendar(),
       item_level: ilvl,
       combat_power: cp,
     });
@@ -2886,7 +2897,7 @@ async function logGrowth(charId) {
   const char = allChars.find(c => c.id === charId);
   if (!char) return;
 
-  const today = getTodayKST();
+  const today = getTodayKST_Calendar();
   const ilvl = char.item_level || 0;
   const cp = char.combat_power || 0;
 
@@ -2958,8 +2969,8 @@ function renderGrowthChart() {
   const emptyEl = document.getElementById('growth-chart-empty');
   if (!svg || !emptyEl) return;
 
-  
-  const todayStr = getTodayKST();
+
+  const todayStr = getTodayKST_Calendar();
   const parseDate = (str) => {
     const [y, m, d] = str.split('-').map(Number);
     return new Date(y, m - 1, d);
