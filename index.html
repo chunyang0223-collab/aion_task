@@ -2980,14 +2980,27 @@ function renderGrowthChart() {
   const emptyEl = document.getElementById('growth-chart-empty');
   if (!svg || !emptyEl) return;
 
-  // 범위 필터
-  let rows = _growthState.data;
-  if (_growthState.range !== 'all') {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - _growthState.range);
-    const cutoffStr = cutoff.toISOString().slice(0, 10);
-    rows = rows.filter(r => r.log_date >= cutoffStr);
+  // KST 오늘 날짜 문자열 (YYYY-MM-DD)
+  const todayStr = getTodayKST();
+  const parseDate = (str) => {
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
+  const todayDate = parseDate(todayStr);
+
+  // 필터 기간 시작일
+  let startDate;
+  if (_growthState.range === 'all') {
+    const oldest = _growthState.data[0]?.log_date;
+    startDate = oldest ? parseDate(oldest) : todayDate;
+  } else {
+    startDate = new Date(todayDate);
+    startDate.setDate(startDate.getDate() - (_growthState.range - 1));
   }
+
+  // 시작일 기준으로 rows 필터
+  const startStr = `${startDate.getFullYear()}-${String(startDate.getMonth()+1).padStart(2,'0')}-${String(startDate.getDate()).padStart(2,'0')}`;
+  const rows = _growthState.data.filter(r => r.log_date >= startStr);
 
   if (rows.length === 0) {
     svg.style.display = 'none';
@@ -2997,115 +3010,100 @@ function renderGrowthChart() {
   svg.style.display = 'block';
   emptyEl.style.display = 'none';
 
-  // SVG viewBox
   const W = 800, H = 300;
   const padL = 58, padR = 58, padT = 14, padB = 28;
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
+  const innerPad = 40;
 
-  // X축: 필터 기간 기준으로 날짜 위치 계산
-  // 왼쪽 끝 = 기간 시작일, 오른쪽 끝 = 오늘
-  const todayStr = getTodayKST();
-  const parseDate = (str) => {
-    const [y, m, d] = str.split('-').map(Number);
-    return new Date(y, m - 1, d);
-  };
-  const todayDate = parseDate(todayStr);
-  let startDate;
-  if (_growthState.range === 'all') {
-    const oldest = rows[0]?.log_date;
-    startDate = oldest ? parseDate(oldest) : todayDate;
-  } else {
-    startDate = new Date(todayDate);
-    startDate.setDate(startDate.getDate() - (_growthState.range - 1));
-  }
+  // X축: 날짜 → 픽셀
   const totalDays = Math.max(1, Math.round((todayDate - startDate) / 86400000));
-  const xScale = (d) => {
-    const dt = parseDate(d);
-    const daysFromStart = Math.round((dt - startDate) / 86400000);
-    return padL + (daysFromStart / totalDays) * plotW;
+  const xScale = (str) => {
+    const dt = parseDate(str);
+    const days = Math.round((dt - startDate) / 86400000);
+    return padL + innerPad + (days / totalDays) * (plotW - innerPad * 2);
   };
+  const xByDays = (daysOff) => padL + innerPad + (daysOff / totalDays) * (plotW - innerPad * 2);
 
-  // Y축: 왼쪽=템레벨, 오른쪽=전투력
+  // Y축
   const ilvlVals = rows.map(r => r.item_level || 0).filter(v => v > 0);
-  const cpVals = rows.map(r => r.combat_power || 0).filter(v => v > 0);
+  const cpVals   = rows.map(r => r.combat_power || 0).filter(v => v > 0);
 
-  const ilvlMin = ilvlVals.length ? Math.min(...ilvlVals) : 0;
-  const ilvlMax = ilvlVals.length ? Math.max(...ilvlVals) : 1;
-  const cpMin = cpVals.length ? Math.min(...cpVals) : 0;
-  const cpMax = cpVals.length ? Math.max(...cpVals) : 1;
+  function niceTicks(min, max) {
+    if (min === max) { min = min * 0.95; max = max * 1.05; }
+    const range = max - min;
+    const raw = range / 4;
+    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const norm = raw / mag;
+    const step = norm < 1.5 ? mag : norm < 3 ? 2*mag : norm < 7 ? 5*mag : 10*mag;
+    const lo = Math.floor(min / step) * step;
+    const hi = Math.ceil(max / step) * step;
+    const ticks = [];
+    for (let v = lo; v <= hi + step * 0.01; v += step) ticks.push(Math.round(v));
+    return ticks;
+  }
 
-  // 여유 10%
-  const pad = (min, max) => {
-    if (min === max) return [min - Math.max(1, min * 0.05), max + Math.max(1, max * 0.05)];
-    const m = (max - min) * 0.1;
-    return [Math.max(0, min - m), max + m];
-  };
-  const [ilvlLo, ilvlHi] = pad(ilvlMin, ilvlMax);
-  const [cpLo, cpHi] = pad(cpMin, cpMax);
+  const ilvlTicks = ilvlVals.length ? niceTicks(Math.min(...ilvlVals), Math.max(...ilvlVals)) : [0, 1];
+  const cpTicks   = cpVals.length   ? niceTicks(Math.min(...cpVals),   Math.max(...cpVals))   : [0, 1];
 
-  const yIlvl = (v) => padT + (1 - (v - ilvlLo) / (ilvlHi - ilvlLo || 1)) * plotH;
-  const yCp = (v) => padT + (1 - (v - cpLo) / (cpHi - cpLo || 1)) * plotH;
+  const ilvlLo = ilvlTicks[0], ilvlHi = ilvlTicks[ilvlTicks.length - 1];
+  const cpLo   = cpTicks[0],   cpHi   = cpTicks[cpTicks.length - 1];
+
+  const yIlvl = v => padT + (1 - (v - ilvlLo) / (ilvlHi - ilvlLo || 1)) * plotH;
+  const yCp   = v => padT + (1 - (v - cpLo)   / (cpHi   - cpLo   || 1)) * plotH;
 
   let out = '';
 
-  // 격자선 (가로 4등분)
-  for (let i = 0; i <= 4; i++) {
-    const y = padT + (plotH * i / 4);
-    out += `<line class="growth-grid" x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}"/>`;
-  }
+  // 격자선 (템레벨 눈금 기준)
+  ilvlTicks.forEach(v => {
+    const y = yIlvl(v);
+    out += `<line class="growth-grid" x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}"/>`;
+  });
 
-  // 왼쪽 Y축 눈금 (템레벨) - showIlvl일 때만
+  // 왼쪽 Y축 (템레벨)
   if (_growthState.showIlvl && ilvlVals.length) {
-    for (let i = 0; i <= 4; i++) {
-      const ratio = 1 - i / 4;
-      const val = ilvlLo + (ilvlHi - ilvlLo) * ratio;
-      const y = padT + (plotH * i / 4);
-      out += `<text class="growth-axis-label" x="${padL - 6}" y="${y + 3}" text-anchor="end" fill="#7aa3c8">${Math.round(val)}</text>`;
-    }
-  }
-  // 오른쪽 Y축 눈금 (전투력) - showCp일 때만
-  if (_growthState.showCp && cpVals.length) {
-    for (let i = 0; i <= 4; i++) {
-      const ratio = 1 - i / 4;
-      const val = cpLo + (cpHi - cpLo) * ratio;
-      const y = padT + (plotH * i / 4);
-      out += `<text class="growth-axis-label" x="${W - padR + 6}" y="${y + 3}" text-anchor="start" fill="#c47a8a">${formatCp(Math.round(val))}</text>`;
-    }
+    ilvlTicks.forEach(v => {
+      const y = yIlvl(v);
+      out += `<text class="growth-axis-label" x="${padL - 6}" y="${(y + 3).toFixed(1)}" text-anchor="end" fill="#7aa3c8">${v}</text>`;
+    });
   }
 
-  // X축 날짜 라벨 (기간 균등 분할, 최대 6개)
-  const tickCount = Math.min(6, totalDays + 1);
+  // 오른쪽 Y축 (전투력)
+  if (_growthState.showCp && cpVals.length) {
+    cpTicks.forEach(v => {
+      const y = yCp(v);
+      out += `<text class="growth-axis-label" x="${W - padR + 6}" y="${(y + 3).toFixed(1)}" text-anchor="start" fill="#c47a8a">${formatCp(v)}</text>`;
+    });
+  }
+
+  // X축 날짜 라벨
+  const tickCount = Math.min(7, totalDays + 1);
   for (let i = 0; i < tickCount; i++) {
-    const daysOffset = Math.round(i * totalDays / (tickCount - 1 || 1));
-    const labelDate = new Date(startDate);
-    labelDate.setDate(labelDate.getDate() + daysOffset);
-    const mm = String(labelDate.getMonth() + 1).padStart(2, '0');
-    const dd = String(labelDate.getDate()).padStart(2, '0');
-    const label = `${mm}-${dd}`;
-    const x = padL + (daysOffset / totalDays) * plotW;
+    const daysOff = Math.round(i * totalDays / (tickCount - 1 || 1));
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + daysOff);
+    const label = `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const x = xByDays(daysOff);
     out += `<text class="growth-axis-label" x="${x.toFixed(1)}" y="${H - 10}" text-anchor="middle">${label}</text>`;
   }
 
-  // 템레벨 선
+  // 템레벨 선 + 점
   if (_growthState.showIlvl && ilvlVals.length) {
-    const points = rows.filter(r => (r.item_level || 0) > 0);
-    if (points.length) {
-      const path = points.map((r, i) => `${i === 0 ? 'M' : 'L'}${xScale(r.log_date).toFixed(1)},${yIlvl(r.item_level).toFixed(1)}`).join(' ');
-      out += `<path class="growth-line" d="${path}" stroke="#7aa3c8"/>`;
-      points.forEach(r => {
+    const pts = rows.filter(r => (r.item_level || 0) > 0);
+    if (pts.length) {
+      out += `<path class="growth-line" d="${pts.map((r,i) => `${i===0?'M':'L'}${xScale(r.log_date).toFixed(1)},${yIlvl(r.item_level).toFixed(1)}`).join(' ')}" stroke="#7aa3c8"/>`;
+      pts.forEach(r => {
         out += `<circle class="growth-point" cx="${xScale(r.log_date).toFixed(1)}" cy="${yIlvl(r.item_level).toFixed(1)}" r="3" fill="#7aa3c8" stroke="white"/>`;
       });
     }
   }
 
-  // 전투력 선
+  // 전투력 선 + 점
   if (_growthState.showCp && cpVals.length) {
-    const points = rows.filter(r => (r.combat_power || 0) > 0);
-    if (points.length) {
-      const path = points.map((r, i) => `${i === 0 ? 'M' : 'L'}${xScale(r.log_date).toFixed(1)},${yCp(r.combat_power).toFixed(1)}`).join(' ');
-      out += `<path class="growth-line" d="${path}" stroke="#c47a8a"/>`;
-      points.forEach(r => {
+    const pts = rows.filter(r => (r.combat_power || 0) > 0);
+    if (pts.length) {
+      out += `<path class="growth-line" d="${pts.map((r,i) => `${i===0?'M':'L'}${xScale(r.log_date).toFixed(1)},${yCp(r.combat_power).toFixed(1)}`).join(' ')}" stroke="#c47a8a"/>`;
+      pts.forEach(r => {
         out += `<circle class="growth-point" cx="${xScale(r.log_date).toFixed(1)}" cy="${yCp(r.combat_power).toFixed(1)}" r="3" fill="#c47a8a" stroke="white"/>`;
       });
     }
