@@ -2917,18 +2917,35 @@ function renderGrowthChart() {
   };
   const todayDate = parseDate(todayStr);
 
-  
-  let startDate;
+  const fmtDate = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+
+
+  let startDate, endDate;
   if (_growthState.range === 'all') {
     const oldest = _growthState.data[0]?.log_date;
     startDate = oldest ? parseDate(oldest) : todayDate;
+    endDate = todayDate;
   } else {
-    startDate = new Date(todayDate);
-    startDate.setDate(startDate.getDate() - (_growthState.range - 1));
+    const rangeDays = _growthState.range;
+
+    const cutoff = new Date(todayDate);
+    cutoff.setDate(cutoff.getDate() - (rangeDays - 1));
+    const cutoffStr = fmtDate(cutoff);
+    const rowsInRange = _growthState.data.filter(r => r.log_date >= cutoffStr);
+
+    if (rowsInRange.length > 0) {
+      startDate = parseDate(rowsInRange[0].log_date);
+    } else {
+      startDate = cutoff;
+    }
+
+    endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + (rangeDays - 1));
   }
 
-  
-  const startStr = `${startDate.getFullYear()}-${String(startDate.getMonth()+1).padStart(2,'0')}-${String(startDate.getDate()).padStart(2,'0')}`;
+
+  const startStr = fmtDate(startDate);
   const rows = _growthState.data.filter(r => r.log_date >= startStr);
 
   if (rows.length === 0) {
@@ -2945,8 +2962,8 @@ function renderGrowthChart() {
   const plotH = H - padT - padB;
   const innerPad = 40;
 
-  
-  const totalDays = Math.max(1, Math.round((todayDate - startDate) / 86400000));
+
+  const totalDays = Math.max(1, Math.round((endDate - startDate) / 86400000));
   const xScale = (str) => {
     const dt = parseDate(str);
     const days = Math.round((dt - startDate) / 86400000);
