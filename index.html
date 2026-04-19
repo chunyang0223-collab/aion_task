@@ -144,6 +144,76 @@ body {
   background: var(--border);
 }
 
+.growth-range-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2px;
+}
+.growth-range-btn {
+  border: none;
+  background: transparent;
+  padding: 3px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--text-sub);
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+.growth-range-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+.growth-legend {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-bottom: 10px;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+}
+.growth-legend label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+.growth-legend input { margin: 0; cursor: pointer; }
+.growth-dot {
+  display: inline-block;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+}
+#growth-chart-wrap {
+  background: var(--surface2);
+  border-radius: var(--radius-xs);
+  padding: 10px;
+  overflow: hidden;
+}
+#growth-chart { font-family: 'Gowun Dodum', sans-serif; }
+.growth-line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.growth-point { stroke-width: 1.5; }
+.growth-axis-label {
+  font-size: 10px;
+  fill: var(--text-sub);
+}
+.growth-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  opacity: 0.6;
+}
+
 .odd-batch-btn {
   font-size: 0.7rem;
   padding: 3px 10px;
@@ -2546,11 +2616,20 @@ async function submitAddChar(owner, slot) {
   const cp = Math.round((parseFloat(document.getElementById('fc-cp').value.replace(',','.')) || 0) * 10);
   const odd = parseInt(document.getElementById('fc-odd').value) || 0;
   if (!name) { showToast('캐릭터명을 입력해줘!'); return; }
-  const { error } = await sb.from('characters').insert({
+  const { data: inserted, error } = await sb.from('characters').insert({
     owner, slot, name, item_level: ilvl, combat_power: cp, odd_energy_base: odd
-  });
+  }).select().single();
   if (error) { showToast('저장 실패 😢'); console.error(error); return; }
   showToast(`${name} 추가 완료!`);
+  // 첫 성장 기록
+  if (inserted && inserted.id && (ilvl > 0 || cp > 0)) {
+    await sb.from('char_growth_log').insert({
+      character_id: inserted.id,
+      log_date: getTodayKST(),
+      item_level: ilvl,
+      combat_power: cp,
+    });
+  }
   closeAddChar();
   await loadAll();
   renderOverview();
@@ -2733,9 +2812,35 @@ function renderDetail(char) {
     html += `</div>`;
   }
 
+  // ── 성장 그래프 ──
+  html += `
+    <div class="card">
+      <div class="card-title">
+        <div class="card-title-icon icon-info">📈</div>성장 그래프
+        <div class="growth-range-tabs" style="margin-left:auto">
+          <button class="growth-range-btn" data-range="7">7일</button>
+          <button class="growth-range-btn" data-range="30">30일</button>
+          <button class="growth-range-btn active" data-range="90">90일</button>
+          <button class="growth-range-btn" data-range="all">전체</button>
+        </div>
+      </div>
+      <div class="growth-legend">
+        <label><input type="checkbox" id="gl-ilvl" checked> <span class="growth-dot" style="background:#7aa3c8"></span> 템레벨</label>
+        <label><input type="checkbox" id="gl-cp" checked> <span class="growth-dot" style="background:#c47a8a"></span> 전투력</label>
+      </div>
+      <div id="growth-chart-wrap">
+        <div id="growth-chart-empty" style="display:none;text-align:center;padding:28px 10px;color:var(--text-sub);font-size:0.8rem">
+          아직 기록이 없어요. 템레벨이나 전투력을 수정하면 오늘부터 쌓여요.
+        </div>
+        <svg id="growth-chart" viewBox="0 0 600 240" preserveAspectRatio="none" style="width:100%;height:240px;display:block"></svg>
+      </div>
+    </div>`;
+
   document.getElementById('detail-content').innerHTML = html;
-  // innerHTML 세팅 후 즉시 오드 예상 타이머 시작
+  // 오드 예상 타이머 시작
   startOddTimer(char.id);
+  // 성장 그래프 세팅
+  setupGrowthChart(char.id);
 }
 
 // ── NUM INPUT HELPER ──
@@ -2791,6 +2896,206 @@ function validateCpInput(input) {
   input.value = val;
 }
 
+// ═══════════════════════════════════════════════
+// 성장 기록 (템레벨 / 전투력)
+// 같은 날짜면 더 높은 값으로만 덮어씀
+// ═══════════════════════════════════════════════
+async function logGrowth(charId) {
+  if (currentActor === 'guest') return;
+  const char = allChars.find(c => c.id === charId);
+  if (!char) return;
+
+  const today = getTodayKST();
+  const ilvl = char.item_level || 0;
+  const cp = char.combat_power || 0;
+
+  // 오늘자 기록이 있는지 먼저 확인
+  const { data: existing } = await sb.from('char_growth_log')
+    .select('*')
+    .eq('character_id', charId)
+    .eq('log_date', today)
+    .maybeSingle();
+
+  if (existing) {
+    // 현재 값이 기록된 값보다 크면 덮어씀 (각 필드별로)
+    const newIlvl = Math.max(existing.item_level || 0, ilvl);
+    const newCp = Math.max(existing.combat_power || 0, cp);
+    // 변화 없으면 skip
+    if (newIlvl === (existing.item_level || 0) && newCp === (existing.combat_power || 0)) return;
+    await sb.from('char_growth_log')
+      .update({ item_level: newIlvl, combat_power: newCp })
+      .eq('id', existing.id);
+  } else {
+    await sb.from('char_growth_log').insert({
+      character_id: charId,
+      log_date: today,
+      item_level: ilvl,
+      combat_power: cp,
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════
+// 성장 그래프 (이중 Y축: 왼쪽=템레벨, 오른쪽=전투력)
+// ═══════════════════════════════════════════════
+let _growthState = { charId: null, range: 90, showIlvl: true, showCp: true, data: [] };
+
+async function setupGrowthChart(charId) {
+  _growthState.charId = charId;
+  _growthState.range = 90;
+  _growthState.showIlvl = true;
+  _growthState.showCp = true;
+
+  // 이벤트 바인딩
+  document.querySelectorAll('.growth-range-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.growth-range-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const r = btn.dataset.range;
+      _growthState.range = r === 'all' ? 'all' : parseInt(r);
+      renderGrowthChart();
+    };
+  });
+  document.getElementById('gl-ilvl').onchange = (e) => {
+    _growthState.showIlvl = e.target.checked;
+    renderGrowthChart();
+  };
+  document.getElementById('gl-cp').onchange = (e) => {
+    _growthState.showCp = e.target.checked;
+    renderGrowthChart();
+  };
+
+  // 데이터 로드 (캐릭별 전체)
+  const { data, error } = await sb.from('char_growth_log')
+    .select('*')
+    .eq('character_id', charId)
+    .order('log_date', { ascending: true });
+  if (error) { console.error(error); return; }
+  _growthState.data = data || [];
+  renderGrowthChart();
+}
+
+function renderGrowthChart() {
+  const svg = document.getElementById('growth-chart');
+  const emptyEl = document.getElementById('growth-chart-empty');
+  if (!svg || !emptyEl) return;
+
+  // 범위 필터
+  let rows = _growthState.data;
+  if (_growthState.range !== 'all') {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - _growthState.range);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    rows = rows.filter(r => r.log_date >= cutoffStr);
+  }
+
+  if (rows.length === 0) {
+    svg.style.display = 'none';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  svg.style.display = 'block';
+  emptyEl.style.display = 'none';
+
+  // SVG viewBox
+  const W = 600, H = 240;
+  const padL = 42, padR = 48, padT = 14, padB = 28;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+
+  // X축: 날짜
+  const dates = rows.map(r => r.log_date);
+  const xScale = (d) => {
+    if (rows.length === 1) return padL + plotW / 2;
+    const idx = dates.indexOf(d);
+    return padL + (idx / (dates.length - 1)) * plotW;
+  };
+
+  // Y축: 왼쪽=템레벨, 오른쪽=전투력
+  const ilvlVals = rows.map(r => r.item_level || 0).filter(v => v > 0);
+  const cpVals = rows.map(r => r.combat_power || 0).filter(v => v > 0);
+
+  const ilvlMin = ilvlVals.length ? Math.min(...ilvlVals) : 0;
+  const ilvlMax = ilvlVals.length ? Math.max(...ilvlVals) : 1;
+  const cpMin = cpVals.length ? Math.min(...cpVals) : 0;
+  const cpMax = cpVals.length ? Math.max(...cpVals) : 1;
+
+  // 여유 10%
+  const pad = (min, max) => {
+    if (min === max) return [min - Math.max(1, min * 0.05), max + Math.max(1, max * 0.05)];
+    const m = (max - min) * 0.1;
+    return [Math.max(0, min - m), max + m];
+  };
+  const [ilvlLo, ilvlHi] = pad(ilvlMin, ilvlMax);
+  const [cpLo, cpHi] = pad(cpMin, cpMax);
+
+  const yIlvl = (v) => padT + (1 - (v - ilvlLo) / (ilvlHi - ilvlLo || 1)) * plotH;
+  const yCp = (v) => padT + (1 - (v - cpLo) / (cpHi - cpLo || 1)) * plotH;
+
+  let out = '';
+
+  // 격자선 (가로 4등분)
+  for (let i = 0; i <= 4; i++) {
+    const y = padT + (plotH * i / 4);
+    out += `<line class="growth-grid" x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}"/>`;
+  }
+
+  // 왼쪽 Y축 눈금 (템레벨) - showIlvl일 때만
+  if (_growthState.showIlvl && ilvlVals.length) {
+    for (let i = 0; i <= 4; i++) {
+      const ratio = 1 - i / 4;
+      const val = ilvlLo + (ilvlHi - ilvlLo) * ratio;
+      const y = padT + (plotH * i / 4);
+      out += `<text class="growth-axis-label" x="${padL - 6}" y="${y + 3}" text-anchor="end" fill="#7aa3c8">${Math.round(val)}</text>`;
+    }
+  }
+  // 오른쪽 Y축 눈금 (전투력) - showCp일 때만
+  if (_growthState.showCp && cpVals.length) {
+    for (let i = 0; i <= 4; i++) {
+      const ratio = 1 - i / 4;
+      const val = cpLo + (cpHi - cpLo) * ratio;
+      const y = padT + (plotH * i / 4);
+      out += `<text class="growth-axis-label" x="${W - padR + 6}" y="${y + 3}" text-anchor="start" fill="#c47a8a">${formatCp(Math.round(val))}</text>`;
+    }
+  }
+
+  // X축 날짜 라벨 (최대 6개)
+  const labelCount = Math.min(rows.length, 6);
+  for (let i = 0; i < labelCount; i++) {
+    const idx = labelCount === 1 ? 0 : Math.round(i * (rows.length - 1) / (labelCount - 1));
+    const d = rows[idx].log_date;
+    const x = xScale(d);
+    const label = d.slice(5); // MM-DD
+    out += `<text class="growth-axis-label" x="${x}" y="${H - 10}" text-anchor="middle">${label}</text>`;
+  }
+
+  // 템레벨 선
+  if (_growthState.showIlvl && ilvlVals.length) {
+    const points = rows.filter(r => (r.item_level || 0) > 0);
+    if (points.length) {
+      const path = points.map((r, i) => `${i === 0 ? 'M' : 'L'}${xScale(r.log_date).toFixed(1)},${yIlvl(r.item_level).toFixed(1)}`).join(' ');
+      out += `<path class="growth-line" d="${path}" stroke="#7aa3c8"/>`;
+      points.forEach(r => {
+        out += `<circle class="growth-point" cx="${xScale(r.log_date).toFixed(1)}" cy="${yIlvl(r.item_level).toFixed(1)}" r="3" fill="#7aa3c8" stroke="white"/>`;
+      });
+    }
+  }
+
+  // 전투력 선
+  if (_growthState.showCp && cpVals.length) {
+    const points = rows.filter(r => (r.combat_power || 0) > 0);
+    if (points.length) {
+      const path = points.map((r, i) => `${i === 0 ? 'M' : 'L'}${xScale(r.log_date).toFixed(1)},${yCp(r.combat_power).toFixed(1)}`).join(' ');
+      out += `<path class="growth-line" d="${path}" stroke="#c47a8a"/>`;
+      points.forEach(r => {
+        out += `<circle class="growth-point" cx="${xScale(r.log_date).toFixed(1)}" cy="${yCp(r.combat_power).toFixed(1)}" r="3" fill="#c47a8a" stroke="white"/>`;
+      });
+    }
+  }
+
+  svg.innerHTML = out;
+}
+
 async function commitCpInput(charId, input) {
   let raw = parseFloat(input.value.replace(',', '.'));
   if (isNaN(raw)) raw = 0;
@@ -2807,6 +3112,7 @@ async function commitCpInput(charId, input) {
   markSelfChange('characters', charId);
   const { error } = await sb.from('characters').update({combat_power: stored}).eq('id', charId);
   if (error) showToast('저장 실패');
+  else logGrowth(charId);
 }
 
 async function saveNumInput(charId, field, newVal) {
@@ -2840,6 +3146,8 @@ async function updateCharField(charId, field, value) {
   if (char) char[field] = value;
   showToast('저장 완료');
   lazyRenderOverview();
+  // 템레벨 변경 시 성장 기록
+  if (field === 'item_level') logGrowth(charId);
 }
 
 async function toggleResting(charId, value) {
