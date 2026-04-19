@@ -2195,6 +2195,55 @@ function goBack() {
   showPage('overview');
 }
 
+
+
+function isElementVisible(el) {
+  if (!el) return false;
+  return window.getComputedStyle(el).display !== 'none';
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (e.isComposing || e.keyCode === 229) return;
+
+
+  const closableModals = [
+    { id: 'acc-modal-overlay',          close: () => window.closeAccountModal       && window.closeAccountModal() },
+    { id: 'odd-batch-detail-overlay',   close: () => window.closeOddBatchDetailModal && window.closeOddBatchDetailModal() },
+    { id: 'odd-batch-overlay',          close: () => window.closeOddBatchModal      && window.closeOddBatchModal() },
+    { id: 'log-delete-overlay',         close: () => window.closeLogDeleteModal     && window.closeLogDeleteModal() },
+    { id: 'vsw-overlay',                close: () => window.vswClose                && window.vswClose() },
+  ];
+  for (const m of closableModals) {
+    const el = document.getElementById(m.id);
+    if (isElementVisible(el)) {
+      m.close();
+      e.preventDefault();
+      return;
+    }
+  }
+
+
+  const userModal = document.getElementById('user-modal-overlay');
+  if (isElementVisible(userModal)) return;
+
+
+  const active = document.activeElement;
+  if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+    active.blur();
+    e.preventDefault();
+    return;
+  }
+
+
+  const detailPage = document.getElementById('detail-page');
+  if (detailPage && detailPage.classList.contains('active')) {
+    goBack();
+    e.preventDefault();
+  }
+});
+
+
 async function init() {
   try {
     await loadAll();
