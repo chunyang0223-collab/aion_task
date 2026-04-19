@@ -2999,16 +2999,31 @@ function renderGrowthChart() {
 
   // SVG viewBox
   const W = 800, H = 300;
-  const padL = 42, padR = 48, padT = 14, padB = 28;
+  const padL = 58, padR = 58, padT = 14, padB = 28;
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
 
-  // X축: 날짜
-  const dates = rows.map(r => r.log_date);
+  // X축: 필터 기간 기준으로 날짜 위치 계산
+  // 왼쪽 끝 = 기간 시작일, 오른쪽 끝 = 오늘
+  const todayStr = getTodayKST();
+  const parseDate = (str) => {
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
+  const todayDate = parseDate(todayStr);
+  let startDate;
+  if (_growthState.range === 'all') {
+    const oldest = rows[0]?.log_date;
+    startDate = oldest ? parseDate(oldest) : todayDate;
+  } else {
+    startDate = new Date(todayDate);
+    startDate.setDate(startDate.getDate() - (_growthState.range - 1));
+  }
+  const totalDays = Math.max(1, Math.round((todayDate - startDate) / 86400000));
   const xScale = (d) => {
-    if (rows.length === 1) return padL;
-    const idx = dates.indexOf(d);
-    return padL + (idx / (dates.length - 1)) * plotW;
+    const dt = parseDate(d);
+    const daysFromStart = Math.round((dt - startDate) / 86400000);
+    return padL + (daysFromStart / totalDays) * plotW;
   };
 
   // Y축: 왼쪽=템레벨, 오른쪽=전투력
@@ -3059,14 +3074,17 @@ function renderGrowthChart() {
     }
   }
 
-  // X축 날짜 라벨 (최대 6개)
-  const labelCount = Math.min(rows.length, 6);
-  for (let i = 0; i < labelCount; i++) {
-    const idx = labelCount === 1 ? 0 : Math.round(i * (rows.length - 1) / (labelCount - 1));
-    const d = rows[idx].log_date;
-    const x = xScale(d);
-    const label = d.slice(5); // MM-DD
-    out += `<text class="growth-axis-label" x="${x}" y="${H - 10}" text-anchor="middle">${label}</text>`;
+  // X축 날짜 라벨 (기간 균등 분할, 최대 6개)
+  const tickCount = Math.min(6, totalDays + 1);
+  for (let i = 0; i < tickCount; i++) {
+    const daysOffset = Math.round(i * totalDays / (tickCount - 1 || 1));
+    const labelDate = new Date(startDate);
+    labelDate.setDate(labelDate.getDate() + daysOffset);
+    const mm = String(labelDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(labelDate.getDate()).padStart(2, '0');
+    const label = `${mm}-${dd}`;
+    const x = padL + (daysOffset / totalDays) * plotW;
+    out += `<text class="growth-axis-label" x="${x.toFixed(1)}" y="${H - 10}" text-anchor="middle">${label}</text>`;
   }
 
   // 템레벨 선
