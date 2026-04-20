@@ -2755,7 +2755,7 @@ async function openDetail(charId) {
 
   document.getElementById('detail-tab').style.display = '';
   showPage('detail-page');
-  document.getElementById('detail-page').scrollTop = 0;
+  window.scrollTo(0, 0);
   document.getElementById('detail-content').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
 
   renderDetail(char);
