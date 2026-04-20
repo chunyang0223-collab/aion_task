@@ -1918,7 +1918,7 @@ body.guest-mode .page input {
 <div id="guest-banner" style="
   display:none;background:#f5ddd0;border-bottom:1px solid var(--peach);
   padding:6px 16px;font-size:0.75rem;color:#9a5a3a;text-align:center;
-">👁 손님 모드 — 보기만 가능합니다 &nbsp;<button onclick="logout()" style="border:none;background:transparent;color:#9a5a3a;font-size:0.75rem;font-family:'Gowun Dodum',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:3px;">로그인</button></div>
+">👁 손님 모드 — 보기만 가능합니다</div>
 <div id="toast" class="toast"></div>
 
 <!-- 오드 일괄 적용 미리보기 모달 -->
@@ -3813,8 +3813,11 @@ async function handleRealtimeChange(table, payload) {
   if (eventType === 'UPDATE' && newRow) {
     // force_logout 강제 로그아웃 감지
     if (table === 'account_data' && newRow.force_logout) {
-      logout();
-      return;
+      const myOwner = Object.values(accountData).find(a => a.actor === currentActor)?.owner;
+      if (myOwner && newRow.owner === myOwner) {
+        logout();
+        return;
+      }
     }
     applyRowUpdate(table, newRow);
     scheduleLocalRerender();
@@ -5444,3 +5447,4 @@ function expCandidateItem(c, idx, topChar) {
 
 </body>
 </html>
+                                                                                                                                                                                                                                        
