@@ -917,21 +917,22 @@ body.guest-mode .odd-batch-btn { display: none; }
 /* ── TOAST ── */
 .toast {
   position: fixed;
-  bottom: 24px;
+  top: 72px;
   left: 50%;
-  transform: translateX(-50%) translateY(60px);
+  transform: translateX(-50%) translateY(-20px);
   background: var(--text);
   color: white;
   padding: 8px 18px;
   border-radius: 20px;
   font-size: 0.85rem;
-  transition: transform 0.3s;
+  transition: transform 0.3s, opacity 0.3s;
   z-index: 999;
   pointer-events: none;
   white-space: nowrap;
+  opacity: 0;
 }
 
-.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
 /* ── LOADING ── */
 .loading {
