@@ -3532,6 +3532,11 @@ function openMemoModal(owner) {
   ta.dataset.owner = owner;
   document.getElementById('memo-modal-overlay').style.display = 'flex';
   setTimeout(() => ta.focus(), 50);
+
+  // 다른 사용자의 메모를 열었을 때만 로그 기록 (본인/guest 제외)
+  if (currentActor && currentActor !== 'guest' && currentActor !== owner) {
+    writeLog(owner, null, '메모를 읽었습니다', null, 'memo_read');
+  }
 }
 
 function closeMemoModal() {
@@ -3979,6 +3984,9 @@ async function renderLogPage() {
       // 오드 일괄 적용 로그 - 전용 포맷 + 클릭 가능
       if (log.field === 'odd_batch' && log.meta && log.meta.type === 'odd_batch') {
         textHtml = `<span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerClass}">[${log.owner}]</span> 계정의 <span class="log-odd-batch-link" onclick="openOddBatchDetailModal('${log.id}')">오드를 일괄 적용했습니다</span>`;
+      } else if (log.field === 'memo_read') {
+        // 메모 열람 로그 - "[A]가 [B]의 메모를 읽었습니다"
+        textHtml = `<span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerClass}">[${log.owner}]</span>의 메모를 읽었습니다`;
       } else {
         textHtml = `<span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerClass}">[${log.owner}]</span> 계정의 <span class="log-char">[${log.character_name || '계정'}]</span><span class="log-action-done"> ${log.action}</span>`;
       }
