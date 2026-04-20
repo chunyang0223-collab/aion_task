@@ -1889,7 +1889,19 @@ body.guest-mode .page input {
     <button class="tab-pill" id="tab-expedition" onclick="showPage('expedition-page')">원정</button>
     <button class="tab-pill" id="tab-log" onclick="showPage('log-page')">로그</button>
   </div>
-  <div id="reset-info" style="text-align:right;flex-shrink:0;line-height:1.5"></div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;gap:2px">
+    <div id="actor-indicator" style="display:flex;align-items:center;gap:6px">
+      <span id="actor-label" style="font-size:0.75rem;color:var(--text-sub)"></span>
+      <button id="logout-btn" onclick="logout()" style="
+        display:none;padding:3px 10px;border-radius:20px;border:1px solid var(--border);
+        background:transparent;color:var(--text-sub);font-size:0.72rem;
+        font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+        transition:background 0.15s,color 0.15s;
+      " onmouseover="this.style.background='var(--hover)';this.style.color='var(--text)'"
+         onmouseout="this.style.background='transparent';this.style.color='var(--text-sub)'">로그아웃</button>
+    </div>
+    <div id="reset-info" style="text-align:right;line-height:1.5"></div>
+  </div>
 </div>
 <!-- 상세뷰 전용 서브바 -->
 <div id="detail-subbar" style="display:none;position:sticky;top:52px;z-index:99;background:rgba(249,246,240,0.95);backdrop-filter:blur(12px);padding:10px 16px 0;">
@@ -3809,6 +3821,11 @@ async function handleRealtimeChange(table, payload) {
   if (isSelfEcho(table, rowKey)) return;
 
   if (eventType === 'UPDATE' && newRow) {
+    // force_logout 강제 로그아웃 감지
+    if (table === 'account_data' && newRow.force_logout === true) {
+      logout();
+      return;
+    }
     applyRowUpdate(table, newRow);
     scheduleLocalRerender();
     return;
@@ -3963,6 +3980,34 @@ function setActor(name) {
   } else {
     document.body.classList.remove('guest-mode');
   }
+
+  // topbar actor 표시 갱신
+  updateActorIndicator();
+}
+
+function updateActorIndicator() {
+  const label = document.getElementById('actor-label');
+  const btn = document.getElementById('logout-btn');
+  if (!label || !btn) return;
+  if (!currentActor || currentActor === 'guest') {
+    label.textContent = '';
+    btn.style.display = 'none';
+  } else {
+    label.textContent = currentActor;
+    btn.style.display = 'block';
+  }
+}
+
+function logout() {
+  currentActor = null;
+  localStorage.removeItem('aion2_actor');
+  const banner = document.getElementById('guest-banner');
+  if (banner) banner.style.display = 'none';
+  document.body.classList.remove('guest-mode');
+  updateActorIndicator();
+  document.getElementById('actor-step1').style.display = 'block';
+  document.getElementById('actor-step2').style.display = 'none';
+  document.getElementById('user-modal-overlay').style.display = 'flex';
 }
 
 function checkActor() {
