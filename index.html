@@ -3927,22 +3927,16 @@ let currentActor = localStorage.getItem('aion2_actor') || null;
 
 let _pendingActor = null;
 
-const ACTOR_BUTTON_STYLES = [
-  { bg: 'var(--sage-light)',    border: 'var(--sage)',    color: '#3d5c2a' },
-  { bg: 'var(--peach-light)',   border: 'var(--peach)',   color: '#9a5a3a' },
-  { bg: 'var(--lavender-light)',border: 'var(--lavender)',color: '#5a4a7a' },
-];
-
 function renderActorModalButtons() {
   const container = document.getElementById('actor-buttons-container');
   if (!container) return;
   const accounts = Object.values(accountData);
   if (accounts.length === 0) return;
-  container.innerHTML = accounts.map((acc, i) => {
-    const s = ACTOR_BUTTON_STYLES[i % ACTOR_BUTTON_STYLES.length];
+  container.innerHTML = accounts.map(acc => {
+    const color = acc.actor_color || '#888';
     return `<button onclick="selectActorName('${acc.owner}')" style="
-      padding:10px 24px;border-radius:20px;border:1px solid ${s.border};
-      background:${s.bg};color:${s.color};font-size:0.9rem;
+      padding:10px 24px;border-radius:20px;border:1px solid ${color};
+      background:${color}22;color:${color};font-size:0.9rem;
       font-family:'Gowun Dodum',sans-serif;cursor:pointer;
     ">${acc.actor}</button>`;
   }).join('');
