@@ -3852,6 +3852,11 @@ function scheduleLocalRerender() {
     } else if (document.getElementById('expedition-page').classList.contains('active')) {
       renderExpeditionPage();
     } else if (currentCharId) {
+      // detail 페이지에 포커스된 input/textarea가 있으면 re-render 건너뜀
+      const focused = document.activeElement;
+      const detailPage = document.getElementById('detail-page');
+      if (focused && detailPage && detailPage.contains(focused) &&
+          (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA')) return;
       const char = allChars.find(c => c.id === currentCharId);
       if (char) renderDetail(char);
     }
