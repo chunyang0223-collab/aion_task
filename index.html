@@ -3822,7 +3822,7 @@ async function handleRealtimeChange(table, payload) {
 
   if (eventType === 'UPDATE' && newRow) {
     // force_logout 강제 로그아웃 감지
-    if (table === 'account_data' && newRow.force_logout === true) {
+    if (table === 'account_data' && newRow.force_logout) {
       logout();
       return;
     }
