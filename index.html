@@ -631,6 +631,77 @@ body.guest-mode .odd-batch-btn { display: none; }
 .icon-info { background: var(--sage-light); }
 .icon-expedition { background: var(--peach-light); }
 
+/* ── GROWTH CHART ── */
+.growth-range-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2px;
+}
+.growth-range-btn {
+  border: none;
+  background: transparent;
+  padding: 3px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--text-sub);
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+.growth-range-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+.growth-legend {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-bottom: 10px;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+}
+.growth-legend label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+.growth-legend input { margin: 0; cursor: pointer; }
+.growth-dot {
+  display: inline-block;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+}
+#growth-chart-wrap {
+  background: var(--surface2);
+  border-radius: var(--radius-xs);
+  padding: 10px;
+  overflow: hidden;
+}
+#growth-chart { font-family: 'Gowun Dodum', sans-serif; }
+.growth-line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.growth-point { stroke-width: 1.5; }
+.growth-axis-label {
+  font-size: 10px;
+  fill: var(--text-sub);
+}
+.growth-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  opacity: 0.6;
+}
+
 /* ── STAT ROW ── */
 .stat-row {
   display: flex;
@@ -2068,6 +2139,17 @@ let abyssClears = {};
 let currentCharId = null;
 
 // ── UTIL ──
+// 성장 로그 전용: 5시 보정 없이 KST 달력 날짜 그대로 반환 (자정 0시 기준)
+function getTodayKST_Calendar() {
+  const now = new Date();
+  const kstMs = now.getTime() + 9 * 3600 * 1000;
+  const kst = new Date(kstMs);
+  const y = kst.getUTCFullYear();
+  const m = String(kst.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(kst.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 // 게임 기준 "오늘" — KST 05:00 이전이면 전날로 취급
 function getTodayKST() {
   const now = new Date();
@@ -2840,9 +2922,34 @@ function renderDetail(char) {
     html += `</div>`;
   }
 
+  // ── 성장 그래프 ──
+  html += `
+    <div class="card">
+      <div class="card-title">
+        <div class="card-title-icon icon-info">📈</div>성장 그래프
+        <div class="growth-range-tabs" style="margin-left:auto">
+          <button class="growth-range-btn active" data-range="7">7일</button>
+          <button class="growth-range-btn" data-range="30">30일</button>
+          <button class="growth-range-btn" data-range="90">90일</button>
+          <button class="growth-range-btn" data-range="all">전체</button>
+        </div>
+      </div>
+      <div class="growth-legend">
+        <label><input type="checkbox" id="gl-ilvl" checked> <span class="growth-dot" style="background:#7aa3c8"></span> 템레벨</label>
+        <label><input type="checkbox" id="gl-cp" checked> <span class="growth-dot" style="background:#c47a8a"></span> 전투력</label>
+      </div>
+      <div id="growth-chart-wrap">
+        <div id="growth-chart-empty" style="display:none;text-align:center;padding:28px 10px;color:var(--text-sub);font-size:0.8rem">
+          아직 기록이 없어요. 템레벨이나 전투력을 수정하면 오늘부터 쌓여요.
+        </div>
+        <svg id="growth-chart" viewBox="0 0 800 300" style="width:100%;height:auto;display:block"></svg>
+      </div>
+    </div>`;
+
   document.getElementById('detail-content').innerHTML = html;
   // innerHTML 세팅 후 즉시 오드 예상 타이머 시작
   startOddTimer(char.id);
+  setupGrowthChart(char.id);
 }
 
 // ── NUM INPUT HELPER ──
@@ -2898,6 +3005,236 @@ function validateCpInput(input) {
   input.value = val;
 }
 
+// ── GROWTH LOG / CHART ──
+async function logGrowth(charId) {
+  if (currentActor === 'guest') return;
+  const char = allChars.find(c => c.id === charId);
+  if (!char) return;
+
+  const today = getTodayKST_Calendar();
+  const ilvl = char.item_level || 0;
+  const cp = char.combat_power || 0;
+
+  const { data: existing } = await sb.from('char_growth_log')
+    .select('*')
+    .eq('character_id', charId)
+    .eq('log_date', today)
+    .maybeSingle();
+
+  if (existing) {
+    const newIlvl = Math.max(existing.item_level || 0, ilvl);
+    const newCp = Math.max(existing.combat_power || 0, cp);
+    if (newIlvl === (existing.item_level || 0) && newCp === (existing.combat_power || 0)) return;
+    await sb.from('char_growth_log')
+      .update({ item_level: newIlvl, combat_power: newCp })
+      .eq('id', existing.id);
+  } else {
+    await sb.from('char_growth_log').insert({
+      character_id: charId,
+      log_date: today,
+      item_level: ilvl,
+      combat_power: cp,
+    });
+  }
+}
+
+let _growthState = { charId: null, range: 7, showIlvl: true, showCp: true, data: [] };
+
+async function setupGrowthChart(charId) {
+  _growthState.charId = charId;
+  _growthState.range = 7;
+  _growthState.showIlvl = true;
+  _growthState.showCp = true;
+
+  document.querySelectorAll('.growth-range-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.growth-range-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const r = btn.dataset.range;
+      _growthState.range = r === 'all' ? 'all' : parseInt(r);
+      renderGrowthChart();
+    };
+  });
+  const glIlvl = document.getElementById('gl-ilvl');
+  const glCp = document.getElementById('gl-cp');
+  if (glIlvl) glIlvl.onchange = (e) => {
+    _growthState.showIlvl = e.target.checked;
+    renderGrowthChart();
+  };
+  if (glCp) glCp.onchange = (e) => {
+    _growthState.showCp = e.target.checked;
+    renderGrowthChart();
+  };
+
+  const { data, error } = await sb.from('char_growth_log')
+    .select('*')
+    .eq('character_id', charId)
+    .order('log_date', { ascending: true });
+  if (error) { console.error(error); return; }
+  _growthState.data = data || [];
+  renderGrowthChart();
+}
+
+function renderGrowthChart() {
+  const svg = document.getElementById('growth-chart');
+  const emptyEl = document.getElementById('growth-chart-empty');
+  if (!svg || !emptyEl) return;
+
+  const todayStr = getTodayKST_Calendar();
+  const parseDate = (str) => {
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
+  const todayDate = parseDate(todayStr);
+
+  const fmtDate = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+  let startDate, endDate;
+  if (_growthState.range === 'all') {
+    const oldest = _growthState.data[0]?.log_date;
+    startDate = oldest ? parseDate(oldest) : todayDate;
+    endDate = todayDate;
+  } else {
+    const rangeDays = _growthState.range;
+    const cutoff = new Date(todayDate);
+    cutoff.setDate(cutoff.getDate() - (rangeDays - 1));
+    const cutoffStr = fmtDate(cutoff);
+    const rowsInRange = _growthState.data.filter(r => r.log_date >= cutoffStr);
+    if (rowsInRange.length > 0) {
+      startDate = parseDate(rowsInRange[0].log_date);
+    } else {
+      startDate = cutoff;
+    }
+    endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + (rangeDays - 1));
+  }
+
+  const startStr = fmtDate(startDate);
+  const rows = _growthState.data.filter(r => r.log_date >= startStr);
+
+  if (rows.length === 0) {
+    svg.style.display = 'none';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  svg.style.display = 'block';
+  emptyEl.style.display = 'none';
+
+  const W = 800, H = 300;
+  const padL = 58, padR = 58, padT = 14, padB = 28;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+  const innerPad = 40;
+
+  const totalDays = Math.max(1, Math.round((endDate - startDate) / 86400000));
+  const xScale = (str) => {
+    const dt = parseDate(str);
+    const days = Math.round((dt - startDate) / 86400000);
+    return padL + innerPad + (days / totalDays) * (plotW - innerPad * 2);
+  };
+  const xByDays = (daysOff) => padL + innerPad + (daysOff / totalDays) * (plotW - innerPad * 2);
+
+  const ilvlVals = rows.map(r => r.item_level || 0).filter(v => v > 0);
+  const cpVals   = rows.map(r => r.combat_power || 0).filter(v => v > 0);
+
+  function fixedTicks(min, max, step) {
+    let lo = Math.floor(min / step) * step;
+    let hi = Math.ceil(max / step) * step;
+    if (min - lo < step * 0.15) lo -= step;
+    if (hi - max < step * 0.15) hi += step;
+    if (lo === hi) hi = lo + step;
+    const ticks = [];
+    for (let v = lo; v <= hi + step * 0.01; v += step) ticks.push(Math.round(v));
+    return ticks;
+  }
+
+  function smoothPath(pts) {
+    if (pts.length === 0) return '';
+    if (pts.length === 1) return `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+    if (pts.length === 2) return `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)} L${pts[1].x.toFixed(1)},${pts[1].y.toFixed(1)}`;
+    let d = `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i - 1] || pts[i];
+      const p1 = pts[i];
+      const p2 = pts[i + 1];
+      const p3 = pts[i + 2] || pts[i + 1];
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+      d += ` C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+    }
+    return d;
+  }
+
+  const ILVL_STEP = 50;
+  const CP_STEP = 200;
+
+  const ilvlTicks = ilvlVals.length ? fixedTicks(Math.min(...ilvlVals), Math.max(...ilvlVals), ILVL_STEP) : [0, 1];
+  const cpTicks   = cpVals.length   ? fixedTicks(Math.min(...cpVals),   Math.max(...cpVals),   CP_STEP)   : [0, 1];
+
+  const ilvlLo = ilvlTicks[0], ilvlHi = ilvlTicks[ilvlTicks.length - 1];
+  const cpLo   = cpTicks[0],   cpHi   = cpTicks[cpTicks.length - 1];
+
+  const yIlvl = v => padT + (1 - (v - ilvlLo) / (ilvlHi - ilvlLo || 1)) * plotH;
+  const yCp   = v => padT + (1 - (v - cpLo)   / (cpHi   - cpLo   || 1)) * plotH;
+
+  let out = '';
+
+  ilvlTicks.forEach(v => {
+    const y = yIlvl(v);
+    out += `<line class="growth-grid" x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}"/>`;
+  });
+
+  if (_growthState.showIlvl && ilvlVals.length) {
+    ilvlTicks.forEach(v => {
+      const y = yIlvl(v);
+      out += `<text class="growth-axis-label" x="${padL - 6}" y="${(y + 3).toFixed(1)}" text-anchor="end" fill="#7aa3c8">${v}</text>`;
+    });
+  }
+
+  if (_growthState.showCp && cpVals.length) {
+    cpTicks.forEach(v => {
+      const y = yCp(v);
+      out += `<text class="growth-axis-label" x="${W - padR + 6}" y="${(y + 3).toFixed(1)}" text-anchor="start" fill="#c47a8a">${formatCp(v)}</text>`;
+    });
+  }
+
+  const tickCount = Math.min(7, totalDays + 1);
+  for (let i = 0; i < tickCount; i++) {
+    const daysOff = Math.round(i * totalDays / (tickCount - 1 || 1));
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + daysOff);
+    const label = `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const x = xByDays(daysOff);
+    out += `<text class="growth-axis-label" x="${x.toFixed(1)}" y="${H - 10}" text-anchor="middle">${label}</text>`;
+  }
+
+  if (_growthState.showIlvl && ilvlVals.length) {
+    const pts = rows.filter(r => (r.item_level || 0) > 0)
+                    .map(r => ({ x: xScale(r.log_date), y: yIlvl(r.item_level) }));
+    if (pts.length) {
+      out += `<path class="growth-line" d="${smoothPath(pts)}" stroke="#7aa3c8" fill="none"/>`;
+      pts.forEach(p => {
+        out += `<circle class="growth-point" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="#7aa3c8" stroke="white"/>`;
+      });
+    }
+  }
+
+  if (_growthState.showCp && cpVals.length) {
+    const pts = rows.filter(r => (r.combat_power || 0) > 0)
+                    .map(r => ({ x: xScale(r.log_date), y: yCp(r.combat_power) }));
+    if (pts.length) {
+      out += `<path class="growth-line" d="${smoothPath(pts)}" stroke="#c47a8a" fill="none"/>`;
+      pts.forEach(p => {
+        out += `<circle class="growth-point" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="#c47a8a" stroke="white"/>`;
+      });
+    }
+  }
+
+  svg.innerHTML = out;
+}
+
 async function commitCpInput(charId, input) {
   let raw = parseFloat(input.value.replace(',', '.'));
   if (isNaN(raw)) raw = 0;
@@ -2914,6 +3251,7 @@ async function commitCpInput(charId, input) {
   markSelfChange('characters', charId);
   const { error } = await sb.from('characters').update({combat_power: stored}).eq('id', charId);
   if (error) showToast('저장 실패');
+  else logGrowth(charId);
 }
 
 async function saveNumInput(charId, field, newVal) {
@@ -2947,6 +3285,7 @@ async function updateCharField(charId, field, value) {
   if (char) char[field] = value;
   showToast('저장 완료');
   lazyRenderOverview();
+  if (field === 'item_level') logGrowth(charId);
 }
 
 async function toggleResting(charId, value) {
