@@ -2780,9 +2780,20 @@ function renderDetail(char) {
   html += `<div class="card">
     <div class="card-title">
       <div class="card-title-icon icon-info">ℹ</div>기본 정보
-      <button class="toggle-btn ${isResting ? 'done-peach' : ''}"
-        style="margin-left:auto;font-size:0.72rem"
-        onclick="toggleResting('${char.id}', ${!isResting})">${isResting ? '💤 휴식중' : '휴식'}</button>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+        <input id="plaync-url-${char.id}" type="text" class="text-input"
+          style="display:none;width:200px;font-size:0.72rem"
+          placeholder="플레이엔씨 캐릭터 URL"
+          autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
+        <button id="plaync-url-save-${char.id}" class="toggle-btn"
+          style="display:none;font-size:0.72rem;padding:3px 8px"
+          onclick="savePlayncUrl('${char.id}')">저장</button>
+        <button class="toggle-btn" style="font-size:0.72rem;padding:3px 8px"
+          onclick="onClickFetchPlaync('${char.id}')">전투력 불러오기</button>
+        <button class="toggle-btn ${isResting ? 'done-peach' : ''}"
+          style="font-size:0.72rem"
+          onclick="toggleResting('${char.id}', ${!isResting})">${isResting ? '💤 휴식중' : '휴식'}</button>
+      </div>
     </div>
     <div class="stat-row">
       <span class="stat-label">캐릭터명</span>
@@ -2811,7 +2822,7 @@ function renderDetail(char) {
       </div>
     </div>
     <div class="stat-row">
-      <span class="stat-label">오드에너지<span class="stat-sublabel">기본 / 충전</span></span>
+      <span class="stat-label" style="padding-top:6px">오드에너지<span class="stat-sublabel">기본 / 충전</span></span>
       <div class="stat-inputs">
         ${numInput(`odd_energy_base`, char.odd_energy_base||0, char.id, 0, 840)}
         <span style="color:var(--text-sub);font-size:0.8rem">+</span>
@@ -3296,6 +3307,87 @@ async function updateCharField(charId, field, value) {
   showToast('저장 완료');
   lazyRenderOverview();
   if (field === 'item_level') logGrowth(charId);
+}
+
+// ── 플레이엔씨 연동 ──
+function onClickFetchPlaync(charId) {
+  const char = allChars.find(c => c.id === charId);
+  if (!char) return;
+  if (char.plaync_character_id) {
+    fetchFromPlaync(charId);
+  } else {
+    const urlInput = document.getElementById(`plaync-url-${charId}`);
+    const saveBtn = document.getElementById(`plaync-url-save-${charId}`);
+    if (urlInput) { urlInput.style.display = 'block'; urlInput.focus(); }
+    if (saveBtn) saveBtn.style.display = 'block';
+  }
+}
+
+async function savePlayncUrl(charId) {
+  if (currentActor === 'guest') return;
+  const input = document.getElementById(`plaync-url-${charId}`);
+  if (!input) return;
+  const url = input.value.trim();
+  const match = url.match(/\/characters\/(\d+)\/([^?#\s]+)/);
+  if (!match) { showToast('URL 형식이 맞지 않아요'); return; }
+  const serverId = parseInt(match[1]);
+  const characterId = decodeURIComponent(match[2]);
+  const char = allChars.find(c => c.id === charId);
+  if (!char) return;
+  markSelfChange('characters', charId);
+  const { error } = await sb.from('characters').update({
+    plaync_character_id: characterId,
+    plaync_server_id: serverId,
+  }).eq('id', charId);
+  if (error) { showToast('저장 실패'); return; }
+  char.plaync_character_id = characterId;
+  char.plaync_server_id = serverId;
+  const urlInput = document.getElementById(`plaync-url-${charId}`);
+  const saveBtn = document.getElementById(`plaync-url-save-${charId}`);
+  if (urlInput) urlInput.style.display = 'none';
+  if (saveBtn) saveBtn.style.display = 'none';
+  fetchFromPlaync(charId);
+}
+
+async function fetchFromPlaync(charId) {
+  if (currentActor === 'guest') return;
+  const char = allChars.find(c => c.id === charId);
+  if (!char?.plaync_character_id) { showToast('URL을 먼저 저장해주세요'); return; }
+  const btn = document.getElementById(`plaync-fetch-btn-${charId}`);
+  if (btn) btn.textContent = '가져오는 중...';
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/fetch-plaync-char`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'apikey': SUPABASE_KEY,
+      },
+      body: JSON.stringify({
+        characterId: char.plaync_character_id,
+        serverId: char.plaync_server_id,
+      }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    const updates = {};
+    if (data.itemLevel != null) updates.item_level = data.itemLevel;
+    // combat_power는 0.1k 단위로 저장 (527491 → 5275)
+    if (data.combatPower != null) updates.combat_power = Math.floor(data.combatPower / 100);
+    if (!Object.keys(updates).length) { showToast('데이터를 찾을 수 없어요'); return; }
+    markSelfChange('characters', charId);
+    await sb.from('characters').update(updates).eq('id', charId);
+    Object.assign(char, updates);
+    renderDetail(char);
+    if (updates.item_level) logGrowth(charId);
+    const cpDisplay = data.combatPower != null ? (Math.floor(data.combatPower / 100) / 10).toFixed(1) + 'k' : '-';
+    showToast(`템 ${data.itemLevel?.toLocaleString() ?? '-'} · ${cpDisplay} 적용됨`);
+  } catch (e) {
+    showToast('가져오기 실패: ' + e.message);
+  } finally {
+    const btn2 = document.getElementById(`plaync-fetch-btn-${charId}`);
+    if (btn2) btn2.textContent = '가져오기';
+  }
 }
 
 async function toggleResting(charId, value) {
