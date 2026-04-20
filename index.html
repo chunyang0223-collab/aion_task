@@ -2076,18 +2076,7 @@ body.guest-mode .page input {
     <div id="actor-step1">
       <div style="font-size:1rem;color:var(--text);margin-bottom:6px">누구세요?</div>
       <div style="font-size:0.82rem;color:var(--text-sub);margin-bottom:20px">로그 기록에 사용됩니다</div>
-      <div style="display:flex;gap:10px;justify-content:center">
-        <button onclick="selectActorName('설냥')" style="
-          padding:10px 24px;border-radius:20px;border:1px solid var(--sage);
-          background:var(--sage-light);color:#3d5c2a;font-size:0.9rem;
-          font-family:'Gowun Dodum',sans-serif;cursor:pointer;
-        ">설냥</button>
-        <button onclick="selectActorName('츄츄')" style="
-          padding:10px 24px;border-radius:20px;border:1px solid var(--peach);
-          background:var(--peach-light);color:#9a5a3a;font-size:0.9rem;
-          font-family:'Gowun Dodum',sans-serif;cursor:pointer;
-        ">츄츄</button>
-      </div>
+      <div id="actor-buttons-container" style="display:flex;gap:10px;justify-content:center"></div>
       <div style="margin-top:16px;text-align:center">
         <button onclick="setActor('guest')" style="
           border:none;background:transparent;color:var(--text-sub);
@@ -2387,6 +2376,7 @@ async function loadAll() {
   allChars = charsRes.data || [];
   accountData = {};
   (accountRes.data || []).forEach(a => accountData[a.owner] = a);
+  renderActorModalButtons();
   // 색상 CSS 변수 주입 (DB값 우선, fallback은 :root에 정의됨)
   Object.values(accountData).forEach(acc => {
     if (acc.actor && acc.actor_color)
@@ -3936,6 +3926,27 @@ async function reloadTable(table) {
 let currentActor = localStorage.getItem('aion2_actor') || null;
 
 let _pendingActor = null;
+
+const ACTOR_BUTTON_STYLES = [
+  { bg: 'var(--sage-light)',    border: 'var(--sage)',    color: '#3d5c2a' },
+  { bg: 'var(--peach-light)',   border: 'var(--peach)',   color: '#9a5a3a' },
+  { bg: 'var(--lavender-light)',border: 'var(--lavender)',color: '#5a4a7a' },
+];
+
+function renderActorModalButtons() {
+  const container = document.getElementById('actor-buttons-container');
+  if (!container) return;
+  const accounts = Object.values(accountData);
+  if (accounts.length === 0) return;
+  container.innerHTML = accounts.map((acc, i) => {
+    const s = ACTOR_BUTTON_STYLES[i % ACTOR_BUTTON_STYLES.length];
+    return `<button onclick="selectActorName('${acc.owner}')" style="
+      padding:10px 24px;border-radius:20px;border:1px solid ${s.border};
+      background:${s.bg};color:${s.color};font-size:0.9rem;
+      font-family:'Gowun Dodum',sans-serif;cursor:pointer;
+    ">${acc.actor}</button>`;
+  }).join('');
+}
 
 function selectActorName(name) {
   _pendingActor = name;
