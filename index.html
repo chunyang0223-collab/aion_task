@@ -584,6 +584,7 @@ body.guest-mode .odd-batch-btn { display: none; }
 .icon-daily { background: var(--sky-light); }
 .icon-weekly { background: var(--lavender-light); }
 .icon-info { background: var(--sage-light); }
+.icon-expedition { background: var(--peach-light); }
 
 /* ── STAT ROW ── */
 .stat-row {
@@ -1528,6 +1529,15 @@ body.guest-mode .page input {
   color: var(--text);
   line-height: 1.2;
 }
+.exp-recommend-card-boss {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  margin-left: 4px;
+  font-variant-numeric: tabular-nums;
+  vertical-align: 1px;
+}
+.exp-recommend-card-boss.low { color: #b87a55; }
+.exp-recommend-card-boss.out { color: #c4564a; font-weight: 600; }
 .exp-recommend-card-stats {
   font-size: 0.7rem;
   color: var(--text-sub);
@@ -1661,6 +1671,14 @@ body.guest-mode .page input {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   min-width: 0;
 }
+.exp-candidate-boss {
+  font-size: 0.66rem;
+  color: var(--text-sub);
+  margin-left: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.exp-candidate-boss.low { color: #b87a55; }
+.exp-candidate-boss.out { color: #c4564a; font-weight: 600; }
 .exp-candidate-cp {
   font-size: 0.66rem;
   color: var(--text-sub);
@@ -2565,7 +2583,7 @@ async function submitAddChar(owner, slot) {
   const odd = parseInt(document.getElementById('fc-odd').value) || 0;
   if (!name) { showToast('캐릭터명을 입력해줘!'); return; }
   const { error } = await sb.from('characters').insert({
-    owner, slot, name, item_level: ilvl, combat_power: cp, odd_energy_base: odd
+    owner, slot, name, item_level: ilvl, combat_power: cp, odd_energy_base: odd, boss_kill_count: 35
   });
   if (error) { showToast('저장 실패 😢'); console.error(error); return; }
   showToast(`${name} 추가 완료!`);
@@ -2660,6 +2678,19 @@ function renderDetail(char) {
         onclick="recordOddNow('${char.id}')">기록</button>
       <button class="toggle-btn done" style="font-size:0.72rem;padding:4px 10px"
         onclick="applyOddEstimate('${char.id}')" ${char.odd_recorded_at?'':'disabled'}>적용</button>
+    </div>
+  </div>`;
+
+  // ── 원정 ──
+  const bossKillMax = 35;
+  const bossKillCount = (char.boss_kill_count ?? bossKillMax);
+  html += `<div class="card">
+    <div class="card-title"><div class="card-title-icon icon-expedition">원</div>원정 <span style="margin-left:auto;font-size:0.72rem;color:var(--text-sub)">수요일 05:00 리셋</span></div>
+    <div class="stat-row">
+      <span class="stat-label">최종 보스 처치 횟수 <span class="stat-sublabel">${bossKillCount}/${bossKillMax}</span></span>
+      <div class="stat-inputs">
+        ${numInput('boss_kill_count', bossKillCount, char.id, 0, bossKillMax)}
+      </div>
     </div>
   </div>`;
 
@@ -4508,13 +4539,21 @@ function expRecommendCard(c, ownerLabel) {
   const pct = Math.min(100, (odd / 840) * 100);
   const cp = c.combat_power || 0;
   const cpText = (typeof formatCp === 'function') ? formatCp(cp) : cp;
+  const bossMax = 35;
+  const bossLeft = (c.boss_kill_count ?? bossMax);
+  const bossOut = bossLeft <= 0;
+  const bossLow = !bossOut && bossLeft <= 5;
+  const bossClass = bossOut ? 'out' : (bossLow ? 'low' : '');
   return `
     <div class="exp-recommend-card">
       <div class="exp-recommend-card-strip" style="background:var(--owner-${c.owner})"></div>
       <div class="exp-recommend-card-owner">
         <span class="exp-recommend-card-owner-dot" style="background:var(--owner-${c.owner})"></span>${c.owner}
       </div>
-      <div class="exp-recommend-card-name">${c.name}</div>
+      <div class="exp-recommend-card-name">
+        ${c.name}
+        <span class="exp-recommend-card-boss ${bossClass}" title="최종 보스 처치 가능 횟수 (수요일 05:00 리셋)">(${bossLeft}/${bossMax})</span>
+      </div>
       <div class="exp-recommend-card-stats">템 ${c.item_level||0} · ${cpText}</div>
       <div class="exp-recommend-card-bar">
         <div class="exp-recommend-card-bar-fill" style="width:${pct}%;background:${expOddColor(odd)}"></div>
@@ -4548,10 +4587,18 @@ function expCandidateItem(c, idx, topChar) {
   const pct = Math.min(100, (odd / 840) * 100);
   const cp = c.combat_power || 0;
   const cpText = (typeof formatCp === 'function') ? formatCp(cp) : cp;
+  const bossMax = 35;
+  const bossLeft = (c.boss_kill_count ?? bossMax);
+  const bossOut = bossLeft <= 0;
+  const bossLow = !bossOut && bossLeft <= 5;
+  const bossClass = bossOut ? 'out' : (bossLow ? 'low' : '');
   return `
     <div class="exp-candidate-item ${excluded ? 'excluded' : ''} ${isTop ? 'top' : ''}">
       <div class="exp-candidate-rank">${idx + 1}</div>
-      <div class="exp-candidate-name">${c.name}</div>
+      <div class="exp-candidate-name">
+        ${c.name}
+        <span class="exp-candidate-boss ${bossClass}" title="최종 보스 처치 가능 횟수 (수요일 05:00 리셋)">(${bossLeft}/${bossMax})</span>
+      </div>
       <div class="exp-candidate-cp">${cpText}</div>
       <div class="exp-candidate-bar">
         <div class="exp-candidate-bar-fill" style="width:${pct}%;background:${expOddColor(odd)}"></div>
