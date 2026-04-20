@@ -2306,6 +2306,7 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.querySelectorAll('.tab-pill').forEach(p => p.classList.remove('active'));
+  window.scrollTo(0, 0);
 
   // detail-page가 아닌 곳으로 이동 시 상세뷰 서브바/탭 숨김
   if (id !== 'detail-page') {
@@ -2755,7 +2756,6 @@ async function openDetail(charId) {
 
   document.getElementById('detail-tab').style.display = '';
   showPage('detail-page');
-  window.scrollTo(0, 0);
   document.getElementById('detail-content').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
 
   renderDetail(char);
