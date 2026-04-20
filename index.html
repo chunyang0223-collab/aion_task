@@ -31,13 +31,13 @@
   --radius-sm: 10px;
   --radius-xs: 7px;
 
-  
+  /* ── Expedition tokens ── */
   --odd-empty: #ede6d8;
   --odd-low:   #d4e2c4;
   --odd-mid:   #a3b18a;
   --odd-full:  #c47a8a;
-  --owner-설냥: #c47a8a;  
-  --owner-츄츄: #7a9abf;  
+  --owner-설냥: #c47a8a;  /* 핑크 (로그 냥이 색) */
+  --owner-츄츄: #7a9abf;  /* 파랑 (로그 츄츄 색) */
   --shadow-inset: inset 0 1px 2px rgba(160,150,140,0.05);
 }
 
@@ -52,6 +52,7 @@ body {
   user-select: none;
 }
 
+/* ── TOP NAV ── */
 .topbar {
   position: sticky;
   top: 0;
@@ -119,10 +120,12 @@ body {
   50% { opacity: 0.4; }
 }
 
+/* ── PAGES ── */
 .page { display: none; padding: 16px; }
 #detail-page { padding-top: 0; }
 .page.active { display: block; }
 
+/* ── OVERVIEW PAGE ── */
 .owner-section { margin-bottom: 20px; }
 
 .owner-label {
@@ -139,76 +142,6 @@ body {
   flex: 1;
   height: 1px;
   background: var(--border);
-}
-
-.growth-range-tabs {
-  display: flex;
-  gap: 2px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 2px;
-}
-.growth-range-btn {
-  border: none;
-  background: transparent;
-  padding: 3px 8px;
-  border-radius: 10px;
-  cursor: pointer;
-  color: var(--text-sub);
-  font-family: 'Gowun Dodum', sans-serif;
-  font-size: 0.68rem;
-  white-space: nowrap;
-}
-.growth-range-btn.active {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: var(--shadow-sm);
-}
-.growth-legend {
-  display: flex;
-  gap: 14px;
-  justify-content: center;
-  margin-bottom: 10px;
-  font-size: 0.72rem;
-  color: var(--text-sub);
-}
-.growth-legend label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  user-select: none;
-}
-.growth-legend input { margin: 0; cursor: pointer; }
-.growth-dot {
-  display: inline-block;
-  width: 9px; height: 9px;
-  border-radius: 50%;
-}
-#growth-chart-wrap {
-  background: var(--surface2);
-  border-radius: var(--radius-xs);
-  padding: 10px;
-  overflow: hidden;
-}
-#growth-chart { font-family: 'Gowun Dodum', sans-serif; }
-.growth-line {
-  fill: none;
-  stroke-width: 2;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
-.growth-point { stroke-width: 1.5; }
-.growth-axis-label {
-  font-size: 10px;
-  fill: var(--text-sub);
-}
-.growth-grid {
-  stroke: var(--border);
-  stroke-width: 1;
-  stroke-dasharray: 2 3;
-  opacity: 0.6;
 }
 
 .odd-batch-btn {
@@ -240,6 +173,7 @@ body.guest-mode .odd-batch-btn { display: none; }
   .chars-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
+/* ── CHARACTER MINI CARD ── */
 .char-mini {
   background: var(--surface);
   border-radius: var(--radius-sm);
@@ -307,10 +241,10 @@ body.guest-mode .odd-batch-btn { display: none; }
 }
 
 .mini-dot.done { background: var(--sage); }
-.mini-dot.done-weekly { background: #7aa3c8; }    
-.mini-dot.done-cor-설냥 { background: #c47a8a; }  
-.mini-dot.done-cor-츄츄 { background: #7a9abf; }  
-.mini-dot.partial { background: #d66a4a; }        
+.mini-dot.done-weekly { background: #7aa3c8; }    /* 각성/루드라/침식 - 파랑 */
+.mini-dot.done-cor-설냥 { background: #c47a8a; }  /* 회랑 - 설냥 핑크 */
+.mini-dot.done-cor-츄츄 { background: #7a9abf; }  /* 회랑 - 츄츄 파랑 */
+.mini-dot.partial { background: #d66a4a; }        /* 악몽 주의 - 빨강 */
 .mini-dot.locked { background: var(--border); opacity: 0.4; }
 
 .char-mini-add {
@@ -322,6 +256,7 @@ body.guest-mode .odd-batch-btn { display: none; }
   font-size: 1.4rem;
 }
 
+/* completion bar at bottom of card */
 .char-mini.drag-over {
   border: 2px dashed var(--sage);
   background: var(--sage-light);
@@ -341,6 +276,7 @@ body.guest-mode .odd-batch-btn { display: none; }
   transition: width 0.3s;
 }
 
+/* ── ACCOUNT SECTION ── */
 .account-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -374,6 +310,7 @@ body.guest-mode .odd-batch-btn { display: none; }
   margin-top: 4px;
 }
 
+/* ── ABYSS SECTION ── */
 .abyss-section { margin-bottom: 20px; }
 
 .section-title {
@@ -392,6 +329,7 @@ body.guest-mode .odd-batch-btn { display: none; }
   gap: 6px;
 }
 
+/* ── View toggle (zone별 / 캐릭별) ── */
 .abyss-view-toggle {
   display: inline-flex;
   gap: 2px;
@@ -419,6 +357,7 @@ body.guest-mode .odd-batch-btn { display: none; }
   box-shadow: var(--shadow-sm);
 }
 
+/* ── 매트릭스 뷰 (캐릭별) ── */
 .abyss-matrix {
   display: flex;
   flex-direction: column;
@@ -556,6 +495,7 @@ body.guest-mode .odd-batch-btn { display: none; }
 
 .abyss-toggle.on::after { transform: translateX(12px); }
 
+/* char clear dots under zone */
 .abyss-char-dots {
   display: flex;
   gap: 2px;
@@ -564,6 +504,7 @@ body.guest-mode .odd-batch-btn { display: none; }
   margin-top: 4px;
 }
 
+/* ── DETAIL PAGE ── */
 .detail-header {
   display: flex;
   align-items: center;
@@ -611,6 +552,7 @@ body.guest-mode .odd-batch-btn { display: none; }
 .badge-설냥 { background: var(--sage-light); color: #5a7a42; }
 .badge-츄츄 { background: var(--peach-light); color: #9a5a3a; }
 
+/* ── CARD SECTIONS ── */
 .card {
   background: var(--surface);
   border-radius: var(--radius);
@@ -643,6 +585,7 @@ body.guest-mode .odd-batch-btn { display: none; }
 .icon-weekly { background: var(--lavender-light); }
 .icon-info { background: var(--sage-light); }
 
+/* ── STAT ROW ── */
 .stat-row {
   display: flex;
   align-items: center;
@@ -671,6 +614,7 @@ body.guest-mode .odd-batch-btn { display: none; }
   gap: 6px;
 }
 
+/* ── NUMBER INPUT ── */
 .num-input-wrap {
   display: flex;
   align-items: center;
@@ -723,10 +667,12 @@ body.guest-mode .odd-batch-btn { display: none; }
 .num-val-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .num-val-input:focus { background: var(--hover); border-radius: 4px; }
 
+/* 계정 모달 안에서만 숫자 컨트롤 컴팩트하게 */
 #acc-modal .num-btn { width: 22px; height: 22px; font-size: 0.9rem; }
 #acc-modal .num-val-input { flex: 1; min-width: 0; width: auto; font-size: 0.78rem; }
 #acc-modal .num-input-wrap { width: 100%; justify-content: center; }
 
+/* ── CP INPUT ── */
 .cp-input-wrap {
   display: flex;
   align-items: center;
@@ -754,6 +700,7 @@ body.guest-mode .odd-batch-btn { display: none; }
   pointer-events: none;
 }
 
+/* ── TOGGLE BUTTON ── */
 .toggle-btn {
   padding: 5px 14px;
   border-radius: 20px;
@@ -779,6 +726,7 @@ body.guest-mode .odd-batch-btn { display: none; }
   border-color: var(--peach);
 }
 
+/* ── TEXT INPUT ── */
 .text-input {
   border: 1px solid var(--border);
   border-radius: var(--radius-xs);
@@ -795,6 +743,7 @@ body.guest-mode .odd-batch-btn { display: none; }
 
 .text-input:focus { border-color: var(--sage); }
 
+/* ── COUNTER DISPLAY ── */
 .counter-display {
   font-size: 0.85rem;
   color: var(--text);
@@ -802,6 +751,7 @@ body.guest-mode .odd-batch-btn { display: none; }
 
 .counter-max { color: var(--text-sub); font-size: 0.75rem; }
 
+/* ── AWAKENING PIPS ── */
 .pip-row {
   display: flex;
   gap: 5px;
@@ -828,6 +778,7 @@ body.guest-mode .odd-batch-btn { display: none; }
   color: white;
 }
 
+/* ── NIGHTMARE / KEY WARN ── */
 .warn-chip {
   padding: 2px 8px;
   border-radius: 10px;
@@ -844,6 +795,7 @@ body.guest-mode .odd-batch-btn { display: none; }
   color: #5a7a42;
 }
 
+/* ── TOAST ── */
 .toast {
   position: fixed;
   bottom: 24px;
@@ -862,6 +814,7 @@ body.guest-mode .odd-batch-btn { display: none; }
 
 .toast.show { transform: translateX(-50%) translateY(0); }
 
+/* ── LOADING ── */
 .loading {
   display: flex;
   align-items: center;
@@ -883,6 +836,7 @@ body.guest-mode .odd-batch-btn { display: none; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ── SECTION DIVIDER ── */
 .section-sep {
   font-size: 0.78rem;
   color: var(--text-sub);
@@ -898,6 +852,7 @@ body.guest-mode .odd-batch-btn { display: none; }
   background: var(--border);
 }
 
+/* ── LOCKED OVERLAY ── */
 .locked-row {
   opacity: 0.35;
   pointer-events: none;
@@ -911,6 +866,8 @@ body.guest-mode .odd-batch-btn { display: none; }
   border-radius: 8px;
 }
 
+/* ── WEEK RESET INFO ── */
+/* ── LOG PAGE ── */
 .log-date-header {
   font-size: 0.78rem;
   color: var(--text-sub);
@@ -1012,6 +969,7 @@ body.guest-mode .odd-batch-btn { display: none; }
   padding-left: 2px;
 }
 
+/* add char form */
 .add-char-form {
   display: none;
   background: var(--surface);
@@ -1065,7 +1023,7 @@ body.guest-mode .odd-batch-btn { display: none; }
   font-family: 'Gowun Dodum', sans-serif;
   cursor: pointer;
 }
-
+/* ── GUEST MODE ── */
 body.guest-mode .page button,
 body.guest-mode .page input,
 body.guest-mode .page .toggle-btn,
@@ -1083,6 +1041,10 @@ body.guest-mode .page input {
   user-select: none !important;
   -webkit-user-select: none !important;
 }
+
+/* ═══════════════════════════════════════════════════
+   EXPEDITION TAB
+   ═══════════════════════════════════════════════════ */
 
 .exp-supply-card {
   background: linear-gradient(180deg, #fff 0%, var(--peach-light) 230%);
@@ -1172,6 +1134,7 @@ body.guest-mode .page input {
 .exp-card-icon.sage { background: var(--sage); }
 .exp-card-body { position: relative; z-index: 1; }
 
+/* ── Supply board: 9 dungeons × 3 modes grid ── */
 .exp-supply-legend {
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 2px 8px;
@@ -1302,6 +1265,7 @@ body.guest-mode .page input {
   font-weight: normal;
 }
 
+/* ── Party finder ── */
 .exp-party-empty-hint {
   text-align: center;
   padding: 18px 10px;
@@ -1341,6 +1305,7 @@ body.guest-mode .page input {
 .exp-party-pill-check { display: none; font-size: 0.7rem; }
 .exp-party-pill.active .exp-party-pill-check { display: inline; }
 
+/* 파티 타겟 pill (위 보급의뢰에서 체크한 것 중 1개 선택) */
 .exp-target-pill {
   padding: 6px 12px;
   border-radius: 20px;
@@ -1387,6 +1352,7 @@ body.guest-mode .page input {
   opacity: 0.85;
 }
 
+/* Results toggle */
 .exp-result-toggle {
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 4px 8px;
@@ -1503,6 +1469,7 @@ body.guest-mode .page input {
   background: var(--sage-light); border-color: var(--sage); color: #5a7a42;
 }
 
+/* ── Recommend party cards (둘다 모드 핵심 출력) ── */
 .exp-recommend-title {
   font-size: 0.82rem;
   color: var(--text);
@@ -1587,6 +1554,24 @@ body.guest-mode .page input {
   font-weight: normal;
   font-size: 0.82rem;
 }
+.exp-recommend-card-total {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  margin-top: 1px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.exp-recommend-card-total strong {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+.exp-recommend-card-total-sub {
+  font-size: 0.66rem;
+  color: var(--text-sub);
+  margin-left: 4px;
+}
 
 .exp-recommend-plus {
   display: flex;
@@ -1598,10 +1583,12 @@ body.guest-mode .page input {
   font-weight: 300;
 }
 
+/* Solo mode single card */
 .exp-recommend-solo {
   max-width: 55%;
 }
 
+/* ── Candidates (다른 후보) ── */
 .exp-candidates-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1753,6 +1740,7 @@ body.guest-mode .page input {
 </head>
 <body>
 
+<!-- TOP BAR -->
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:7px;flex-shrink:0">
     <div class="realtime-dot" id="rt-dot" title="실시간 연결"></div>
@@ -1766,7 +1754,7 @@ body.guest-mode .page input {
   </div>
   <div id="reset-info" style="text-align:right;flex-shrink:0;line-height:1.5"></div>
 </div>
-
+<!-- 상세뷰 전용 서브바 -->
 <div id="detail-subbar" style="display:none;position:sticky;top:52px;z-index:99;background:rgba(249,246,240,0.95);backdrop-filter:blur(12px);padding:10px 16px 0;">
   <div class="detail-header" style="margin-bottom:10px">
     <div class="back-btn" onclick="goBack()">←</div>
@@ -1784,6 +1772,7 @@ body.guest-mode .page input {
 ">👁 손님 모드 — 보기만 가능합니다</div>
 <div id="toast" class="toast"></div>
 
+<!-- 오드 일괄 적용 미리보기 모달 -->
 <div id="odd-batch-overlay" style="
   display:none;position:fixed;inset:0;z-index:250;
   background:rgba(90,82,75,0.4);backdrop-filter:blur(4px);
@@ -1821,6 +1810,7 @@ body.guest-mode .page input {
   </div>
 </div>
 
+<!-- 오드 일괄 적용 로그 상세보기 모달 (로그에서 클릭 시) -->
 <div id="odd-batch-detail-overlay" style="
   display:none;position:fixed;inset:0;z-index:250;
   background:rgba(90,82,75,0.4);backdrop-filter:blur(4px);
@@ -1854,6 +1844,7 @@ body.guest-mode .page input {
   </div>
 </div>
 
+<!-- 로그 삭제 PIN 모달 -->
 <div id="log-delete-overlay" style="
   display:none;position:fixed;inset:0;z-index:300;
   background:rgba(90,82,75,0.4);backdrop-filter:blur(4px);
@@ -1895,28 +1886,33 @@ body.guest-mode .page input {
   </div>
 </div>
 
+<!-- ═══════════════════════════════ OVERVIEW PAGE ═══════════════════════════════ -->
 <div id="overview" class="page active">
   <div id="overview-content">
     <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
   </div>
 </div>
 
+<!-- ═══════════════════════════════ DETAIL PAGE ═══════════════════════════════ -->
 <div id="detail-page" class="page">
   <div id="detail-content"></div>
 </div>
 
+<!-- ═══════════════════════════════ EXPEDITION PAGE ═══════════════════════════════ -->
 <div id="expedition-page" class="page">
   <div id="expedition-content">
     <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
   </div>
 </div>
 
+<!-- ── 로그 페이지 ── -->
 <div id="log-page" class="page">
   <div id="log-content">
     <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
   </div>
 </div>
 
+<!-- ── 사용자 선택 모달 ── -->
 <div id="user-modal-overlay" style="
   display:none;position:fixed;inset:0;z-index:300;
   background:rgba(90,82,75,0.4);backdrop-filter:blur(4px);
@@ -1927,7 +1923,7 @@ body.guest-mode .page input {
     border:1px solid var(--border);padding:24px;width:100%;max-width:280px;
     box-shadow:0 12px 40px rgba(160,150,140,0.18);text-align:center;
   ">
-    
+    <!-- 1단계: 이름 선택 -->
     <div id="actor-step1">
       <div style="font-size:1rem;color:var(--text);margin-bottom:6px">누구세요?</div>
       <div style="font-size:0.82rem;color:var(--text-sub);margin-bottom:20px">로그 기록에 사용됩니다</div>
@@ -1951,7 +1947,7 @@ body.guest-mode .page input {
         ">손님으로 입장</button>
       </div>
     </div>
-    
+    <!-- 2단계: PIN 입력 -->
     <div id="actor-step2" style="display:none">
       <div style="font-size:1rem;color:var(--text);margin-bottom:4px" id="actor-pin-title"></div>
       <div style="font-size:0.82rem;color:var(--text-sub);margin-bottom:16px">비밀번호를 입력해주세요</div>
@@ -2008,12 +2004,14 @@ let abyssCorridors = [];
 let abyssClears = {};
 let currentCharId = null;
 
+// ── UTIL ──
+// 게임 기준 "오늘" — KST 05:00 이전이면 전날로 취급
 function getTodayKST() {
   const now = new Date();
-
+  // KST = UTC+9
   const kstMs = now.getTime() + 9 * 3600 * 1000;
   const kst = new Date(kstMs);
-
+  // KST 시간이 05:00 미만이면 아직 전날 게임일
   if (kst.getUTCHours() < 5) {
     kst.setUTCDate(kst.getUTCDate() - 1);
   }
@@ -2023,32 +2021,22 @@ function getTodayKST() {
   return `${y}-${m}-${d}`;
 }
 
-// 성장 로그 전용: 5시 보정 없이 KST 달력 날짜 그대로 반환 (자정 0시 기준)
-function getTodayKST_Calendar() {
-  const now = new Date();
-  const kstMs = now.getTime() + 9 * 3600 * 1000;
-  const kst = new Date(kstMs);
-  const y = kst.getUTCFullYear();
-  const m = String(kst.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(kst.getUTCDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
+// 게임 기준 "이번 주 시작" — 가장 최근 수요일 KST 05:00 기준
 function getWeekStart() {
   const now = new Date();
   const kstMs = now.getTime() + 9 * 3600 * 1000;
   const kst = new Date(kstMs);
-  const dow = kst.getUTCDay();   
-  const hour = kst.getUTCHours(); 
+  const dow = kst.getUTCDay();   // 0=일 1=월 2=화 3=수 4=목 5=금 6=토
+  const hour = kst.getUTCHours(); // KST 시각
 
-  
+  // 가장 최근 수요일(3)까지의 거리
   let diff = (dow - 3 + 7) % 7;
-  
+  // 수요일 당일이지만 KST 05:00 미만 → 아직 저번 주
   if (diff === 0 && hour < 5) diff = 7;
 
   const wed = new Date(kstMs);
   wed.setUTCDate(kst.getUTCDate() - diff);
-  
+  // 수요일 KST 날짜를 그대로 UTC 필드로 읽음 (offset이 이미 더해진 상태)
   const y = wed.getUTCFullYear();
   const m = String(wed.getUTCMonth() + 1).padStart(2, '0');
   const d = String(wed.getUTCDate()).padStart(2, '0');
@@ -2056,7 +2044,7 @@ function getWeekStart() {
 }
 
 function getLastWarDate() {
-  
+  // 화/목/토(2,4,6) 21:00 KST 기준
   const now = new Date();
   const kst = new Date(now.getTime() + 9*3600*1000);
   const warDays = [2,4,6];
@@ -2072,19 +2060,20 @@ function getLastWarDate() {
   return getTodayKST();
 }
 
+// 다음 전쟁 시각 (KST) 반환 - UTC Date 객체
 function getNextWarTime() {
   const now = new Date();
   const kst = new Date(now.getTime() + 9*3600*1000);
-  const warDays = [2,4,6]; 
-  
+  const warDays = [2,4,6]; // 화/목/토
+  // i=0 부터 시작 → 오늘도 체크
   for (let i=0; i<=7; i++) {
     const d = new Date(kst);
     d.setUTCDate(kst.getUTCDate() + i);
     const wd = d.getUTCDay();
     if (warDays.includes(wd)) {
-      
+      // KST 21:00 = UTC 12:00 당일
       d.setUTCHours(12, 0, 0, 0);
-      
+      // 오늘이지만 이미 21:00 지났으면 스킵
       if (d <= now) continue;
       return d;
     }
@@ -2113,12 +2102,12 @@ function getCountdown() {
   let text = '';
   if (days > 0) text += `${days}일 `;
   text += `${hours}시간 ${mins}분`;
-  const urgent = diff < 12 * 3600 * 1000; 
+  const urgent = diff < 12 * 3600 * 1000; // 12시간 미만
   return { text, urgent };
 }
 
 function formatResetTime(isoStr) {
-  
+  // UTC ISO → KST 표시
   const d = new Date(isoStr);
   const kst = new Date(d.getTime() + 9*3600*1000);
   const y = kst.getUTCFullYear();
@@ -2171,7 +2160,7 @@ function showPage(id) {
   document.getElementById(id).classList.add('active');
   document.querySelectorAll('.tab-pill').forEach(p => p.classList.remove('active'));
 
-  
+  // detail-page가 아닌 곳으로 이동 시 상세뷰 서브바/탭 숨김
   if (id !== 'detail-page') {
     document.getElementById('detail-subbar').style.display = 'none';
     document.getElementById('detail-tab').style.display = 'none';
@@ -2206,55 +2195,7 @@ function goBack() {
   showPage('overview');
 }
 
-
-
-function isElementVisible(el) {
-  if (!el) return false;
-  return window.getComputedStyle(el).display !== 'none';
-}
-
-document.addEventListener('keydown', (e) => {
-  if (e.key !== 'Escape') return;
-  if (e.isComposing || e.keyCode === 229) return;
-
-
-  const closableModals = [
-    { id: 'acc-modal-overlay',          close: () => window.closeAccountModal       && window.closeAccountModal() },
-    { id: 'odd-batch-detail-overlay',   close: () => window.closeOddBatchDetailModal && window.closeOddBatchDetailModal() },
-    { id: 'odd-batch-overlay',          close: () => window.closeOddBatchModal      && window.closeOddBatchModal() },
-    { id: 'log-delete-overlay',         close: () => window.closeLogDeleteModal     && window.closeLogDeleteModal() },
-    { id: 'vsw-overlay',                close: () => window.vswClose                && window.vswClose() },
-  ];
-  for (const m of closableModals) {
-    const el = document.getElementById(m.id);
-    if (isElementVisible(el)) {
-      m.close();
-      e.preventDefault();
-      return;
-    }
-  }
-
-
-  const userModal = document.getElementById('user-modal-overlay');
-  if (isElementVisible(userModal)) return;
-
-
-  const active = document.activeElement;
-  if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
-    active.blur();
-    e.preventDefault();
-    return;
-  }
-
-
-  const detailPage = document.getElementById('detail-page');
-  if (detailPage && detailPage.classList.contains('active')) {
-    goBack();
-    e.preventDefault();
-  }
-});
-
-
+// ── INIT ──
 async function init() {
   try {
     await loadAll();
@@ -2296,17 +2237,18 @@ async function loadAll() {
     abyssClears[k] = c;
   });
   _expChecked = new Set((supplyRes.data || []).map(r => r.dungeon_key));
-  
+  // 파티 타겟 초기 자동 선택
   if (_expPartyTarget.size === 0 && _expChecked.size > 0) {
     _expPartyTarget.add([..._expChecked][0]);
   }
 }
 
+// ── OVERVIEW RENDER ──
 function renderOverview() {
   const el = document.getElementById('overview-content');
   let html = '';
 
-  
+  // Each owner section
   for (const owner of OWNERS) {
     const ownerChars = allChars.filter(c => c.owner === owner);
     const slots = Array.from({length:8}, (_, i) => {
@@ -2359,7 +2301,7 @@ function renderOverview() {
     html += `</div></div>`;
   }
 
-  
+  // Account section
   html += `<div class="section-sep">계정 정보</div>`;
   html += `<div class="account-cards">`;
   for (const owner of OWNERS) {
@@ -2383,7 +2325,7 @@ function renderOverview() {
   }
   html += `</div>`;
 
-  
+  // Abyss section
   html += renderAbyssSection();
 
   el.innerHTML = html;
@@ -2395,22 +2337,22 @@ function buildMiniDots(char, dt, wt) {
   const aw = char.awakening_done || 0;
   const acc = accountData[char.owner] || {};
 
-  
+  // 일일 (왼쪽): 사명, 보급, 악몽
   const daily = [
     `<div class="mini-dot ${dt.mission_done?'done':''}" title="사명${dt.mission_done?' (완료)':''}"></div>`,
     `<div class="mini-dot ${dt.supply_done?'done':''}" title="보급${dt.supply_done?' (완료)':''}"></div>`,
     `<div class="mini-dot ${nm<=12?'done':'partial'}" title="악몽 ${nm}장${nm>12?' (주의)':''}"></div>`,
   ].join('');
 
-  
+  // 주간 (오른쪽): 각성(3/3 완료), 루드라(템2700+), 침식(템3500+)
   const weeklyDots = [];
-  
+  // 각성 - 3회 다 완료해야 완료
   weeklyDots.push(`<div class="mini-dot ${aw>=3?'done-weekly':''}" title="각성 ${aw}/3"></div>`);
-  
+  // 루드라 - 템 2700+만 해당, 미달은 dot 자체 생략
   if (ilvl >= 2700) {
     weeklyDots.push(`<div class="mini-dot ${wt.ludra_done?'done-weekly':''}" title="성역 - 루드라${wt.ludra_done?' (완료)':''}"></div>`);
   }
-  
+  // 침식 - 템 3500+만 해당
   if (ilvl >= 3500) {
     weeklyDots.push(`<div class="mini-dot ${wt.erosion_done?'done-weekly':''}" title="성역 - 침식${wt.erosion_done?' (완료)':''}"></div>`);
   }
@@ -2431,7 +2373,7 @@ function calcCompletionPct(char, dt, wt) {
   return total > 0 ? Math.round(done/total*100) : 0;
 }
 
-let _abyssViewMode = 'zone';  
+let _abyssViewMode = 'zone';  // 'zone' | 'char'
 
 function toggleAbyssViewMode(mode) {
   _abyssViewMode = mode;
@@ -2471,6 +2413,7 @@ function renderAbyssSection() {
   return html;
 }
 
+// ── 기존 zone별 뷰 ──
 function renderAbyssZoneGrid(warDate) {
   let html = `<div class="abyss-grid">`;
   for (const zone of ZONES) {
@@ -2504,12 +2447,13 @@ function renderAbyssZoneGrid(warDate) {
   return html;
 }
 
+// ── 캐릭별 매트릭스 뷰 ──
 function renderAbyssCharMatrix(acquiredZones, warDate) {
   if (acquiredZones.length === 0) {
     return `<div class="abyss-matrix-empty">획득된 회랑이 없어요</div>`;
   }
 
-  
+  // 쉬고 있지 않은 + 입장 가능한(하층이면 템1000+ / 중층이면 템3000+) 캐릭만
   const hasLower = acquiredZones.some(z => z.layer === '하층');
   const hasMiddle = acquiredZones.some(z => z.layer === '중층');
   const eligibleChars = allChars.filter(c => {
@@ -2525,16 +2469,16 @@ function renderAbyssCharMatrix(acquiredZones, warDate) {
     return `<div class="abyss-matrix-empty">입장 가능한 캐릭이 없어요</div>`;
   }
 
-  
+  // 설냥 먼저 → 츄츄
   eligibleChars.sort((a, b) => {
     if (a.owner !== b.owner) return a.owner === '설냥' ? -1 : 1;
     return (a.slot || 0) - (b.slot || 0);
   });
 
-  
+  // 그리드 컬럼: 이름 | zone1 | zone2 | ... (각 row와 헤더가 동일하게 사용)
   const gridCols = `minmax(80px, 1.4fr) ${acquiredZones.map(() => 'minmax(36px, 1fr)').join(' ')}`;
 
-  
+  // 헤더
   let html = `<div class="abyss-matrix">`;
   html += `<div class="abyss-matrix-header" style="grid-template-columns:${gridCols}">`;
   html += `<div class="abyss-matrix-header-cell" style="text-align:left;padding-left:4px">캐릭</div>`;
@@ -2543,7 +2487,7 @@ function renderAbyssCharMatrix(acquiredZones, warDate) {
   });
   html += `</div>`;
 
-  
+  // 각 캐릭 행
   eligibleChars.forEach(char => {
     const ilvl = char.item_level || 0;
     let eligibleZoneCount = 0;
@@ -2578,14 +2522,16 @@ function renderAbyssCharMatrix(acquiredZones, warDate) {
   return html;
 }
 
+// 매트릭스 셀 클릭 — zone별 뷰의 toggleAbyssChar와 동일 로직
 async function toggleAbyssCharMatrix(corridorId, charId, cleared) {
   if (!corridorId) return;
   await toggleAbyssChar(corridorId, charId, cleared);
 }
 
+// ── ADD CHAR FORM ──
 function openAddChar(owner, slot) {
   currentCharId = null;
-  
+  // Show a small inline form at top of overview
   let formHtml = `<div class="add-char-form open" id="add-char-form">
     <div class="card-title"><div class="card-title-icon icon-info">✎</div>${owner} ${slot}번 캐릭터 추가</div>
     <div class="form-row">
@@ -2618,25 +2564,17 @@ async function submitAddChar(owner, slot) {
   const cp = Math.round((parseFloat(document.getElementById('fc-cp').value.replace(',','.')) || 0) * 10);
   const odd = parseInt(document.getElementById('fc-odd').value) || 0;
   if (!name) { showToast('캐릭터명을 입력해줘!'); return; }
-  const { data: inserted, error } = await sb.from('characters').insert({
+  const { error } = await sb.from('characters').insert({
     owner, slot, name, item_level: ilvl, combat_power: cp, odd_energy_base: odd
-  }).select().single();
+  });
   if (error) { showToast('저장 실패 😢'); console.error(error); return; }
   showToast(`${name} 추가 완료!`);
-  
-  if (inserted && inserted.id && (ilvl > 0 || cp > 0)) {
-    await sb.from('char_growth_log').insert({
-      character_id: inserted.id,
-      log_date: getTodayKST_Calendar(),
-      item_level: ilvl,
-      combat_power: cp,
-    });
-  }
   closeAddChar();
   await loadAll();
   renderOverview();
 }
 
+// ── DETAIL ──
 async function openDetail(charId) {
   currentCharId = charId;
   const char = allChars.find(c => c.id === charId);
@@ -2671,7 +2609,7 @@ function renderDetail(char) {
 
   const isResting = !!char.resting;
 
-  
+  // ── 기본 정보 ──
   html += `<div class="card">
     <div class="card-title">
       <div class="card-title-icon icon-info">ℹ</div>기본 정보
@@ -2725,7 +2663,7 @@ function renderDetail(char) {
     </div>
   </div>`;
 
-  
+  // ── 일일 숙제 ──
   html += `<div class="card">
     <div class="card-title"><div class="card-title-icon icon-daily">일</div>일일 숙제 <span style="margin-left:auto;font-size:0.72rem;color:var(--text-sub)">05:00 리셋</span></div>
     <div class="stat-row">
@@ -2749,11 +2687,11 @@ function renderDetail(char) {
     </div>
   </div>`;
 
-  
+  // ── 주간 숙제 ──
   html += `<div class="card">
     <div class="card-title"><div class="card-title-icon icon-weekly">주</div>주간 숙제 <span style="margin-left:auto;font-size:0.72rem;color:var(--text-sub)">수요일 05:00 리셋</span></div>`;
 
-  
+  // 각성 pips
   const awDone = char.awakening_done || 0;
   const awCharged = char.awakening_charged || 0;
   html += `<div class="stat-row">
@@ -2768,7 +2706,7 @@ function renderDetail(char) {
     </div>
   </div>`;
 
-  
+  // 일일던전 (충전권)
   html += `<div class="stat-row">
     <span class="stat-label">일일던전 충전권<span class="stat-sublabel">캐릭별</span></span>
     <div class="stat-inputs">
@@ -2776,7 +2714,7 @@ function renderDetail(char) {
     </div>
   </div>`;
 
-  
+  // 성역
   const ludraLocked = ilvl < 2700;
   const erosionLocked = ilvl < 3500;
   html += `<div class="stat-row ${ludraLocked?'locked-row':''}">
@@ -2792,7 +2730,7 @@ function renderDetail(char) {
 
   html += `</div>`;
 
-  
+  // ── 어비스 회랑 ──
   const acquiredZones = abyssCorridors.filter(c => c.acquired);
   if (acquiredZones.length > 0) {
     html += `<div class="card">
@@ -2813,37 +2751,12 @@ function renderDetail(char) {
     html += `</div>`;
   }
 
-  
-  html += `
-    <div class="card">
-      <div class="card-title">
-        <div class="card-title-icon icon-info">📈</div>성장 그래프
-        <div class="growth-range-tabs" style="margin-left:auto">
-          <button class="growth-range-btn active" data-range="7">7일</button>
-          <button class="growth-range-btn" data-range="30">30일</button>
-          <button class="growth-range-btn" data-range="90">90일</button>
-          <button class="growth-range-btn" data-range="all">전체</button>
-        </div>
-      </div>
-      <div class="growth-legend">
-        <label><input type="checkbox" id="gl-ilvl" checked> <span class="growth-dot" style="background:#7aa3c8"></span> 템레벨</label>
-        <label><input type="checkbox" id="gl-cp" checked> <span class="growth-dot" style="background:#c47a8a"></span> 전투력</label>
-      </div>
-      <div id="growth-chart-wrap">
-        <div id="growth-chart-empty" style="display:none;text-align:center;padding:28px 10px;color:var(--text-sub);font-size:0.8rem">
-          아직 기록이 없어요. 템레벨이나 전투력을 수정하면 오늘부터 쌓여요.
-        </div>
-        <svg id="growth-chart" viewBox="0 0 800 300" style="width:100%;height:auto;display:block"></svg>
-      </div>
-    </div>`;
-
   document.getElementById('detail-content').innerHTML = html;
-  
+  // innerHTML 세팅 후 즉시 오드 예상 타이머 시작
   startOddTimer(char.id);
-  
-  setupGrowthChart(char.id);
 }
 
+// ── NUM INPUT HELPER ──
 function numInput(field, val, charId, min, max) {
   const id = `nv-${charId}-${field}`;
   return `<div class="num-input-wrap">
@@ -2856,6 +2769,7 @@ function numInput(field, val, charId, min, max) {
   </div>`;
 }
 
+// +/- 버튼: DOM에서 현재 값 읽어서 증감
 function stepCharById(charId, field, inputId, delta, min, max) {
   const el = document.getElementById(inputId);
   if (!el) return;
@@ -2865,6 +2779,7 @@ function stepCharById(charId, field, inputId, delta, min, max) {
   saveNumInput(charId, field, newVal);
 }
 
+// 직접 입력 후 포커스 벗어날 때 저장
 function commitNumInput(charId, field, inputId, min, max) {
   const el = document.getElementById(inputId);
   if (!el) return;
@@ -2875,6 +2790,8 @@ function commitNumInput(charId, field, inputId, min, max) {
   saveNumInput(charId, field, newVal);
 }
 
+// ── CP HELPERS ──
+// DB 저장값: 소수점 1자리를 정수로 (예: 525.2k → 5252)
 function formatCp(stored) {
   if (!stored) return '0k';
   const v = stored / 10;
@@ -2882,274 +2799,23 @@ function formatCp(stored) {
 }
 
 function validateCpInput(input) {
-  
+  // 숫자, 점, 쉼표만 허용 / 소수점 1자리까지
   let val = input.value.replace(',', '.').replace(/[^0-9.]/g, '');
-  
+  // 점 두 개 이상 제거
   const parts = val.split('.');
   if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
-  
+  // 소수점 이하 1자리까지만
   if (parts.length === 2 && parts[1].length > 1) val = parts[0] + '.' + parts[1].slice(0,1);
   input.value = val;
-}
-
-async function logGrowth(charId) {
-  if (currentActor === 'guest') return;
-  const char = allChars.find(c => c.id === charId);
-  if (!char) return;
-
-  const today = getTodayKST_Calendar();
-  const ilvl = char.item_level || 0;
-  const cp = char.combat_power || 0;
-
-  
-  const { data: existing } = await sb.from('char_growth_log')
-    .select('*')
-    .eq('character_id', charId)
-    .eq('log_date', today)
-    .maybeSingle();
-
-  if (existing) {
-    
-    const newIlvl = Math.max(existing.item_level || 0, ilvl);
-    const newCp = Math.max(existing.combat_power || 0, cp);
-    
-    if (newIlvl === (existing.item_level || 0) && newCp === (existing.combat_power || 0)) return;
-    await sb.from('char_growth_log')
-      .update({ item_level: newIlvl, combat_power: newCp })
-      .eq('id', existing.id);
-  } else {
-    await sb.from('char_growth_log').insert({
-      character_id: charId,
-      log_date: today,
-      item_level: ilvl,
-      combat_power: cp,
-    });
-  }
-}
-
-let _growthState = { charId: null, range: 7, showIlvl: true, showCp: true, data: [] };
-
-async function setupGrowthChart(charId) {
-  _growthState.charId = charId;
-  _growthState.range = 7;
-  _growthState.showIlvl = true;
-  _growthState.showCp = true;
-
-  
-  document.querySelectorAll('.growth-range-btn').forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll('.growth-range-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const r = btn.dataset.range;
-      _growthState.range = r === 'all' ? 'all' : parseInt(r);
-      renderGrowthChart();
-    };
-  });
-  document.getElementById('gl-ilvl').onchange = (e) => {
-    _growthState.showIlvl = e.target.checked;
-    renderGrowthChart();
-  };
-  document.getElementById('gl-cp').onchange = (e) => {
-    _growthState.showCp = e.target.checked;
-    renderGrowthChart();
-  };
-
-  
-  const { data, error } = await sb.from('char_growth_log')
-    .select('*')
-    .eq('character_id', charId)
-    .order('log_date', { ascending: true });
-  if (error) { console.error(error); return; }
-  _growthState.data = data || [];
-  renderGrowthChart();
-}
-
-function renderGrowthChart() {
-  const svg = document.getElementById('growth-chart');
-  const emptyEl = document.getElementById('growth-chart-empty');
-  if (!svg || !emptyEl) return;
-
-
-  const todayStr = getTodayKST_Calendar();
-  const parseDate = (str) => {
-    const [y, m, d] = str.split('-').map(Number);
-    return new Date(y, m - 1, d);
-  };
-  const todayDate = parseDate(todayStr);
-
-  const fmtDate = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-
-
-
-  let startDate, endDate;
-  if (_growthState.range === 'all') {
-    const oldest = _growthState.data[0]?.log_date;
-    startDate = oldest ? parseDate(oldest) : todayDate;
-    endDate = todayDate;
-  } else {
-    const rangeDays = _growthState.range;
-
-    const cutoff = new Date(todayDate);
-    cutoff.setDate(cutoff.getDate() - (rangeDays - 1));
-    const cutoffStr = fmtDate(cutoff);
-    const rowsInRange = _growthState.data.filter(r => r.log_date >= cutoffStr);
-
-    if (rowsInRange.length > 0) {
-      startDate = parseDate(rowsInRange[0].log_date);
-    } else {
-      startDate = cutoff;
-    }
-
-    endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + (rangeDays - 1));
-  }
-
-
-  const startStr = fmtDate(startDate);
-  const rows = _growthState.data.filter(r => r.log_date >= startStr);
-
-  if (rows.length === 0) {
-    svg.style.display = 'none';
-    emptyEl.style.display = 'block';
-    return;
-  }
-  svg.style.display = 'block';
-  emptyEl.style.display = 'none';
-
-  const W = 800, H = 300;
-  const padL = 58, padR = 58, padT = 14, padB = 28;
-  const plotW = W - padL - padR;
-  const plotH = H - padT - padB;
-  const innerPad = 40;
-
-
-  const totalDays = Math.max(1, Math.round((endDate - startDate) / 86400000));
-  const xScale = (str) => {
-    const dt = parseDate(str);
-    const days = Math.round((dt - startDate) / 86400000);
-    return padL + innerPad + (days / totalDays) * (plotW - innerPad * 2);
-  };
-  const xByDays = (daysOff) => padL + innerPad + (daysOff / totalDays) * (plotW - innerPad * 2);
-
-  
-  const ilvlVals = rows.map(r => r.item_level || 0).filter(v => v > 0);
-  const cpVals   = rows.map(r => r.combat_power || 0).filter(v => v > 0);
-
-  // 고정 틱 간격 방식 (아툴 스타일): step 단위 경계에 맞춰 Y축 범위를 잡음.
-  // 데이터가 경계에 너무 가까이 붙으면 한 칸씩 여유를 줘서 점이 축에 겹치지 않게 함.
-  function fixedTicks(min, max, step) {
-    let lo = Math.floor(min / step) * step;
-    let hi = Math.ceil(max / step) * step;
-    if (min - lo < step * 0.15) lo -= step;
-    if (hi - max < step * 0.15) hi += step;
-    if (lo === hi) hi = lo + step;
-    const ticks = [];
-    for (let v = lo; v <= hi + step * 0.01; v += step) ticks.push(Math.round(v));
-    return ticks;
-  }
-
-  // Catmull-Rom → cubic Bezier 변환. 점들을 부드러운 곡선으로 이음.
-  function smoothPath(pts) {
-    if (pts.length === 0) return '';
-    if (pts.length === 1) return `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
-    if (pts.length === 2) return `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)} L${pts[1].x.toFixed(1)},${pts[1].y.toFixed(1)}`;
-    let d = `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p0 = pts[i - 1] || pts[i];
-      const p1 = pts[i];
-      const p2 = pts[i + 1];
-      const p3 = pts[i + 2] || pts[i + 1];
-      const cp1x = p1.x + (p2.x - p0.x) / 6;
-      const cp1y = p1.y + (p2.y - p0.y) / 6;
-      const cp2x = p2.x - (p3.x - p1.x) / 6;
-      const cp2y = p2.y - (p3.y - p1.y) / 6;
-      d += ` C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
-    }
-    return d;
-  }
-
-  // 템레벨: 50 단위 / 전투력: 저장값 200 단위 (표시 기준 20k)
-  const ILVL_STEP = 50;
-  const CP_STEP = 200;
-
-  const ilvlTicks = ilvlVals.length ? fixedTicks(Math.min(...ilvlVals), Math.max(...ilvlVals), ILVL_STEP) : [0, 1];
-  const cpTicks   = cpVals.length   ? fixedTicks(Math.min(...cpVals),   Math.max(...cpVals),   CP_STEP)   : [0, 1];
-
-  const ilvlLo = ilvlTicks[0], ilvlHi = ilvlTicks[ilvlTicks.length - 1];
-  const cpLo   = cpTicks[0],   cpHi   = cpTicks[cpTicks.length - 1];
-
-  const yIlvl = v => padT + (1 - (v - ilvlLo) / (ilvlHi - ilvlLo || 1)) * plotH;
-  const yCp   = v => padT + (1 - (v - cpLo)   / (cpHi   - cpLo   || 1)) * plotH;
-
-  let out = '';
-
-  
-  ilvlTicks.forEach(v => {
-    const y = yIlvl(v);
-    out += `<line class="growth-grid" x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}"/>`;
-  });
-
-  
-  if (_growthState.showIlvl && ilvlVals.length) {
-    ilvlTicks.forEach(v => {
-      const y = yIlvl(v);
-      out += `<text class="growth-axis-label" x="${padL - 6}" y="${(y + 3).toFixed(1)}" text-anchor="end" fill="#7aa3c8">${v}</text>`;
-    });
-  }
-
-  
-  if (_growthState.showCp && cpVals.length) {
-    cpTicks.forEach(v => {
-      const y = yCp(v);
-      out += `<text class="growth-axis-label" x="${W - padR + 6}" y="${(y + 3).toFixed(1)}" text-anchor="start" fill="#c47a8a">${formatCp(v)}</text>`;
-    });
-  }
-
-  
-  const tickCount = Math.min(7, totalDays + 1);
-  for (let i = 0; i < tickCount; i++) {
-    const daysOff = Math.round(i * totalDays / (tickCount - 1 || 1));
-    const d = new Date(startDate);
-    d.setDate(d.getDate() + daysOff);
-    const label = `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    const x = xByDays(daysOff);
-    out += `<text class="growth-axis-label" x="${x.toFixed(1)}" y="${H - 10}" text-anchor="middle">${label}</text>`;
-  }
-
-  
-  if (_growthState.showIlvl && ilvlVals.length) {
-    const pts = rows.filter(r => (r.item_level || 0) > 0)
-                    .map(r => ({ x: xScale(r.log_date), y: yIlvl(r.item_level) }));
-    if (pts.length) {
-      out += `<path class="growth-line" d="${smoothPath(pts)}" stroke="#7aa3c8" fill="none"/>`;
-      pts.forEach(p => {
-        out += `<circle class="growth-point" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="#7aa3c8" stroke="white"/>`;
-      });
-    }
-  }
-
-
-  if (_growthState.showCp && cpVals.length) {
-    const pts = rows.filter(r => (r.combat_power || 0) > 0)
-                    .map(r => ({ x: xScale(r.log_date), y: yCp(r.combat_power) }));
-    if (pts.length) {
-      out += `<path class="growth-line" d="${smoothPath(pts)}" stroke="#c47a8a" fill="none"/>`;
-      pts.forEach(p => {
-        out += `<circle class="growth-point" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="#c47a8a" stroke="white"/>`;
-      });
-    }
-  }
-
-  svg.innerHTML = out;
 }
 
 async function commitCpInput(charId, input) {
   let raw = parseFloat(input.value.replace(',', '.'));
   if (isNaN(raw)) raw = 0;
-  
+  // 소수점 1자리 강제
   raw = Math.round(raw * 10) / 10;
   input.value = raw;
-  const stored = Math.round(raw * 10); 
+  const stored = Math.round(raw * 10); // DB 저장값
   const char = allChars.find(c => c.id === charId);
   if (char) {
     char.combat_power = stored;
@@ -3159,7 +2825,6 @@ async function commitCpInput(charId, input) {
   markSelfChange('characters', charId);
   const { error } = await sb.from('characters').update({combat_power: stored}).eq('id', charId);
   if (error) showToast('저장 실패');
-  else logGrowth(charId);
 }
 
 async function saveNumInput(charId, field, newVal) {
@@ -3172,7 +2837,7 @@ async function saveNumInput(charId, field, newVal) {
   const { error } = await sb.from('characters').update({[field]: newVal}).eq('id', charId);
   if (error) { showToast('저장 실패'); return; }
 
-  
+  // 악몽만 +/- 양방향 로그 (오드는 로그 안 찍음)
   if (char && field === 'nightmare_base' && newVal !== prevVal) {
     const diff = newVal - prevVal;
     const sign = diff > 0 ? '+' : '';
@@ -3182,6 +2847,7 @@ async function saveNumInput(charId, field, newVal) {
   lazyRenderOverview();
 }
 
+// ── DB ACTIONS ──
 async function updateCharField(charId, field, value) {
   if (currentActor === 'guest') return;
 
@@ -3192,8 +2858,6 @@ async function updateCharField(charId, field, value) {
   if (char) char[field] = value;
   showToast('저장 완료');
   lazyRenderOverview();
-  
-  if (field === 'item_level') logGrowth(charId);
 }
 
 async function toggleResting(charId, value) {
@@ -3209,6 +2873,8 @@ async function toggleResting(charId, value) {
     writeLog(char.owner, char.name, value ? '휴식 시작' : '휴식 해제', char.id, null);
   }
 }
+
+
 
 async function toggleDaily(charId, field, value, today) {
   if (currentActor === 'guest') return;
@@ -3285,6 +2951,7 @@ async function cycleAwakening(charId, cur, pip) {
   }
 }
 
+// ── ACCOUNT MODAL ──
 function accModalNumInput(field, val, owner, min, max) {
   const id = `amn-${owner}-${field}`;
   return `<div class="num-input-wrap">
@@ -3318,14 +2985,14 @@ function commitAccModal(owner, field, val) {
   const acc = accountData[owner];
   const prevVal = acc ? (acc[field] || 0) : 0;
   if (acc) acc[field] = val;
-  
+  // 카드 숫자 즉시 갱신
   renderOverview();
   debounce(`acc-${owner}-${field}`, async () => {
     markSelfChange('account_data', owner);
     const { error } = await sb.from('account_data').update({[field]: val}).eq('owner', owner);
     if (error) { showToast('저장 실패'); return; }
 
-    
+    // 슈고/일일던전 +/- 양방향 로그
     const LABELS = {
       shugo_key_base:    '슈고 열쇠',
       dungeon_remaining: '일일던전',
@@ -3407,14 +3074,15 @@ async function toggleAccOrder(owner, field, value) {
   const { error } = await sb.from('account_data').update({[field]: value}).eq('owner', owner);
   if (error) { showToast('저장 실패'); return; }
   acc[field] = value;
-  openAccountModal(owner); 
-  renderOverview();        
+  openAccountModal(owner); // 모달 버튼 즉시 갱신
+  renderOverview();        // 겉 버튼도 연동
 }
 
 function closeAccountModal() {
   document.getElementById('acc-modal-overlay').style.display = 'none';
 }
 
+// 디바운스 (모달용 - 아직 없으면 추가)
 if (typeof _debounceTimers === 'undefined') var _debounceTimers = {};
 if (typeof debounce !== 'function') {
   function debounce(key, fn, delay=600) {
@@ -3483,6 +3151,7 @@ async function toggleAbyssChar(corridorId, charId, cleared) {
   }
 }
 
+// ── REALTIME ──
 function subscribeRealtime() {
   const dot = document.getElementById('rt-dot');
 
@@ -3517,13 +3186,15 @@ function subscribeRealtime() {
     });
 }
 
+// ── 내가 방금 바꾼 row 캐시 (self-echo 무시용) ──
+// key: `table:id`, value: timestamp
 const _selfChanges = new Map();
-const SELF_ECHO_WINDOW_MS = 3000;  
+const SELF_ECHO_WINDOW_MS = 3000;  // 3초 내 돌아오는 내 변경은 무시
 
 function markSelfChange(table, id) {
   if (!id) return;
   _selfChanges.set(`${table}:${id}`, Date.now());
-  
+  // 오래된 것 정리
   for (const [k, t] of _selfChanges) {
     if (Date.now() - t > SELF_ECHO_WINDOW_MS) _selfChanges.delete(k);
   }
@@ -3540,11 +3211,14 @@ function isSelfEcho(table, id) {
   return true;
 }
 
+// ── realtime 이벤트 처리 ──
+// UPDATE: 해당 row만 메모리에서 교체 → 렌더
+// INSERT/DELETE: 구조 변경이니 전체 재조회
 async function handleRealtimeChange(table, payload) {
   const eventType = payload.eventType;
   const newRow = payload.new;
   const oldRow = payload.old;
-  
+  // account_data는 owner가 PK 역할, 나머지는 id
   const rowKey = table === 'account_data'
     ? ((newRow && newRow.owner) || (oldRow && oldRow.owner))
     : ((newRow && newRow.id) || (oldRow && oldRow.id));
@@ -3557,10 +3231,11 @@ async function handleRealtimeChange(table, payload) {
     return;
   }
 
-  
+  // INSERT/DELETE는 전체 재조회 (구조 변경)
   await reloadTable(table);
 }
 
+// 메모리의 해당 row만 교체
 function applyRowUpdate(table, row) {
   if (table === 'characters') {
     const idx = allChars.findIndex(c => c.id === row.id);
@@ -3583,6 +3258,7 @@ function applyRowUpdate(table, row) {
   }
 }
 
+// 렌더 debounce (연속 이벤트 모아서 한 번만)
 let _rerenderTimer = null;
 function scheduleLocalRerender() {
   if (_rerenderTimer) return;
@@ -3629,18 +3305,18 @@ async function reloadTable(table) {
   } else if (table === 'expedition_supply') {
     const { data } = await sb.from('expedition_supply').select('dungeon_key');
     const newSet = new Set((data || []).map(r => r.dungeon_key));
-    
+    // 파티 타겟이 더 이상 체크되지 않은 던전을 가리키면 정리
     _expChecked = newSet;
     for (const k of [..._expPartyTarget]) {
       if (!newSet.has(k)) _expPartyTarget.delete(k);
     }
-    
+    // 타겟이 비었는데 체크된 게 있으면 첫 번째 자동 선택
     if (_expPartyTarget.size === 0 && _expChecked.size > 0) {
       _expPartyTarget.add([..._expChecked][0]);
     }
   }
 
-  
+  // re-render current view
   if (document.getElementById('overview').classList.contains('active')) {
     renderOverview();
   } else if (document.getElementById('expedition-page').classList.contains('active')) {
@@ -3651,6 +3327,7 @@ async function reloadTable(table) {
   }
 }
 
+// ── ACTOR (누가 쓰는지) ──
 let currentActor = localStorage.getItem('aion2_actor') || null;
 
 let _pendingActor = null;
@@ -3690,7 +3367,7 @@ function setActor(name) {
   document.getElementById('actor-step2').style.display = 'none';
   document.getElementById('actor-step1').style.display = 'block';
 
-  
+  // 손님이면 읽기전용 배너 표시 + 전체 편집 차단
   const banner = document.getElementById('guest-banner');
   if (banner) banner.style.display = name === 'guest' ? 'block' : 'none';
   if (name === 'guest') {
@@ -3708,6 +3385,7 @@ function checkActor() {
   return true;
 }
 
+// ── ACTIVITY LOG ──
 async function writeLog(owner, characterName, action, charId=null, field=null) {
   if (!checkActor()) return;
   const gameDate = getTodayKST();
@@ -3731,6 +3409,7 @@ async function deleteLog(charId, field) {
     .eq('game_date', gameDate);
 }
 
+// ── 로그 × 버튼 삭제 (PIN 확인) ──
 let _logDeleteId = null;
 
 function openLogDeleteModal(logId) {
@@ -3757,7 +3436,7 @@ async function confirmLogDelete() {
     return;
   }
 
-  
+  // 본인(currentActor) PIN 확인 — account_data.pin
   const acc = accountData[currentActor];
   if (!acc) {
     errEl.textContent = '계정 정보 로딩 중...';
@@ -3769,7 +3448,7 @@ async function confirmLogDelete() {
     return;
   }
 
-  
+  // 삭제
   const { error } = await sb.from('activity_log').delete().eq('id', _logDeleteId);
   if (error) {
     errEl.textContent = '삭제 실패';
@@ -3782,6 +3461,7 @@ async function confirmLogDelete() {
   renderLogPage();
 }
 
+// 로그 페이지 날짜 상태
 let logCurrentDate = null;
 
 async function renderLogPage() {
@@ -3797,7 +3477,7 @@ async function renderLogPage() {
   const today = getTodayKST();
   const isToday = logCurrentDate === today;
 
-  
+  // 이전/다음 날짜 계산
   const prev = offsetDate(logCurrentDate, -1);
   const next = offsetDate(logCurrentDate, 1);
   const hasNext = logCurrentDate < today;
@@ -3821,7 +3501,7 @@ async function renderLogPage() {
         `<button class="log-delete-btn" onclick="openLogDeleteModal('${log.id}')" title="삭제">×</button>`;
 
       let textHtml;
-      
+      // 오드 일괄 적용 로그 - 전용 포맷 + 클릭 가능
       if (log.field === 'odd_batch' && log.meta && log.meta.type === 'odd_batch') {
         textHtml = `<span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerClass}">[${log.owner}]</span> 계정의 <span class="log-odd-batch-link" onclick="openOddBatchDetailModal('${log.id}')">오드를 일괄 적용했습니다</span>`;
       } else {
@@ -3869,6 +3549,7 @@ function formatLogTime(isoStr) {
   return `${mo}월 ${day}일 ${h}시 ${m}분`;
 }
 
+// ── ODD ENERGY ESTIMATE ──
 let _oddTimers = {};
 
 function formatKST(isoStr) {
@@ -3881,6 +3562,8 @@ function formatKST(isoStr) {
   return `${m}/${day} ${h}:${min}`;
 }
 
+// KST 05:00 기준 충전 스케줄 - 3시간마다
+// 05:00, 08:00, 11:00, 14:00, 17:00, 20:00, 23:00, 02:00
 function calcOddEstimate(charId) {
   const char = allChars.find(c => c.id === charId);
   if (!char || !char.odd_recorded_at) return null;
@@ -3889,10 +3572,10 @@ function calcOddEstimate(charId) {
   const now = new Date();
   const baseVal = char.odd_energy_base || 0;
 
-  
+  // KST 기준 충전 시각: 02,05,08,11,14,17,20,23시
   const chargeHoursKST = [2,5,8,11,14,17,20,23];
 
-  
+  // 기록 시각의 KST 날짜부터 오늘까지 각 충전 시각이 몇 번 지났는지
   const recKST = new Date(recorded.getTime() + 9*3600*1000);
   const nowKST = new Date(now.getTime() + 9*3600*1000);
   const startDay = new Date(Date.UTC(recKST.getUTCFullYear(), recKST.getUTCMonth(), recKST.getUTCDate()));
@@ -3917,17 +3600,17 @@ function updateOddEstimateUI(charId) {
 }
 
 function getNextChargeMs() {
-  
-  
+  // 다음 충전 시각까지 남은 ms
+  // KST 05시 기준 3시간마다: 05,08,11,14,17,20,23,02
   const now = new Date();
   const kst = new Date(now.getTime() + 9*3600*1000);
   const h = kst.getUTCHours();
   const m = kst.getUTCMinutes();
   const s = kst.getUTCSeconds();
   const ms = kst.getUTCMilliseconds();
-  
+  // 05:00 기준으로 몇 분 지났는지
   const minutesSince5 = ((h - 5 + 24) % 24) * 60 + m;
-  const minutesInCycle = minutesSince5 % 180; 
+  const minutesInCycle = minutesSince5 % 180; // 3시간 = 180분
   const minutesLeft = 180 - minutesInCycle;
   return (minutesLeft * 60 - s) * 1000 - ms;
 }
@@ -3940,7 +3623,7 @@ function startOddTimer(charId) {
     const delay = getNextChargeMs();
     _oddTimers[charId] = setTimeout(() => {
       updateOddEstimateUI(charId);
-      scheduleNext(); 
+      scheduleNext(); // 다음 충전 시각 예약
     }, delay);
   }
   scheduleNext();
@@ -3955,7 +3638,7 @@ async function recordOddNow(charId) {
   if (error) { showToast('저장 실패'); return; }
   const char = allChars.find(c => c.id === charId);
   if (char) char.odd_recorded_at = now;
-  
+  // UI 갱신
   const recEl = document.getElementById(`odd-recorded-${charId}`);
   if (recEl) recEl.textContent = formatKST(now) + ' 기록 기준';
   startOddTimer(charId);
@@ -3967,10 +3650,10 @@ async function applyOddEstimate(charId) {
 
   const estimated = calcOddEstimate(charId);
   if (estimated === null) return;
-  
+  // 기본량 입력칸에 적용
   const inputEl = document.getElementById(`nv-${charId}-odd_energy_base`);
   if (inputEl) inputEl.value = estimated;
-  
+  // 저장
   const now = new Date().toISOString();
   markSelfChange('characters', charId);
   const { error } = await sb.from('characters')
@@ -3986,14 +3669,17 @@ async function applyOddEstimate(charId) {
   showToast(`오드 ${estimated} 적용!`);
 }
 
+// ═══════════════════════════════════════════════
+// 오드 일괄 적용
+// ═══════════════════════════════════════════════
 let _oddBatchOwner = null;
-let _oddBatchPlan = null;  
+let _oddBatchPlan = null;  // [{ charId, name, before, after, hasRecord }]
 
 function openOddBatchModal(owner) {
   if (currentActor === 'guest') return;
   _oddBatchOwner = owner;
 
-  
+  // 해당 owner 캐릭 전원 대상 (휴식 포함, slot 순)
   const chars = allChars
     .filter(c => c.owner === owner && c.name)
     .sort((a, b) => (a.slot || 0) - (b.slot || 0));
@@ -4037,7 +3723,7 @@ function openOddBatchModal(owner) {
 
   document.getElementById('odd-batch-body').innerHTML = rows || `<div style="text-align:center;padding:20px;color:var(--text-sub);font-size:0.8rem">적용할 캐릭이 없어요</div>`;
 
-  
+  // 기록이 하나도 없으면 확인 버튼 비활성화
   const anyApplicable = _oddBatchPlan.some(p => p.hasRecord);
   const confirmBtn = document.getElementById('odd-batch-confirm');
   confirmBtn.disabled = !anyApplicable;
@@ -4064,7 +3750,7 @@ async function confirmOddBatchApply() {
 
   const now = new Date().toISOString();
 
-  
+  // 각 캐릭 업데이트 (병렬)
   applicable.forEach(p => markSelfChange('characters', p.charId));
   const updates = applicable.map(p =>
     sb.from('characters')
@@ -4079,7 +3765,7 @@ async function confirmOddBatchApply() {
     return;
   }
 
-  
+  // 로컬 상태 업데이트
   applicable.forEach(p => {
     const c = allChars.find(c => c.id === p.charId);
     if (c) {
@@ -4088,8 +3774,8 @@ async function confirmOddBatchApply() {
     }
   });
 
-  
-  
+  // 로그 기록 — meta에 전체 plan (기록없는 캐릭 포함) 저장
+  // 기록없는 캐릭도 포함해서 저장해야 나중에 상세보기에서 전체 목록 확인 가능
   await sb.from('activity_log').insert({
     game_date: getTodayKST(),
     actor: currentActor,
@@ -4115,8 +3801,9 @@ async function confirmOddBatchApply() {
   renderOverview();
 }
 
+// ── 로그에서 "오드 일괄 적용" 링크 클릭 시 상세보기 ──
 function openOddBatchDetailModal(logId) {
-  
+  // activity_log에서 meta 가져와서 표시
   (async () => {
     const { data, error } = await sb.from('activity_log')
       .select('*')
@@ -4162,6 +3849,7 @@ function closeOddBatchDetailModal() {
   document.getElementById('odd-batch-detail-overlay').style.display = 'none';
 }
 
+// ── DRAG AND DROP ──
 let _dragCharId = null;
 let _dragOwner = null;
 let _dragSlot = null;
@@ -4191,14 +3879,14 @@ async function dropChar(e, targetOwner, targetSlot) {
   e.preventDefault();
   document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
 
-  if (!_dragCharId || _dragOwner !== targetOwner) return; 
-  if (_dragSlot === targetSlot) return; 
+  if (!_dragCharId || _dragOwner !== targetOwner) return; // 다른 계정끼리 이동 불가
+  if (_dragSlot === targetSlot) return; // 같은 자리
 
-  
+  // 대상 슬롯에 캐릭터가 있는지 확인
   const targetChar = allChars.find(c => c.owner === targetOwner && c.slot === targetSlot);
 
   if (targetChar) {
-    
+    // 두 캐릭터 슬롯 교환
     markSelfChange('characters', _dragCharId);
     markSelfChange('characters', targetChar.id);
     await Promise.all([
@@ -4209,7 +3897,7 @@ async function dropChar(e, targetOwner, targetSlot) {
     if (dragChar) dragChar.slot = targetSlot;
     targetChar.slot = _dragSlot;
   } else {
-    
+    // 빈 슬롯으로 이동
     markSelfChange('characters', _dragCharId);
     await sb.from('characters').update({slot: targetSlot}).eq('id', _dragCharId);
     const dragChar = allChars.find(c => c.id === _dragCharId);
@@ -4223,13 +3911,16 @@ async function dropChar(e, targetOwner, targetSlot) {
   renderOverview();
 }
 
+// ── START ──
 init();
 
+// ── 5초마다 백업 sync (realtime 이벤트 놓친 경우 보정) ──
+// 탭이 화면에 보일 때만 돌림
 let _backupSyncTimer = null;
 async function backupSyncTick() {
   if (document.visibilityState !== 'visible') return;
   if (currentActor === 'guest' && !allChars.length) return;
-  
+  // 가벼운 전체 재조회 — 캐릭/계정/오늘자 일일/주간
   const today = getTodayKST();
   const week = getWeekStart();
   const warDate = getLastWarDate();
@@ -4266,7 +3957,7 @@ function stopBackupSync() {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     startBackupSync();
-    
+    // 탭 돌아오면 즉시 한 번
     backupSyncTick();
   } else {
     stopBackupSync();
@@ -4274,6 +3965,7 @@ document.addEventListener('visibilitychange', () => {
 });
 if (document.visibilityState === 'visible') startBackupSync();
 
+// actor 미설정 시 모달 표시
 if (!currentActor) {
   document.getElementById('user-modal-overlay').style.display = 'flex';
 } else if (currentActor === 'guest') {
@@ -4282,6 +3974,7 @@ if (!currentActor) {
   document.body.classList.add('guest-mode');
 }
 
+// 카운트다운 1분마다 갱신
 setInterval(() => {
   const el = document.getElementById('abyss-countdown');
   if (!el) return;
@@ -4290,6 +3983,9 @@ setInterval(() => {
   el.style.color = urgent ? '#b85050' : 'var(--text-sub)';
 }, 60000);
 
+// ═══════════════════════════════════════════════════════════════
+// EXPEDITION TAB
+// ═══════════════════════════════════════════════════════════════
 const EXP_DUNGEONS = [
   { name: '크라오동굴',           explo: 200,  normal: 1000, hard: 2400, star: 1 },
   { name: '드라웁니르',           explo: 900,  normal: 1000, hard: 2400, star: 1 },
@@ -4302,13 +3998,14 @@ const EXP_DUNGEONS = [
   { name: '환영의 회랑',          explo: 3000, normal: 3000, hard: 3500, star: 5 },
 ];
 
-let _expChecked = new Set();          
-let _expPartyTarget = new Set();      
+// STATE — 체크 상태는 Supabase expedition_supply 테이블에서 실시간 동기화
+let _expChecked = new Set();          // 체크된 던전 키들 ('name::mode::ilvl')
+let _expPartyTarget = new Set();      // 파티 찾기용 선택된 던전 (로컬, 공유 안 함)
 let _expParty = 'both';
-let _expExcluded = new Set();         
+let _expExcluded = new Set();         // 세션 범위(저장 안 함)
 let _expResultExpanded = true;
-let _expSortMode = 'odd';             
-let _expSupplyExpanded = null;        
+let _expSortMode = 'odd';             // 'odd' | 'total' | 'cp'
+let _expSupplyExpanded = null;        // 첫 렌더 때 체크 유무로 자동 결정
 
 function expKey(name, mode, ilvl) { return `${name}::${mode}::${ilvl}`; }
 function expParseKey(key) {
@@ -4316,6 +4013,7 @@ function expParseKey(key) {
   return { name, mode, ilvl: parseInt(ilvlStr) };
 }
 
+// 오드 4단계
 function expOddLevel(odd) {
   if (odd <= 0)  return 'empty';
   if (odd < 420) return 'low';
@@ -4326,13 +4024,18 @@ function expOddColor(odd) {
   return { empty:'var(--odd-empty)', low:'var(--odd-low)',
            mid:'var(--odd-mid)', full:'var(--odd-full)' }[expOddLevel(odd)];
 }
-
+// "예상 기본 오드" 가져오기 — calcOddEstimate 있으면 사용, 없으면 base
 function expCurrentOdd(char) {
   const est = (typeof calcOddEstimate === 'function') ? calcOddEstimate(char.id) : null;
   if (est !== null && est !== undefined) return est;
   return char.odd_energy_base || 0;
 }
+// "전체 오드" = 예상 기본 오드 + 충전 오드
+function expTotalOdd(char) {
+  return expCurrentOdd(char) + (char.odd_energy_charged || 0);
+}
 
+// 파티 타겟의 최대 템레벨 (AND 조건 - 다중 선택 시 모두 가능한 캐릭)
 function expRequiredIlvl() {
   if (_expPartyTarget.size === 0) return null;
   let max = 0;
@@ -4343,12 +4046,13 @@ function expRequiredIlvl() {
   return max;
 }
 
+// EVENTS
 async function expToggleCell(name, mode, ilvl) {
   if (currentActor === 'guest') return;
   const key = expKey(name, mode, ilvl);
   const wasChecked = _expChecked.has(key);
 
-  
+  // 낙관적 로컬 업데이트 (반응성)
   if (wasChecked) {
     _expChecked.delete(key);
     _expPartyTarget.delete(key);
@@ -4363,7 +4067,7 @@ async function expToggleCell(name, mode, ilvl) {
   }
   renderExpeditionPage();
 
-  
+  // DB 반영 (realtime으로 다른 사용자에게 전파됨)
   let error;
   if (wasChecked) {
     ({ error } = await sb.from('expedition_supply').delete().eq('dungeon_key', key));
@@ -4377,7 +4081,7 @@ async function expToggleCell(name, mode, ilvl) {
   if (error) {
     showToast('저장 실패 😢');
     console.error(error);
-    
+    // 원복
     if (wasChecked) _expChecked.add(key);
     else _expChecked.delete(key);
     renderExpeditionPage();
@@ -4403,7 +4107,7 @@ async function expClearAll() {
   }
 }
 function expTogglePartyTarget(key) {
-  
+  // 단일 선택: 같은 pill 다시 탭하면 해제, 다른 pill 탭하면 전환
   if (_expPartyTarget.has(key)) {
     _expPartyTarget.delete(key);
   } else {
@@ -4437,6 +4141,7 @@ function expToggleResults() {
   if (chevron) chevron.classList.toggle('collapsed', !_expResultExpanded);
 }
 
+// RENDER
 function renderExpeditionPage() {
   const el = document.getElementById('expedition-content');
   if (!el) return;
@@ -4445,12 +4150,12 @@ function renderExpeditionPage() {
     return;
   }
 
-  
+  // 접힘 상태 초기화 (첫 렌더 시에만)
   if (_expSupplyExpanded === null) {
     _expSupplyExpanded = (_expChecked.size === 0);
   }
 
-  
+  // ── 1) Supply board ──
   const modes = [
     { key: 'explo',  label: '탐험',       dotCls: 'explo',  column: 'explo'  },
     { key: 'normal', label: '정복 · 보통', dotCls: 'normal', column: 'normal' },
@@ -4516,7 +4221,7 @@ function renderExpeditionPage() {
     </div>
   `;
 
-  
+  // 접힘 요약 (접혀있을 때만 표시)
   let collapsedSummary = '';
   if (!_expSupplyExpanded) {
     if (_expChecked.size === 0) {
@@ -4554,7 +4259,7 @@ function renderExpeditionPage() {
     </div>
   `;
 
-  
+  // ── 2) Party finder ──
   const reqIlvl = expRequiredIlvl();
 
   const partyPillsHtml = `
@@ -4566,7 +4271,7 @@ function renderExpeditionPage() {
     </div>
   `;
 
-  
+  // 체크된 보급의뢰 던전들을 파티 찾기 pill로 표시 (단일 선택)
   let targetPillsHtml = '';
   if (_expChecked.size > 0) {
     const checkedList = [..._expChecked].map(k => {
@@ -4602,24 +4307,43 @@ function renderExpeditionPage() {
       <div class="exp-party-empty-hint">위 던전 중 하나를 골라주세요</div>
     `;
   } else {
-    
+    // 입장 가능한 캐릭 풀 (템레벨 충족)
     const pool = allChars.filter(c => c.name && (c.item_level || 0) >= reqIlvl);
 
-    const sortFn = _expSortMode === 'cp'
-      ? (a, b) => {
+    const sortFn = (() => {
+      if (_expSortMode === 'cp') {
+        return (a, b) => {
           const diff = (b.combat_power || 0) - (a.combat_power || 0);
           return diff !== 0 ? diff : expCurrentOdd(b) - expCurrentOdd(a);
-        }
-      : (a, b) => {
-          const diff = expCurrentOdd(b) - expCurrentOdd(a);
+        };
+      }
+      if (_expSortMode === 'total') {
+        return (a, b) => {
+          const diff = expTotalOdd(b) - expTotalOdd(a);
           return diff !== 0 ? diff : (b.combat_power || 0) - (a.combat_power || 0);
         };
+      }
+      // 'odd' (기본)
+      return (a, b) => {
+        const diff = expCurrentOdd(b) - expCurrentOdd(a);
+        return diff !== 0 ? diff : (b.combat_power || 0) - (a.combat_power || 0);
+      };
+    })();
+
+    const sortLabel = {
+      odd:   '오드 많은 순',
+      total: '전체 오드 많은 순',
+      cp:    '전투력 높은 순',
+    }[_expSortMode] || '오드 많은 순';
 
     const sortPillsHtml = `
       <div class="exp-party-label">정렬 기준</div>
       <div class="exp-party-pills">
         <button class="exp-party-pill ${_expSortMode === 'odd' ? 'active' : ''}" onclick="expSetSortMode('odd')">
           <span class="exp-party-pill-check">✓</span>오드 많은 순
+        </button>
+        <button class="exp-party-pill ${_expSortMode === 'total' ? 'active' : ''}" onclick="expSetSortMode('total')">
+          <span class="exp-party-pill-check">✓</span>전체 오드 많은 순
         </button>
         <button class="exp-party-pill ${_expSortMode === 'cp' ? 'active' : ''}" onclick="expSetSortMode('cp')">
           <span class="exp-party-pill-check">✓</span>전투력 높은 순
@@ -4652,7 +4376,7 @@ function renderExpeditionPage() {
     } else {
       let resultArea;
       if (_expParty === 'both') {
-        
+        // 쌍 추천 - 오우너별로 분리, 각각 오드 내림차순
         const seolList = pool.filter(c => c.owner === '설냥').sort(sortFn);
         const chuList  = pool.filter(c => c.owner === '츄츄').sort(sortFn);
         const topSeol = seolList.find(c => !_expExcluded.has(c.id)) || null;
@@ -4662,7 +4386,7 @@ function renderExpeditionPage() {
 
         resultArea = `
           <div class="exp-recommend-title">
-            <span class="exp-recommend-medal">🥇</span>추천 파티 (오드 많은 순)
+            <span class="exp-recommend-medal">🥇</span>추천 파티 (${sortLabel})
           </div>
           <div class="exp-recommend-row">
             ${expRecommendCard(topSeol, '설냥')}
@@ -4701,7 +4425,7 @@ function renderExpeditionPage() {
           ` : ''}
         `;
       } else {
-        
+        // 단일 오우너 모드
         const soloList = pool.filter(c => c.owner === _expParty).sort(sortFn);
         const top = soloList.find(c => !_expExcluded.has(c.id)) || null;
 
@@ -4755,7 +4479,7 @@ function renderExpeditionPage() {
     </div>
   `;
 
-  
+  // ── Legend ──
   const legend = `
     <div class="exp-legend">
       <div class="exp-legend-item"><div class="exp-legend-dot" style="background:var(--odd-empty)"></div>오드 0</div>
@@ -4770,6 +4494,7 @@ function renderExpeditionPage() {
   el.innerHTML = supplyCard + partyCard + legend;
 }
 
+// ── 헬퍼: 추천 카드 1개 렌더 ──
 function expRecommendCard(c, ownerLabel) {
   if (!c) {
     return `<div class="exp-recommend-card empty">
@@ -4777,6 +4502,9 @@ function expRecommendCard(c, ownerLabel) {
     </div>`;
   }
   const odd = expCurrentOdd(c);
+  const charge = c.odd_energy_charged || 0;
+  const total = odd + charge;
+  const showTotal = _expSortMode === 'total';
   const pct = Math.min(100, (odd / 840) * 100);
   const cp = c.combat_power || 0;
   const cpText = (typeof formatCp === 'function') ? formatCp(cp) : cp;
@@ -4795,14 +4523,28 @@ function expRecommendCard(c, ownerLabel) {
         <span>오드</span>
         <span><strong>${odd}</strong> / 840</span>
       </div>
+      ${showTotal ? `
+        <div class="exp-recommend-card-total">
+          <span>전체</span>
+          <span>
+            <strong>${total}</strong>
+            <span class="exp-recommend-card-total-sub">(+충전 ${charge})</span>
+          </span>
+        </div>
+      ` : ''}
     </div>
   `;
 }
 
+// ── 헬퍼: 후보 아이템 1개 렌더 ──
 function expCandidateItem(c, idx, topChar) {
   const excluded = _expExcluded.has(c.id);
   const isTop = !excluded && topChar && c.id === topChar.id;
   const odd = expCurrentOdd(c);
+  const charge = c.odd_energy_charged || 0;
+  const showTotal = _expSortMode === 'total';
+  const displayValue = showTotal ? (odd + charge) : odd;
+  const oddTooltip = showTotal ? `기본 ${odd} + 충전 ${charge}` : '';
   const pct = Math.min(100, (odd / 840) * 100);
   const cp = c.combat_power || 0;
   const cpText = (typeof formatCp === 'function') ? formatCp(cp) : cp;
@@ -4814,7 +4556,7 @@ function expCandidateItem(c, idx, topChar) {
       <div class="exp-candidate-bar">
         <div class="exp-candidate-bar-fill" style="width:${pct}%;background:${expOddColor(odd)}"></div>
       </div>
-      <div class="exp-candidate-odd">${odd}</div>
+      <div class="exp-candidate-odd" title="${oddTooltip}">${displayValue}</div>
       <button class="exp-candidate-exclude-btn ${excluded ? 'excluded' : ''}"
               onclick="expToggleExclude('${c.id}')"
               title="${excluded ? '다시 추가' : '추천에서 제외'}">
@@ -4824,7 +4566,7 @@ function expCandidateItem(c, idx, topChar) {
   `;
 }
 </script>
-
+<!-- ── 계정 모달 ── -->
 <div id="acc-modal-overlay" style="
   display:none;position:fixed;inset:0;z-index:200;
   background:rgba(90,82,75,0.35);backdrop-filter:blur(4px);
@@ -4907,7 +4649,7 @@ function expCandidateItem(c, idx, topChar) {
   #vsw-overlay .vsw-btn.primary { background: var(--sage); color: white; border-color: var(--sage); }
 </style>
 
-<button id="vsw-badge" onclick="vswOpen()">v1.2</button>
+<button id="vsw-badge" onclick="vswOpen()">v1.3</button>
 
 <div id="vsw-overlay" onclick="vswClose()">
   <div class="vsw-card" onclick="event.stopPropagation()">
@@ -4930,7 +4672,7 @@ function expCandidateItem(c, idx, topChar) {
 
 <script>
 (function() {
-  const CURRENT_VERSION = 'v1.2';
+  const CURRENT_VERSION = 'v1.3';
   const VERSIONS_URL = '/aion_task/versions.json';
 
   function openModal() {
