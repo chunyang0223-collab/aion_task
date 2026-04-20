@@ -3415,22 +3415,24 @@ function commitAccModal(owner, field, val) {
   if (acc) acc[field] = val;
   // 카드 숫자 즉시 갱신
   renderOverview();
+
+  // 슈고/일일던전 +/- 양방향 로그 (클릭 즉시 기록 — debounce에 묶이지 않음)
+  const LABELS = {
+    shugo_key_base:    '슈고 열쇠',
+    dungeon_remaining: '일일던전',
+  };
+  const label = LABELS[field];
+  if (label && val !== prevVal) {
+    const diff = val - prevVal;
+    const sign = diff > 0 ? '+' : '';
+    writeLog(owner, null, `${label} ${sign}${diff} (${prevVal}→${val})`, null, null);
+  }
+
+  // DB 저장은 debounce 유지 (네트워크 부하 방지)
   debounce(`acc-${owner}-${field}`, async () => {
     markSelfChange('account_data', owner);
     const { error } = await sb.from('account_data').update({[field]: val}).eq('owner', owner);
     if (error) { showToast('저장 실패'); return; }
-
-    // 슈고/일일던전 +/- 양방향 로그
-    const LABELS = {
-      shugo_key_base:    '슈고 열쇠',
-      dungeon_remaining: '일일던전',
-    };
-    const label = LABELS[field];
-    if (label && val !== prevVal) {
-      const diff = val - prevVal;
-      const sign = diff > 0 ? '+' : '';
-      writeLog(owner, null, `${label} ${sign}${diff} (${prevVal}→${val})`, null, null);
-    }
   });
 }
 
