@@ -36,8 +36,10 @@
   --odd-low:   #d4e2c4;
   --odd-mid:   #a3b18a;
   --odd-full:  #c47a8a;
-  --owner-설냥: #c47a8a;  /* 핑크 (로그 냥이 색) */
-  --owner-츄츄: #7a9abf;  /* 파랑 (로그 츄츄 색) */
+  --color-actor-냥이: #c47a8a;  /* fallback — DB 로딩 후 덮어씀 */
+  --color-actor-츄츄: #7a9abf;  /* fallback — DB 로딩 후 덮어씀 */
+  --color-owner-설냥: #5a8a42;  /* fallback — DB 로딩 후 덮어씀 */
+  --color-owner-츄츄: #b06040;  /* fallback — DB 로딩 후 덮어씀 */
   --shadow-inset: inset 0 1px 2px rgba(160,150,140,0.05);
 }
 
@@ -1032,10 +1034,10 @@ body.guest-mode .odd-batch-btn { display: none; }
   border-color: #d66a4a;
   color: #b85050;
 }
-.log-actor-냥이 { color: #c47a8a; }
-.log-actor-츄츄 { color: #7a9abf; }
-.log-owner-설냥 { color: #5a8a42; }
-.log-owner-츄츄 { color: #b06040; }
+.log-actor-냥이 { color: var(--color-actor-냥이); }
+.log-actor-츄츄 { color: var(--color-actor-츄츄); }
+.log-owner-설냥 { color: var(--color-owner-설냥); }
+.log-owner-츄츄 { color: var(--color-owner-츄츄); }
 .log-char { color: var(--lavender); }
 .log-action { color: var(--text); }
 .log-action-done { color: var(--sage); }
@@ -2371,6 +2373,13 @@ async function loadAll() {
   allChars = charsRes.data || [];
   accountData = {};
   (accountRes.data || []).forEach(a => accountData[a.owner] = a);
+  // 색상 CSS 변수 주입 (DB값 우선, fallback은 :root에 정의됨)
+  Object.values(accountData).forEach(acc => {
+    if (acc.actor && acc.actor_color)
+      document.documentElement.style.setProperty(`--color-actor-${acc.actor}`, acc.actor_color);
+    if (acc.owner && acc.owner_color)
+      document.documentElement.style.setProperty(`--color-owner-${acc.owner}`, acc.owner_color);
+  });
   dailyTasks = {};
   (dailyRes.data || []).forEach(t => dailyTasks[t.character_id] = t);
   weeklyTasks = {};
@@ -3534,7 +3543,7 @@ function openMemoModal(owner) {
   setTimeout(() => ta.focus(), 50);
 
   // 다른 사용자의 메모를 열었을 때만 로그 기록 (본인/guest 제외)
-  if (currentActor && currentActor !== 'guest' && currentActor !== owner) {
+  if (currentActor && currentActor !== 'guest' && Object.values(accountData).find(a => a.actor === currentActor)?.owner !== owner) {
     writeLog(owner, null, '메모를 읽었습니다', null, 'memo_read');
   }
 }
@@ -3837,7 +3846,7 @@ async function confirmPin() {
     document.getElementById('actor-pin-input').value = '';
     return;
   }
-  setActor(_pendingActor);
+  setActor(acc.actor);
 }
 
 function setActor(name) {
@@ -3917,7 +3926,7 @@ async function confirmLogDelete() {
   }
 
   // 본인(currentActor) PIN 확인 — account_data.pin
-  const acc = accountData[currentActor];
+  const acc = Object.values(accountData).find(a => a.actor === currentActor);
   if (!acc) {
     errEl.textContent = '계정 정보 로딩 중...';
     return;
@@ -3974,8 +3983,8 @@ async function renderLogPage() {
   } else {
     logs.forEach(log => {
       const time = formatLogTime(log.created_at);
-      const actorDisplay = log.actor === '설냥' ? '냥이' : '츄츄';
-      const actorClass = log.actor === '설냥' ? 'log-actor-냥이' : 'log-actor-츄츄';
+      const actorDisplay = log.actor;
+      const actorClass = 'log-actor-' + log.actor;
       const ownerClass = log.owner === '설냥' ? 'log-owner-설냥' : 'log-owner-츄츄';
       const delBtn = currentActor === 'guest' ? '' :
         `<button class="log-delete-btn" onclick="openLogDeleteModal('${log.id}')" title="삭제">×</button>`;
@@ -3985,9 +3994,10 @@ async function renderLogPage() {
       if (log.field === 'odd_batch' && log.meta && log.meta.type === 'odd_batch') {
         textHtml = `<span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerClass}">[${log.owner}]</span> 계정의 <span class="log-odd-batch-link" onclick="openOddBatchDetailModal('${log.id}')">오드를 일괄 적용했습니다</span>`;
       } else if (log.field === 'memo_read') {
-        // 메모 열람 로그 - "[A]가 [B]의 메모를 읽었습니다" (owner도 사용자 표시명으로 치환)
-        const ownerDisplay = log.owner === '설냥' ? '냥이' : '츄츄';
-        textHtml = `<span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerClass}">[${ownerDisplay}]</span>의 메모를 읽었습니다`;
+        // 메모 열람 로그 - "[A]가 [B]의 메모를 읽었습니다"
+        const ownerActor = accountData[log.owner]?.actor || log.owner;
+        const ownerActorClass = 'log-actor-' + ownerActor;
+        textHtml = `<span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerActorClass}">[${ownerActor}]</span>의 메모를 읽었습니다`;
       } else {
         textHtml = `<span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerClass}">[${log.owner}]</span> 계정의 <span class="log-char">[${log.character_name || '계정'}]</span><span class="log-action-done"> ${log.action}</span>`;
       }
