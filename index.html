@@ -3985,8 +3985,9 @@ async function renderLogPage() {
       if (log.field === 'odd_batch' && log.meta && log.meta.type === 'odd_batch') {
         textHtml = `<span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerClass}">[${log.owner}]</span> 계정의 <span class="log-odd-batch-link" onclick="openOddBatchDetailModal('${log.id}')">오드를 일괄 적용했습니다</span>`;
       } else if (log.field === 'memo_read') {
-        // 메모 열람 로그 - "[A]가 [B]의 메모를 읽었습니다"
-        textHtml = `<span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerClass}">[${log.owner}]</span>의 메모를 읽었습니다`;
+        // 메모 열람 로그 - "[A]가 [B]의 메모를 읽었습니다" (owner도 사용자 표시명으로 치환)
+        const ownerDisplay = log.owner === '설냥' ? '냥이' : '츄츄';
+        textHtml = `<span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerClass}">[${ownerDisplay}]</span>의 메모를 읽었습니다`;
       } else {
         textHtml = `<span class="${actorClass}">[${actorDisplay}]</span>가 <span class="${ownerClass}">[${log.owner}]</span> 계정의 <span class="log-char">[${log.character_name || '계정'}]</span><span class="log-action-done"> ${log.action}</span>`;
       }
