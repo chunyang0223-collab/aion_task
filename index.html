@@ -2687,9 +2687,10 @@ function renderDetail(char) {
   html += `<div class="card">
     <div class="card-title"><div class="card-title-icon icon-expedition">원</div>원정 <span style="margin-left:auto;font-size:0.72rem;color:var(--text-sub)">수요일 05:00 리셋</span></div>
     <div class="stat-row">
-      <span class="stat-label">최종 보스 처치 횟수 <span class="stat-sublabel">${bossKillCount}/${bossKillMax}</span></span>
+      <span class="stat-label">최종 보스 처치 횟수</span>
       <div class="stat-inputs">
         ${numInput('boss_kill_count', bossKillCount, char.id, 0, bossKillMax)}
+        <span style="color:var(--text-sub);font-size:0.8rem">/ ${bossKillMax}</span>
       </div>
     </div>
   </div>`;
