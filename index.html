@@ -2275,16 +2275,16 @@ function getWeekStart() {
 }
 
 function getLastWarDate() {
-  // 화/목/토(2,4,6) 21:00 KST 기준
+  // 수/토(3,6) 22:00 KST 기준
   const now = new Date();
   const kst = new Date(now.getTime() + 9*3600*1000);
-  const warDays = [2,4,6];
+  const warDays = [3,6];
   for (let i=0; i<14; i++) {
     const d = new Date(kst);
     d.setUTCDate(kst.getUTCDate() - i);
     const wd = d.getUTCDay();
     if (warDays.includes(wd)) {
-      if (i === 0 && kst.getUTCHours() < 21) continue;
+      if (i === 0 && kst.getUTCHours() < 22) continue;
       return d.toISOString().slice(0,10);
     }
   }
@@ -2295,16 +2295,16 @@ function getLastWarDate() {
 function getNextWarTime() {
   const now = new Date();
   const kst = new Date(now.getTime() + 9*3600*1000);
-  const warDays = [2,4,6]; // 화/목/토
+  const warDays = [3,6]; // 수/토
   // i=0 부터 시작 → 오늘도 체크
   for (let i=0; i<=7; i++) {
     const d = new Date(kst);
     d.setUTCDate(kst.getUTCDate() + i);
     const wd = d.getUTCDay();
     if (warDays.includes(wd)) {
-      // KST 21:00 = UTC 12:00 당일
-      d.setUTCHours(12, 0, 0, 0);
-      // 오늘이지만 이미 21:00 지났으면 스킵
+      // KST 22:00 = UTC 13:00 당일
+      d.setUTCHours(13, 0, 0, 0);
+      // 오늘이지만 이미 22:00 지났으면 스킵
       if (d <= now) continue;
       return d;
     }
@@ -2849,7 +2849,9 @@ async function openDetail(charId) {
 
   document.getElementById('detail-tab').style.display = '';
   showPage('detail-page');
-  document.getElementById('detail-content').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  const detailEl = document.getElementById('detail-content');
+  detailEl.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  detailEl.dataset.renderKey = ''; // 스피너 표시 후 renderDetail skip 방지
 
   renderDetail(char);
 }
@@ -3077,6 +3079,14 @@ function renderDetail(char) {
 
   // ── 렌더 최적화: 이전 렌더와 html 문자열 + charId가 같으면 DOM 교체 skip ──
   //    (backupSync 5초 타이머 때문에 생기던 깜빡임 제거)
+  //
+  // [invariant / 주의]
+  //   detail-content.innerHTML을 renderDetail 외부에서 직접 바꾸는 경우
+  //   (예: openDetail에서 스피너 삽입), 반드시
+  //       detailEl.dataset.renderKey = '';
+  //   로 renderKey도 함께 초기화할 것.
+  //   안 그러면 아래 skip 로직이 "이미 같은 내용 그렸음"으로 오판해서
+  //   외부에서 쓴 내용(스피너 등)이 고착되는 무한로딩 버그가 재발한다.
   const detailEl = document.getElementById('detail-content');
   const prevKey = detailEl.dataset.renderKey || '';
   const nextKey = char.id + '::' + html.length + '::' + _fastHash(html);
