@@ -2926,7 +2926,15 @@ function renderDetail(char) {
   html += `</div>`;
 
   // ── 어비스 회랑 ──
-  const acquiredZones = abyssCorridors.filter(c => c.acquired);
+  // ZONES 정의 순서(하층 → 중층 → 상층)대로 정렬해서 같은 층끼리 묶이도록 함
+  const acquiredZones = abyssCorridors
+    .filter(c => c.acquired)
+    .slice()
+    .sort((a, b) => {
+      const ia = ZONES.findIndex(z => z.name === a.zone);
+      const ib = ZONES.findIndex(z => z.name === b.zone);
+      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    });
   if (acquiredZones.length > 0) {
     html += `<div class="card">
       <div class="card-title"><div class="card-title-icon" style="background:var(--lavender-light)">회</div>어비스 회랑</div>`;
