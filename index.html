@@ -1161,6 +1161,88 @@ body.guest-mode .page input {
   user-select: none !important;
   -webkit-user-select: none !important;
 }
+body.guest-mode .page .fetch-pill {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+/* ── 전투력 불러오기 pill (수동/자동 통합 버튼) ── */
+.fetch-pill {
+  display: inline-flex;
+  align-items: stretch;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-sub);
+  font-family: inherit;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  overflow: hidden;
+  transition: all 0.15s;
+  user-select: none;
+  height: 24px;
+  vertical-align: middle;
+}
+.fetch-pill.on {
+  background: var(--sage-light);
+  border-color: var(--sage-light);
+  color: #5a7a42;
+  cursor: pointer;
+}
+.fetch-pill.on:hover {
+  background: #c6d9b2;
+  border-color: #c6d9b2;
+}
+.fetch-pill .fetch-run {
+  padding: 0 3px 0 10px;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.fetch-pill .fetch-run:hover { background: rgba(0,0,0,0.04); }
+.fetch-pill.on .fetch-run { cursor: pointer; }
+.fetch-pill.on .fetch-run:hover { background: transparent; }
+.fetch-pill .fetch-auto-tog {
+  padding: 0 8px 0 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-size: 0.82rem;
+  color: var(--text-sub);
+  opacity: 0.45;
+}
+.fetch-pill .fetch-auto-tog:hover {
+  background: rgba(0,0,0,0.04);
+  opacity: 0.75;
+}
+.fetch-pill.on .fetch-auto-tog {
+  color: #5a7a42;
+  opacity: 1;
+  padding: 0 10px 0 3px;
+}
+.fetch-pill.on .fetch-auto-tog:hover { background: transparent; }
+.fetch-pill .fetch-spin-icon {
+  display: inline-block;
+  transition: transform 0.2s;
+}
+.fetch-pill.on .fetch-auto-tog .fetch-spin-icon {
+  animation: fetch-spin 3s linear infinite;
+}
+@keyframes fetch-spin { to { transform: rotate(360deg); } }
+.fetch-pill.loading .fetch-run { opacity: 0.55; pointer-events: none; }
+.fetch-pill .fetch-run-spin {
+  display: inline-block;
+  animation: fetch-spin 1s linear infinite;
+  margin-right: 5px;
+}
+.fetch-pill .label-off { display: inline; }
+.fetch-pill .label-on { display: none; }
+.fetch-pill.on .label-off { display: none; }
+.fetch-pill.on .label-on { display: inline; }
 
 /* ═══════════════════════════════════════════════════
    EXPEDITION TAB
@@ -2498,7 +2580,14 @@ function renderOverview() {
   // Abyss section
   html += renderAbyssSection();
 
+  // ── 렌더 최적화: 이전 렌더와 html 해시가 같으면 DOM 교체 skip ──
+  //    (backupSync 5초 타이머 때문에 생기던 깜빡임 제거)
+  //    어비스 섹션도 같이 renderOverview의 html에 포함되므로 같이 방어됨.
+  const prevKey = el.dataset.renderKey || '';
+  const nextKey = html.length + '::' + _fastHash(html);
+  if (prevKey === nextKey) return;
   el.innerHTML = html;
+  el.dataset.renderKey = nextKey;
 }
 
 function buildMiniDots(char, dt, wt) {
@@ -2791,8 +2880,15 @@ function renderDetail(char) {
         <button id="plaync-url-save-${char.id}" class="toggle-btn"
           style="display:none;font-size:0.72rem;padding:3px 8px"
           onclick="savePlayncUrl('${char.id}')">저장</button>
-        <button class="toggle-btn" style="font-size:0.72rem;padding:3px 8px"
-          onclick="onClickFetchPlaync('${char.id}')">전투력 불러오기</button>
+        <div class="fetch-pill ${char.auto_fetch_cp ? 'on' : ''}" id="fetch-pill-${char.id}"
+          ${char.auto_fetch_cp ? `onclick="releaseAutoFetch('${char.id}')" title="매일 23 : 55 ~ 23 : 59 전투력 자동 갱신"` : ''}>
+          <div class="fetch-run" onclick="onClickFetchPlaync('${char.id}')">
+            <span class="label-off">전투력 불러오기</span>
+            <span class="label-on">자동 갱신 중</span>
+          </div>
+          <div class="fetch-auto-tog"
+            ${char.auto_fetch_cp ? '' : `onclick="enableAutoFetch('${char.id}', event)" title="자동 갱신 켜기"`}><span class="fetch-spin-icon">⟳</span></div>
+        </div>
         <button class="toggle-btn ${isResting ? 'done-peach' : ''}"
           style="font-size:0.72rem"
           onclick="toggleResting('${char.id}', ${!isResting})">${isResting ? '💤 휴식중' : '휴식'}</button>
@@ -2974,14 +3070,35 @@ function renderDetail(char) {
         <div id="growth-chart-empty" style="display:none;text-align:center;padding:28px 10px;color:var(--text-sub);font-size:0.8rem">
           아직 기록이 없어요. 템레벨이나 전투력을 수정하면 오늘부터 쌓여요.
         </div>
-        <svg id="growth-chart" viewBox="0 0 800 300" style="width:100%;height:auto;display:block"></svg>
+        <svg id="growth-chart" viewBox="0 0 800 300" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;max-height:260px;display:block"></svg>
       </div>
     </div>`;
 
-  document.getElementById('detail-content').innerHTML = html;
-  // innerHTML 세팅 후 즉시 오드 예상 타이머 시작
-  startOddTimer(char.id);
-  setupGrowthChart(char.id);
+  // ── 렌더 최적화: 이전 렌더와 html 문자열 + charId가 같으면 DOM 교체 skip ──
+  //    (backupSync 5초 타이머 때문에 생기던 깜빡임 제거)
+  const detailEl = document.getElementById('detail-content');
+  const prevKey = detailEl.dataset.renderKey || '';
+  const nextKey = char.id + '::' + html.length + '::' + _fastHash(html);
+  if (prevKey !== nextKey) {
+    detailEl.innerHTML = html;
+    detailEl.dataset.renderKey = nextKey;
+    // innerHTML 세팅 후 즉시 오드 예상 타이머 시작
+    startOddTimer(char.id);
+    setupGrowthChart(char.id);
+  }
+  // 내용 동일이면 아무것도 안 함:
+  //  - 상세뷰 DOM 유지 (깜빡임 없음)
+  //  - 사용자가 선택한 성장그래프 범위(7/30/90/전체)도 유지
+  //  - 실제 데이터 변화는 realtime 이벤트 or 사용자 액션에서 renderDetail 재호출되어 반영됨
+}
+
+// 경량 해시 (같은 html 문자열인지 빠르게 비교) — 충돌은 사실상 무시 가능
+function _fastHash(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = (h * 31 + s.charCodeAt(i)) | 0;
+  }
+  return h;
 }
 
 // ── NUM INPUT HELPER ──
@@ -3332,6 +3449,69 @@ function onClickFetchPlaync(charId) {
     if (urlInput) { urlInput.style.display = 'block'; urlInput.focus(); }
     if (saveBtn) saveBtn.style.display = 'block';
   }
+}
+
+// ⟳ 아이콘 클릭 → 자동 갱신 ON
+async function enableAutoFetch(charId, event) {
+  if (event) event.stopPropagation();
+  if (currentActor === 'guest') return;
+  const char = allChars.find(c => c.id === charId);
+  if (!char) return;
+
+  // URL 미등록 상태면 URL 입력부터 유도 (⟳ 눌러도 URL부터)
+  if (!char.plaync_character_id) {
+    const urlInput = document.getElementById(`plaync-url-${charId}`);
+    const saveBtn = document.getElementById(`plaync-url-save-${charId}`);
+    if (urlInput) { urlInput.style.display = 'block'; urlInput.focus(); }
+    if (saveBtn) saveBtn.style.display = 'block';
+    showToast('먼저 URL을 입력해주세요');
+    return;
+  }
+
+  markSelfChange('characters', charId);
+  const { error } = await sb.from('characters').update({ auto_fetch_cp: true }).eq('id', charId);
+  if (error) { showToast('저장 실패'); return; }
+  char.auto_fetch_cp = true;
+
+  // UI 전환: on 클래스 부여, 자식 title 제거, pill 전체 클릭 핸들러 바인딩
+  const pill = document.getElementById(`fetch-pill-${charId}`);
+  if (pill) {
+    pill.classList.add('on');
+    pill.setAttribute('title', '매일 23 : 55 ~ 23 : 59 전투력 자동 갱신');
+    pill.onclick = function() { releaseAutoFetch(charId); };
+    // ⟳ 아이콘의 개별 title/onclick 제거
+    const tog = pill.querySelector('.fetch-auto-tog');
+    if (tog) { tog.removeAttribute('title'); tog.onclick = null; }
+  }
+  showToast('자동 갱신 켜짐');
+  writeLog(char.owner, char.name, '전투력 자동 갱신 ON', char.id, null);
+}
+
+// 자동 ON 상태에서 pill 어디든 클릭 → 자동 갱신 OFF
+async function releaseAutoFetch(charId) {
+  if (currentActor === 'guest') return;
+  const char = allChars.find(c => c.id === charId);
+  if (!char) return;
+
+  markSelfChange('characters', charId);
+  const { error } = await sb.from('characters').update({ auto_fetch_cp: false }).eq('id', charId);
+  if (error) { showToast('저장 실패'); return; }
+  char.auto_fetch_cp = false;
+
+  // UI 복구: on 클래스 제거, title 제거, 자식 title/onclick 복구
+  const pill = document.getElementById(`fetch-pill-${charId}`);
+  if (pill) {
+    pill.classList.remove('on');
+    pill.removeAttribute('title');
+    pill.onclick = null;
+    const tog = pill.querySelector('.fetch-auto-tog');
+    if (tog) {
+      tog.setAttribute('title', '자동 갱신 켜기');
+      tog.onclick = function(e) { enableAutoFetch(charId, e); };
+    }
+  }
+  showToast('자동 갱신 꺼짐');
+  writeLog(char.owner, char.name, '전투력 자동 갱신 OFF', char.id, null);
 }
 
 async function savePlayncUrl(charId) {
@@ -4170,7 +4350,13 @@ async function renderLogPage() {
     });
   }
 
+  // ── 렌더 최적화: 이전 렌더와 html 해시가 같으면 DOM 교체 skip ──
+  //    (로그 탭이 내용 동일한데 DOM 통째 교체 되어 깜빡이는 것 방어)
+  const prevKey = el.dataset.renderKey || '';
+  const nextKey = logCurrentDate + '::' + html.length + '::' + _fastHash(html);
+  if (prevKey === nextKey) return;
   el.innerHTML = html;
+  el.dataset.renderKey = nextKey;
 }
 
 function changeLogDate(date) {
@@ -4801,6 +4987,7 @@ function renderExpeditionPage() {
   if (!el) return;
   if (typeof allChars === 'undefined' || !Array.isArray(allChars)) {
     el.innerHTML = `<div class="loading"><div class="spinner"></div> 불러오는 중...</div>`;
+    el.dataset.renderKey = '';
     return;
   }
 
@@ -5145,7 +5332,14 @@ function renderExpeditionPage() {
     </div>
   `;
 
-  el.innerHTML = supplyCard + partyCard + legend;
+  // ── 렌더 최적화: 이전 렌더와 html 해시가 같으면 DOM 교체 skip ──
+  //    (backupSync 5초 타이머 + _expChecked/파티타겟 등 사용자 상태 유지)
+  const html = supplyCard + partyCard + legend;
+  const prevKey = el.dataset.renderKey || '';
+  const nextKey = html.length + '::' + _fastHash(html);
+  if (prevKey === nextKey) return;
+  el.innerHTML = html;
+  el.dataset.renderKey = nextKey;
 }
 
 // ── 헬퍼: 추천 카드 1개 렌더 ──
