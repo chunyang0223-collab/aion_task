@@ -2447,7 +2447,7 @@ async function loadAll() {
 
   const [charsRes, accountRes, dailyRes, weeklyRes, corridorRes, clearsRes, supplyRes] = await Promise.all([
     sb.from('characters').select('*').order('owner').order('slot'),
-    sb.from('account_data').select('*'),
+    sb.from('account_data').select('*').order('owner'),
     sb.from('daily_tasks').select('*').eq('task_date', today),
     sb.from('weekly_tasks').select('*').eq('week_start', week),
     sb.from('abyss_corridors').select('*').eq('war_date', warDate),
@@ -2459,6 +2459,7 @@ async function loadAll() {
   accountData = {};
   (accountRes.data || []).forEach(a => accountData[a.owner] = a);
   renderActorModalButtons();
+  validateActor();
   // 색상 CSS 변수 주입 (DB값 우선, fallback은 :root에 정의됨)
   Object.values(accountData).forEach(acc => {
     if (acc.actor && acc.actor_color)
@@ -3484,7 +3485,6 @@ async function enableAutoFetch(charId, event) {
     if (tog) { tog.removeAttribute('title'); tog.onclick = null; }
   }
   showToast('자동 갱신 켜짐');
-  writeLog(char.owner, char.name, '전투력 자동 갱신 ON', char.id, null);
 }
 
 // 자동 ON 상태에서 pill 어디든 클릭 → 자동 갱신 OFF
@@ -3511,7 +3511,6 @@ async function releaseAutoFetch(charId) {
     }
   }
   showToast('자동 갱신 꺼짐');
-  writeLog(char.owner, char.name, '전투력 자동 갱신 OFF', char.id, null);
 }
 
 async function savePlayncUrl(charId) {
@@ -4070,9 +4069,10 @@ async function reloadTable(table) {
     const { data } = await sb.from('characters').select('*').order('owner').order('slot');
     allChars = data || [];
   } else if (table === 'account_data') {
-    const { data } = await sb.from('account_data').select('*');
+    const { data } = await sb.from('account_data').select('*').order('owner');
     accountData = {};
     (data||[]).forEach(a => accountData[a.owner] = a);
+    validateActor();
   } else if (table === 'daily_tasks') {
     const { data } = await sb.from('daily_tasks').select('*').eq('task_date', today);
     dailyTasks = {};
@@ -4212,6 +4212,26 @@ function checkActor() {
     return false;
   }
   return true;
+}
+
+// ── actor 검증: accountData 로드 후 currentActor가 유효한지 확인 ──
+// stale localStorage (예: 과거 actor명이 남아있거나 DB에서 삭제된 actor) 자동 정리
+function validateActor() {
+  if (!currentActor || currentActor === 'guest') return;
+  const accounts = Object.values(accountData);
+  if (accounts.length === 0) return; // accountData 아직 미로딩 → skip
+  const valid = accounts.some(a => a.actor === currentActor);
+  if (valid) return;
+  console.warn(`[actor] stale currentActor='${currentActor}' not in accountData → 강제 재로그인`);
+  currentActor = null;
+  localStorage.removeItem('aion2_actor');
+  const banner = document.getElementById('guest-banner');
+  if (banner) banner.style.display = 'none';
+  document.body.classList.remove('guest-mode');
+  updateActorIndicator();
+  document.getElementById('actor-step1').style.display = 'block';
+  document.getElementById('actor-step2').style.display = 'none';
+  document.getElementById('user-modal-overlay').style.display = 'flex';
 }
 
 // ── ACTIVITY LOG ──
@@ -4767,14 +4787,14 @@ async function backupSyncTick() {
   try {
     const [chars, accs, dailies, weeklies, corridors, clears] = await Promise.all([
       sb.from('characters').select('*').order('owner').order('slot'),
-      sb.from('account_data').select('*'),
+      sb.from('account_data').select('*').order('owner'),
       sb.from('daily_tasks').select('*').eq('task_date', today),
       sb.from('weekly_tasks').select('*').eq('week_start', week),
       sb.from('abyss_corridors').select('*').eq('war_date', warDate),
       sb.from('abyss_clears').select('*'),
     ]);
     if (chars.data) allChars = chars.data;
-    if (accs.data) { accountData = {}; accs.data.forEach(a => accountData[a.owner] = a); }
+    if (accs.data) { accountData = {}; accs.data.forEach(a => accountData[a.owner] = a); validateActor(); }
     if (dailies.data) { dailyTasks = {}; dailies.data.forEach(t => dailyTasks[t.character_id] = t); }
     if (weeklies.data) { weeklyTasks = {}; weeklies.data.forEach(t => weeklyTasks[t.character_id] = t); }
     if (corridors.data) abyssCorridors = corridors.data;
