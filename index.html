@@ -845,6 +845,13 @@ body.guest-mode .odd-batch-btn { display: none; }
   border-color: var(--peach);
 }
 
+/* 사명 등 일일리셋 항목용 — 주간리셋(sage/green)과 구분 */
+.toggle-btn.done-sky {
+  background: var(--sky);
+  color: white;
+  border-color: var(--sky);
+}
+
 /* ── TEXT INPUT ── */
 .text-input {
   border: 1px solid var(--border);
@@ -2573,6 +2580,8 @@ function renderOverview() {
         <span class="toggle-btn ${acc.shop_purchased?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAccount('${owner}','shop_purchased',${!acc.shop_purchased})">상점</span>
         <span class="toggle-btn ${acc.transmutation_done?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAccount('${owner}','transmutation_done',${!acc.transmutation_done})">물질변환</span>
         <span class="toggle-btn ${(acc.order_lower&&acc.order_middle&&acc.order_town)?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAllOrders('${owner}',${!(acc.order_lower&&acc.order_middle&&acc.order_town)})">지령서</span>
+        <!-- 사명 (일일리셋, 계정 단위) — 위 3개(주간리셋)와 색상 구분 위해 done-sky -->
+        <span class="toggle-btn ${acc.daily_mission?'done-sky':''}" style="font-size:0.72rem;padding:3px 8px;margin-left:auto" onclick="event.stopPropagation();toggleAccount('${owner}','daily_mission',${!acc.daily_mission})">사명</span>
       </div>
     </div>`;
   }
@@ -2597,9 +2606,9 @@ function buildMiniDots(char, dt, wt) {
   const aw = char.awakening_done || 0;
   const acc = accountData[char.owner] || {};
 
-  // 일일 (왼쪽): 사명, 보급, 악몽
+  // 일일 (왼쪽): 보급, 악몽
+  // 사명은 v1.4.9.1부터 계정 단위 → per-char 미니닷에서 제외
   const daily = [
-    `<div class="mini-dot ${dt.mission_done?'done':''}" title="사명${dt.mission_done?' (완료)':''}"></div>`,
     `<div class="mini-dot ${dt.supply_done?'done':''}" title="보급${dt.supply_done?' (완료)':''}"></div>`,
     `<div class="mini-dot ${nm<=12?'done':'partial'}" title="악몽 ${nm}장${nm>12?' (주의)':''}"></div>`,
   ].join('');
@@ -2624,7 +2633,8 @@ function buildMiniDots(char, dt, wt) {
 function calcCompletionPct(char, dt, wt) {
   let done = 0, total = 0;
   const ilvl = char.item_level || 0;
-  total += 2; if (dt.mission_done) done++; if (dt.supply_done) done++;
+  // 사명은 v1.4.9.1부터 계정 단위 → per-char 진행률에서 제외
+  total += 1; if (dt.supply_done) done++;
   total += 1; if ((char.nightmare_base||0) <= 12) done++;
   total += 1; if ((char.awakening_done||0) >= 3) done++;
   if (ilvl >= 2700) { total++; if (wt.ludra_done) done++; }
@@ -2649,13 +2659,6 @@ function renderAbyssSection() {
     return c?.acquired;
   });
 
-  // TODO[2026-04-22 22시 이후 제거]: 어비스 일정(화목토 21시 → 수토 22시) 전환기 임시 처리.
-  //   이 구간 동안 getLastWarDate가 구 일정 마지막 전쟁(4/21 화)을 건너뛰고 4/18 토를 반환하는 문제 회피용.
-  //   오늘 밤 22시 지나면 getLastWarDate가 4/22 수를 정상 반환하므로 자동 복구됨.
-  //   제거 방법: 아래 showWarLabel 상수와, 템플릿의 `${showWarLabel ? ... : ''}` 조건을
-  //              `${warLabel} 전쟁 결과 · ` 원형으로 되돌릴 것.
-  const showWarLabel = new Date() >= new Date('2026-04-22T22:00:00+09:00');
-
   let html = `<div class="abyss-section">
     <div class="section-title">
       <span>
@@ -2665,7 +2668,7 @@ function renderAbyssSection() {
           <button class="${_abyssViewMode==='char'?'active':''}" onclick="toggleAbyssViewMode('char')">캐릭별</button>
         </span>
       </span>
-      <span style="font-size:0.72rem;color:var(--text-sub)">${showWarLabel ? `${warLabel} 전쟁 결과 · ` : ''}
+      <span style="font-size:0.72rem;color:var(--text-sub)">${warLabel} 전쟁 결과 ·
         <span id="abyss-countdown" style="color:${cdUrgent?'#b85050':'var(--text-sub)'}">다음 전쟁까지 ${cdText}</span>
       </span>
     </div>`;
@@ -2965,13 +2968,9 @@ function renderDetail(char) {
   </div>`;
 
   // ── 일일 숙제 ──
+  // 사명(mission)은 v1.4.9.1부터 계정 통합으로 옮김 → account_data.daily_mission (계정 카드에서 관리)
   html += `<div class="card">
     <div class="card-title"><div class="card-title-icon icon-daily">일</div>일일 숙제 <span style="margin-left:auto;font-size:0.72rem;color:var(--text-sub)">05:00 리셋</span></div>
-    <div class="stat-row">
-      <span class="stat-label">사명</span>
-      <button class="toggle-btn ${dt.mission_done?'done':''}"
-        onclick="toggleDaily('${char.id}','mission_done',${!dt.mission_done},'${today}')">${dt.mission_done?'완료':'미완'}</button>
-    </div>
     <div class="stat-row">
       <span class="stat-label">보급</span>
       <button class="toggle-btn ${dt.supply_done?'done':''}"
@@ -3634,7 +3633,7 @@ async function toggleDaily(charId, field, value, today) {
   if (char) {
     renderDetail(char);
     lazyRenderOverview();
-    const actionMap = { mission_done:'사명 완료', supply_done:'보급 완료' };
+    const actionMap = { supply_done:'보급 완료' };
     if (actionMap[field]) {
       if (value) writeLog(char.owner, char.name, actionMap[field], char.id, field);
       else deleteLog(char.id, field);
