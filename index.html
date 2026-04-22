@@ -2649,11 +2649,12 @@ function renderAbyssSection() {
     return c?.acquired;
   });
 
-  // TODO[2026-04-25 22시 이후 제거]: 어비스 일정(화목토 21시 → 수토 22시) 전환기 임시 처리.
+  // TODO[2026-04-22 22시 이후 제거]: 어비스 일정(화목토 21시 → 수토 22시) 전환기 임시 처리.
   //   이 구간 동안 getLastWarDate가 구 일정 마지막 전쟁(4/21 화)을 건너뛰고 4/18 토를 반환하는 문제 회피용.
+  //   오늘 밤 22시 지나면 getLastWarDate가 4/22 수를 정상 반환하므로 자동 복구됨.
   //   제거 방법: 아래 showWarLabel 상수와, 템플릿의 `${showWarLabel ? ... : ''}` 조건을
   //              `${warLabel} 전쟁 결과 · ` 원형으로 되돌릴 것.
-  const showWarLabel = new Date() >= new Date('2026-04-25T22:00:00+09:00');
+  const showWarLabel = new Date() >= new Date('2026-04-22T22:00:00+09:00');
 
   let html = `<div class="abyss-section">
     <div class="section-title">
