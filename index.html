@@ -4761,30 +4761,55 @@ async function dropChar(e, targetOwner, targetSlot) {
   // 대상 슬롯에 캐릭터가 있는지 확인
   const targetChar = allChars.find(c => c.owner === targetOwner && c.slot === targetSlot);
 
-  if (targetChar) {
-    // 두 캐릭터 슬롯 교환
-    markSelfChange('characters', _dragCharId);
-    markSelfChange('characters', targetChar.id);
-    await Promise.all([
-      sb.from('characters').update({slot: targetSlot}).eq('id', _dragCharId),
-      sb.from('characters').update({slot: _dragSlot}).eq('id', targetChar.id),
-    ]);
-    const dragChar = allChars.find(c => c.id === _dragCharId);
-    if (dragChar) dragChar.slot = targetSlot;
-    targetChar.slot = _dragSlot;
-  } else {
-    // 빈 슬롯으로 이동
-    markSelfChange('characters', _dragCharId);
-    await sb.from('characters').update({slot: targetSlot}).eq('id', _dragCharId);
-    const dragChar = allChars.find(c => c.id === _dragCharId);
-    if (dragChar) dragChar.slot = targetSlot;
-  }
-
+  // 드래그 상태는 여기서 한 번에 비움 (이후 비동기 작업 중 재드롭 방지)
+  const dragCharId = _dragCharId;
+  const originalSlot = _dragSlot;
   _dragCharId = null;
   _dragOwner = null;
   _dragSlot = null;
 
-  renderOverview();
+  if (targetChar) {
+    // 두 캐릭터 슬롯 교환 — RPC(swap_char_slots)로 원자적으로 처리
+    //   함수 내부: A→-1 → B→A원자리 → A→B원자리 (단일 트랜잭션)
+    //   중간에 실패하면 Postgres가 통째로 롤백하므로 DB가 어정쩡한 상태로 남지 않음
+    markSelfChange('characters', dragCharId);
+    markSelfChange('characters', targetChar.id);
+
+    // 로컬 optimistic update — 유저 화면엔 즉시 최종 위치로 반영
+    const dragChar = allChars.find(c => c.id === dragCharId);
+    const prevDragSlot = dragChar ? dragChar.slot : originalSlot;
+    const prevTargetSlot = targetChar.slot;
+    if (dragChar) dragChar.slot = targetSlot;
+    targetChar.slot = originalSlot;
+    renderOverview();
+
+    const { error } = await sb.rpc('swap_char_slots', {
+      a_id: dragCharId,
+      b_id: targetChar.id,
+    });
+
+    if (error) {
+      // DB 반영 실패 → 로컬 롤백
+      if (dragChar) dragChar.slot = prevDragSlot;
+      targetChar.slot = prevTargetSlot;
+      renderOverview();
+      console.error('swap_char_slots failed', error);
+      showToast('자리 바꾸기에 실패했어');
+      return;
+    }
+  } else {
+    // 빈 슬롯으로 이동 — 충돌 가능성 없음, 단일 UPDATE
+    markSelfChange('characters', dragCharId);
+    const { error } = await sb.from('characters').update({slot: targetSlot}).eq('id', dragCharId);
+    if (error) {
+      console.error('move to empty slot failed', error);
+      showToast('자리 이동에 실패했어');
+      return;
+    }
+    const dragChar = allChars.find(c => c.id === dragCharId);
+    if (dragChar) dragChar.slot = targetSlot;
+    renderOverview();
+  }
 }
 
 // ── START ──
