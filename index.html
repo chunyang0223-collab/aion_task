@@ -2434,6 +2434,54 @@ function goBack() {
   showPage('overview');
 }
 
+// ── ESC 키: 모달 닫기 / 상세 → 목록 뒤로가기 ──
+function isElementVisible(el) {
+  if (!el) return false;
+  return window.getComputedStyle(el).display !== 'none';
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (e.isComposing || e.keyCode === 229) return; // IME 조합 중 ESC는 무시
+
+  // 1) 닫을 수 있는 모달들 (z-index 높은 것부터 우선 닫기)
+  const closableModals = [
+    { id: 'memo-modal-overlay',         close: () => window.closeMemoModal           && window.closeMemoModal() },
+    { id: 'acc-modal-overlay',          close: () => window.closeAccountModal        && window.closeAccountModal() },
+    { id: 'odd-batch-detail-overlay',   close: () => window.closeOddBatchDetailModal && window.closeOddBatchDetailModal() },
+    { id: 'odd-batch-overlay',          close: () => window.closeOddBatchModal       && window.closeOddBatchModal() },
+    { id: 'log-delete-overlay',         close: () => window.closeLogDeleteModal      && window.closeLogDeleteModal() },
+    { id: 'vsw-overlay',                close: () => window.vswClose                 && window.vswClose() },
+  ];
+  for (const m of closableModals) {
+    const el = document.getElementById(m.id);
+    if (isElementVisible(el)) {
+      m.close();
+      e.preventDefault();
+      return;
+    }
+  }
+
+  // 2) actor 선택 모달이 떠 있으면 ESC 무시 (반드시 선택해야 하는 모달)
+  const userModal = document.getElementById('user-modal-overlay');
+  if (isElementVisible(userModal)) return;
+
+  // 3) input/textarea 포커스 해제
+  const active = document.activeElement;
+  if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+    active.blur();
+    e.preventDefault();
+    return;
+  }
+
+  // 4) 상세 페이지에서 뒤로가기
+  const detailPage = document.getElementById('detail-page');
+  if (detailPage && detailPage.classList.contains('active')) {
+    goBack();
+    e.preventDefault();
+  }
+});
+
 // ── INIT ──
 async function init() {
   try {
@@ -4794,7 +4842,7 @@ async function dropChar(e, targetOwner, targetSlot) {
       targetChar.slot = prevTargetSlot;
       renderOverview();
       console.error('swap_char_slots failed', error);
-      showToast('자리 바꾸기에 실패했어');
+      showToast('자리 바꾸기 실패');
       return;
     }
   } else {
@@ -4803,7 +4851,7 @@ async function dropChar(e, targetOwner, targetSlot) {
     const { error } = await sb.from('characters').update({slot: targetSlot}).eq('id', dragCharId);
     if (error) {
       console.error('move to empty slot failed', error);
-      showToast('자리 이동에 실패했어');
+      showToast('자리 이동 실패');
       return;
     }
     const dragChar = allChars.find(c => c.id === dragCharId);
