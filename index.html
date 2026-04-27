@@ -1962,6 +1962,607 @@ body.guest-mode .page .fetch-pill {
   }
   .exp-recommend-solo { max-width: 100%; }
 }
+
+/* ══════════════════════ SUPPLY BOARD (v1.5.1) ══════════════════════ */
+/* 보급의뢰 보드 — 슬롯 카드 그리드, 도감 모달, 진행도 칩 */
+
+.supply-page-wrap {
+  padding: 14px 16px 80px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.supply-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.supply-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.supply-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.supply-type-pill {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.78rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.supply-type-pill:hover { background: var(--hover); color: var(--text); }
+.supply-type-pill.active { background: var(--peach-light); border-color: var(--peach); color: var(--text); }
+.supply-type-pill.weekly.active { background: var(--lavender-light); border-color: var(--lavender); }
+
+.supply-toggle-btn {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.74rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.supply-toggle-btn:hover { background: var(--hover); color: var(--text); }
+.supply-toggle-btn.active { background: var(--sage-light); border-color: var(--sage); color: var(--text); }
+
+.supply-icon-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-sub);
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  font-family: 'Gowun Dodum', sans-serif;
+}
+.supply-icon-btn:hover { background: var(--hover); color: var(--text); }
+
+.supply-add-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: none;
+  background: var(--sage);
+  color: white;
+  font-size: 0.78rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  transition: filter 0.15s;
+  white-space: nowrap;
+}
+.supply-add-btn:hover { filter: brightness(0.95); }
+
+.supply-owner-section { margin-bottom: 22px; }
+
+.supply-owner-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 0 4px;
+}
+
+.supply-owner-name {
+  font-size: 0.92rem;
+  color: var(--text);
+  font-weight: normal;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.supply-owner-name .supply-owner-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.supply-owner-name[data-owner="설냥"] .supply-owner-dot { background: var(--color-owner-설냥); }
+.supply-owner-name[data-owner="츄츄"] .supply-owner-dot { background: var(--color-owner-츄츄); }
+
+.supply-owner-summary {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+}
+
+.supply-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.supply-group-header {
+  grid-column: 1 / -1;
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  padding: 6px 10px 4px;
+  border-bottom: 1px dashed var(--border);
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.supply-group-header strong { color: var(--text); font-weight: normal; }
+.supply-group-header .supply-group-count {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--text-sub);
+}
+
+/* ── 슬롯 카드 ── */
+.supply-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  transition: box-shadow 0.18s, transform 0.18s;
+}
+.supply-card:hover { box-shadow: var(--shadow); }
+
+.supply-card.done {
+  background: var(--surface2);
+  opacity: 0.65;
+}
+
+.supply-card-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.supply-card-type {
+  font-size: 0.66rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.supply-card-type.urgent { background: var(--peach-light); color: #8a5040; }
+.supply-card-type.weekly { background: var(--lavender-light); color: #6a5a9a; }
+
+.supply-card-dungeon {
+  font-size: 0.86rem;
+  color: var(--text);
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supply-card-diff {
+  font-size: 0.66rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--surface2);
+  color: var(--text-sub);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.supply-card-diff.explo  { background: var(--sky-light);  color: #4a708a; border-color: var(--sky); }
+.supply-card-diff.conq   { background: var(--sage-light); color: #5a7040; border-color: var(--sage); }
+.supply-card-diff.all    { background: var(--peach-light); color: #8a5040; border-color: var(--peach); }
+
+.supply-card-needed-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 2px;
+}
+
+.supply-card-needed {
+  font-size: 1.6rem;
+  color: var(--text);
+  line-height: 1;
+}
+.supply-card.done .supply-card-needed { color: var(--sage); }
+
+.supply-card-needed-label {
+  font-size: 0.7rem;
+  color: var(--text-sub);
+}
+
+.supply-card-needed-detail {
+  margin-left: auto;
+  font-size: 0.68rem;
+  color: var(--text-sub);
+  text-align: right;
+  line-height: 1.4;
+}
+
+.supply-card-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.supply-item-chip {
+  font-size: 0.7rem;
+  padding: 3px 9px;
+  border-radius: 11px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-sub);
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 캐릭별 진행도 영역 */
+.supply-card-chars {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+.supply-char-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 5px 4px;
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 42px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.supply-char-chip:hover { background: var(--hover); border-color: var(--text-sub); }
+
+.supply-char-chip.done {
+  background: var(--sage-light);
+  border-color: var(--sage);
+}
+.supply-char-chip.partial {
+  background: var(--peach-light);
+  border-color: var(--peach);
+}
+.supply-char-chip.resting {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: var(--surface);
+}
+.supply-char-chip.resting:hover { background: var(--surface); border-color: var(--border); }
+
+.supply-char-chip-name {
+  font-size: 0.66rem;
+  color: var(--text);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.1;
+}
+.supply-char-chip-progress {
+  font-size: 0.7rem;
+  color: var(--text-sub);
+  font-feature-settings: 'tnum';
+  line-height: 1;
+}
+.supply-char-chip.done .supply-char-chip-progress { color: #5a7040; }
+.supply-char-chip.partial .supply-char-chip-progress { color: #8a5040; }
+
+.supply-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -4px;
+}
+
+.supply-card-del {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.74rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  font-family: 'Gowun Dodum', sans-serif;
+}
+.supply-card-del:hover {
+  background: var(--peach-light);
+  border-color: var(--peach);
+  color: #8a5040;
+}
+
+/* 빈 상태 */
+.supply-empty {
+  text-align: center;
+  padding: 40px 16px;
+  color: var(--text-sub);
+  font-size: 0.85rem;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+.supply-empty-hint {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+}
+
+/* ── 슬롯 추가 / 도감 모달 공용 ── */
+.supply-modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  z-index: 220;
+  background: rgba(90,82,75,0.4);
+  backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.supply-modal-overlay.show { display: flex; }
+
+.supply-modal-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 20px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 88vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(160,150,140,0.18);
+  animation: fadeUp 0.2s ease-out;
+}
+
+.supply-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  position: relative;
+}
+.supply-modal-title {
+  font-size: 0.95rem;
+  color: var(--text);
+}
+.supply-modal-close {
+  position: absolute;
+  right: 0;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Gowun Dodum', sans-serif;
+}
+
+.supply-form-row { margin-bottom: 12px; }
+.supply-form-label {
+  font-size: 0.74rem;
+  color: var(--text-sub);
+  margin-bottom: 5px;
+  display: block;
+}
+
+.supply-form-input,
+.supply-form-textarea,
+.supply-form-select {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 0.84rem;
+  color: var(--text);
+  outline: none;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.supply-form-input:focus,
+.supply-form-textarea:focus,
+.supply-form-select:focus { border-color: var(--sage); }
+.supply-form-textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+
+.supply-form-pill-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.supply-form-pill {
+  padding: 5px 12px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.76rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.supply-form-pill:hover { background: var(--hover); color: var(--text); }
+.supply-form-pill.active { background: var(--sage-light); border-color: var(--sage); color: var(--text); }
+.supply-form-pill.urgent.active { background: var(--peach-light); border-color: var(--peach); }
+.supply-form-pill.weekly.active { background: var(--lavender-light); border-color: var(--lavender); }
+.supply-form-pill.explo.active  { background: var(--sky-light);     border-color: var(--sky); }
+.supply-form-pill.conq.active   { background: var(--sage-light);    border-color: var(--sage); }
+.supply-form-pill.all.active    { background: var(--peach-light);   border-color: var(--peach); }
+
+.supply-form-help {
+  font-size: 0.7rem;
+  color: var(--text-sub);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.supply-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+.supply-form-actions .btn-cancel {
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.82rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+}
+.supply-form-actions .btn-confirm {
+  padding: 7px 18px;
+  border-radius: 20px;
+  border: none;
+  background: var(--sage);
+  color: white;
+  font-size: 0.82rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+}
+.supply-form-actions .btn-confirm:disabled {
+  background: var(--border);
+  cursor: not-allowed;
+}
+
+/* ── 새 아이템 자동 인식 알림 ── */
+.supply-recognized-list {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  margin-top: 6px;
+  font-size: 0.74rem;
+  color: var(--text-sub);
+  line-height: 1.6;
+}
+.supply-recognized-list strong { color: var(--text); font-weight: normal; }
+
+/* ── 도감 관리 모달 리스트 ── */
+.supply-dict-search {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 0.84rem;
+  color: var(--text);
+  outline: none;
+  margin-bottom: 10px;
+}
+
+.supply-dict-list {
+  max-height: 50vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.supply-dict-empty {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  padding: 24px 12px;
+}
+.supply-dict-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.supply-dict-row-name {
+  font-size: 0.82rem;
+  color: var(--text);
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.supply-dict-row-meta {
+  font-size: 0.7rem;
+  color: var(--text-sub);
+  white-space: nowrap;
+}
+.supply-dict-row-edit,
+.supply-dict-row-del {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Gowun Dodum', sans-serif;
+}
+.supply-dict-row-edit:hover { background: var(--sage-light); border-color: var(--sage); color: #5a7040; }
+.supply-dict-row-del:hover  { background: var(--peach-light); border-color: var(--peach); color: #8a5040; }
+
+/* 게스트 모드 — 보드 인터랙션 차단 */
+body.guest-mode .supply-add-btn,
+body.guest-mode .supply-card-del,
+body.guest-mode .supply-dict-row-edit,
+body.guest-mode .supply-dict-row-del { display: none !important; }
+body.guest-mode .supply-char-chip { pointer-events: none; }
+
+/* 모바일 보정 */
+@media (max-width: 540px) {
+  .supply-grid { grid-template-columns: 1fr; }
+  .supply-page-wrap { padding: 12px 12px 80px; }
+  .supply-toolbar { gap: 6px; padding: 8px 10px; }
+  .supply-card-needed { font-size: 1.4rem; }
+}
 </style>
 </head>
 <body>
@@ -1976,6 +2577,7 @@ body.guest-mode .page .fetch-pill {
     <button class="tab-pill active" id="tab-overview" onclick="showPage('overview')">전체</button>
     <button class="tab-pill" onclick="showPage('detail-page')" id="detail-tab" style="display:none">상세</button>
     <button class="tab-pill" id="tab-expedition" onclick="showPage('expedition-page')">원정</button>
+    <button class="tab-pill" id="tab-supply" onclick="showPage('supply-page')">보급의뢰</button>
     <button class="tab-pill" id="tab-log" onclick="showPage('log-page')">로그</button>
   </div>
   <div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;gap:2px">
@@ -2143,6 +2745,13 @@ body.guest-mode .page .fetch-pill {
   </div>
 </div>
 
+<!-- ═══════════════════════════════ SUPPLY PAGE (v1.5.1) ═══════════════════════════════ -->
+<div id="supply-page" class="page">
+  <div id="supply-content">
+    <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
+  </div>
+</div>
+
 <!-- ── 로그 페이지 ── -->
 <div id="log-page" class="page">
   <div id="log-content">
@@ -2230,6 +2839,14 @@ let weeklyTasks = {};
 let abyssCorridors = [];
 let abyssClears = {};
 let currentCharId = null;
+
+// ── 보급의뢰 (v1.5.1) ──
+let supplyDict = [];          // [{id, name, dungeon, difficulty}]
+let supplySlots = [];         // [{id, owner, slot_type, dungeon, difficulty, required_count, items, created_at}]
+let supplyProgress = {};      // key: `${slot_id}_${character_id}` → {submitted_count, ...}
+let _supplyTypeFilter = 'weekly';  // 'urgent' | 'weekly'
+let _supplyGroupByDungeon = false;
+let _supplyDictSearch = '';
 
 // ── UTIL ──
 // 성장 로그 전용: 5시 보정 없이 KST 달력 날짜 그대로 반환 (자정 0시 기준)
@@ -2422,6 +3039,18 @@ function showPage(id) {
         `</div>`;
     }
   }
+  if (id === 'supply-page') {
+    document.getElementById('tab-supply').classList.add('active');
+    try {
+      renderSupplyPage();
+    } catch (e) {
+      console.error('[보급의뢰 탭 에러]', e);
+      document.getElementById('supply-content').innerHTML =
+        `<div class="card" style="color:#b85050;font-size:0.85rem;white-space:pre-wrap">` +
+        `보급의뢰 탭 렌더 오류:\n${e.message}\n\n콘솔 로그를 확인해 주세요.` +
+        `</div>`;
+    }
+  }
   if (id === 'log-page') {
     document.getElementById('tab-log').classList.add('active');
     renderLogPage();
@@ -2446,6 +3075,8 @@ document.addEventListener('keydown', (e) => {
 
   // 1) 닫을 수 있는 모달들 (z-index 높은 것부터 우선 닫기)
   const closableModals = [
+    { id: 'supply-slot-modal-overlay',  close: () => window.closeSupplySlotModal     && window.closeSupplySlotModal() },
+    { id: 'supply-dict-modal-overlay',  close: () => window.closeSupplyDictModal     && window.closeSupplyDictModal() },
     { id: 'memo-modal-overlay',         close: () => window.closeMemoModal           && window.closeMemoModal() },
     { id: 'acc-modal-overlay',          close: () => window.closeAccountModal        && window.closeAccountModal() },
     { id: 'odd-batch-detail-overlay',   close: () => window.closeOddBatchDetailModal && window.closeOddBatchDetailModal() },
@@ -2500,7 +3131,11 @@ async function loadAll() {
   const week = getWeekStart();
   const warDate = getLastWarDate();
 
-  const [charsRes, accountRes, dailyRes, weeklyRes, corridorRes, clearsRes, supplyRes] = await Promise.all([
+  const dailyBoundary = getDailyBoundaryISO();
+  const weeklyBoundary = getWeeklyBoundaryISO();
+
+  const [charsRes, accountRes, dailyRes, weeklyRes, corridorRes, clearsRes, supplyRes,
+         supDictRes, supSlotsRes, supProgRes] = await Promise.all([
     sb.from('characters').select('*').order('owner').order('slot'),
     sb.from('account_data').select('*').order('owner'),
     sb.from('daily_tasks').select('*').eq('task_date', today),
@@ -2508,6 +3143,11 @@ async function loadAll() {
     sb.from('abyss_corridors').select('*').eq('war_date', warDate),
     sb.from('abyss_clears').select('*, abyss_corridors(war_date)'),
     sb.from('expedition_supply').select('dungeon_key'),
+    sb.from('supply_item_dict').select('*').order('name'),
+    sb.from('supply_slot').select('*')
+      .or(`and(slot_type.eq.urgent,created_at.gte.${dailyBoundary}),and(slot_type.eq.weekly,created_at.gte.${weeklyBoundary})`)
+      .order('created_at', { ascending: false }),
+    sb.from('supply_progress').select('*'),
   ]);
 
   allChars = charsRes.data || [];
@@ -2537,6 +3177,14 @@ async function loadAll() {
   if (_expPartyTarget.size === 0 && _expChecked.size > 0) {
     _expPartyTarget.add([..._expChecked][0]);
   }
+
+  // ── 보급의뢰 데이터 ──
+  supplyDict = supDictRes.data || [];
+  supplySlots = (supSlotsRes.data || []).filter(s => isSlotActive(s));
+  supplyProgress = {};
+  (supProgRes.data || []).forEach(p => {
+    supplyProgress[`${p.slot_id}_${p.character_id}`] = p;
+  });
 }
 
 // ── OVERVIEW RENDER ──
@@ -4013,6 +4661,15 @@ function subscribeRealtime() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'expedition_supply' }, async (payload) => {
       await handleRealtimeChange('expedition_supply', payload);
     })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'supply_item_dict' }, async (payload) => {
+      await handleRealtimeChange('supply_item_dict', payload);
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'supply_slot' }, async (payload) => {
+      await handleRealtimeChange('supply_slot', payload);
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'supply_progress' }, async (payload) => {
+      await handleRealtimeChange('supply_progress', payload);
+    })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_log' }, async () => {
       if (document.getElementById('log-page').classList.contains('active')) renderLogPage();
     })
@@ -4099,6 +4756,18 @@ function applyRowUpdate(table, row) {
     abyssClears[`${row.corridor_id}_${row.character_id}`] = row;
   } else if (table === 'expedition_supply') {
     _expChecked.add(row.dungeon_key);
+  } else if (table === 'supply_item_dict') {
+    const idx = supplyDict.findIndex(d => d.id === row.id);
+    if (idx >= 0) supplyDict[idx] = row;
+    else supplyDict.push(row);
+  } else if (table === 'supply_slot') {
+    if (isSlotActive(row)) {
+      const idx = supplySlots.findIndex(s => s.id === row.id);
+      if (idx >= 0) supplySlots[idx] = row;
+      else supplySlots.unshift(row);
+    }
+  } else if (table === 'supply_progress') {
+    supplyProgress[`${row.slot_id}_${row.character_id}`] = row;
   }
 }
 
@@ -4112,6 +4781,13 @@ function scheduleLocalRerender() {
       renderOverview();
     } else if (document.getElementById('expedition-page').classList.contains('active')) {
       renderExpeditionPage();
+    } else if (document.getElementById('supply-page').classList.contains('active')) {
+      // 입력 중인 인풋(자동완성, 모달 등)에 포커스가 있으면 재렌더 건너뜀
+      const focused = document.activeElement;
+      const supplyPage = document.getElementById('supply-page');
+      const inModalInput = focused && (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA') &&
+        document.querySelector('.supply-modal-overlay.show')?.contains(focused);
+      if (!inModalInput) renderSupplyPage();
     } else if (currentCharId) {
       // detail 페이지에 포커스된 input/textarea가 있으면 re-render 건너뜀
       const focused = document.activeElement;
@@ -4164,6 +4840,20 @@ async function reloadTable(table) {
     if (_expPartyTarget.size === 0 && _expChecked.size > 0) {
       _expPartyTarget.add([..._expChecked][0]);
     }
+  } else if (table === 'supply_item_dict') {
+    const { data } = await sb.from('supply_item_dict').select('*').order('name');
+    supplyDict = data || [];
+  } else if (table === 'supply_slot') {
+    const dailyBoundary = getDailyBoundaryISO();
+    const weeklyBoundary = getWeeklyBoundaryISO();
+    const { data } = await sb.from('supply_slot').select('*')
+      .or(`and(slot_type.eq.urgent,created_at.gte.${dailyBoundary}),and(slot_type.eq.weekly,created_at.gte.${weeklyBoundary})`)
+      .order('created_at', { ascending: false });
+    supplySlots = (data || []).filter(s => isSlotActive(s));
+  } else if (table === 'supply_progress') {
+    const { data } = await sb.from('supply_progress').select('*');
+    supplyProgress = {};
+    (data || []).forEach(p => { supplyProgress[`${p.slot_id}_${p.character_id}`] = p; });
   }
 
   // re-render current view
@@ -4171,6 +4861,11 @@ async function reloadTable(table) {
     renderOverview();
   } else if (document.getElementById('expedition-page').classList.contains('active')) {
     renderExpeditionPage();
+  } else if (document.getElementById('supply-page').classList.contains('active')) {
+    const focused = document.activeElement;
+    const inModalInput = focused && (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA') &&
+      document.querySelector('.supply-modal-overlay.show')?.contains(focused);
+    if (!inModalInput) renderSupplyPage();
   } else if (currentCharId) {
     const char = allChars.find(c => c.id === currentCharId);
     if (char) renderDetail(char);
@@ -5539,6 +6234,647 @@ function expCandidateItem(c, idx, topChar) {
     </div>
   `;
 }
+
+// ═══════════════════════════════════════════════════════════════════
+//   SUPPLY BOARD (v1.5.1) — 보급의뢰 보드
+// ═══════════════════════════════════════════════════════════════════
+
+// ── 시간 경계 헬퍼 ─────────────────────────────────────────────────
+//   - 일일 경계: 가장 최근의 KST 05:00 (하루 1번)
+//   - 주간 경계: 가장 최근의 수요일 KST 05:00 (주 1번)
+//   둘 다 ISO UTC 문자열로 반환 — Supabase 쿼리에 그대로 사용.
+
+function getDailyBoundaryISO() {
+  // 가장 최근 KST 05:00 시점을 UTC ISO로
+  const now = new Date();
+  // KST 기준 시각 계산
+  const kst = new Date(now.getTime() + 9 * 3600 * 1000);
+  const kstHour = kst.getUTCHours();
+  // 오늘 KST 05:00 (UTC 기준 어제 20:00)
+  const boundary = new Date(now);
+  boundary.setUTCMinutes(0, 0, 0);
+  // KST 05:00 = UTC 20:00 (전날)
+  // 현재 UTC에서 가장 최근 "UTC 20:00" 찾기
+  // 더 단순하게: KST 시각 기준 처리
+  const kstY = kst.getUTCFullYear();
+  const kstM = kst.getUTCMonth();
+  const kstD = kst.getUTCDate();
+  // 오늘 KST 05:00 시점의 UTC = (kstY,kstM,kstD,05) - 9h
+  let bKstDate = kstD;
+  if (kstHour < 5) bKstDate = kstD - 1; // 아직 오늘 05:00 안 지났으면 어제 05:00
+  const utcMs = Date.UTC(kstY, kstM, bKstDate, 5, 0, 0) - 9 * 3600 * 1000;
+  return new Date(utcMs).toISOString();
+}
+
+function getWeeklyBoundaryISO() {
+  // 가장 최근 KST 수요일 05:00 시점을 UTC ISO로
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9 * 3600 * 1000);
+  const kstDow = kst.getUTCDay();   // 0=일, 3=수
+  const kstHour = kst.getUTCHours();
+
+  // 이번 주 수요일까지 며칠 빼야 하는지
+  let daysBack = (kstDow - 3 + 7) % 7;
+  // 수요일 당일이지만 KST 05:00 이전이면 → 저번 주 수요일로
+  if (daysBack === 0 && kstHour < 5) daysBack = 7;
+
+  const kstY = kst.getUTCFullYear();
+  const kstM = kst.getUTCMonth();
+  const kstD = kst.getUTCDate() - daysBack;
+  const utcMs = Date.UTC(kstY, kstM, kstD, 5, 0, 0) - 9 * 3600 * 1000;
+  return new Date(utcMs).toISOString();
+}
+
+function isSlotActive(slot) {
+  if (!slot || !slot.created_at) return false;
+  const created = new Date(slot.created_at).getTime();
+  if (slot.slot_type === 'urgent') {
+    return created >= new Date(getDailyBoundaryISO()).getTime();
+  }
+  if (slot.slot_type === 'weekly') {
+    return created >= new Date(getWeeklyBoundaryISO()).getTime();
+  }
+  return false;
+}
+
+// ── 도감 검색 헬퍼 ─────────────────────────────────────────────────
+function findDictItem(name) {
+  const n = (name || '').trim();
+  if (!n) return null;
+  return supplyDict.find(d => d.name === n) || null;
+}
+
+function parseSupplyItems(text) {
+  // 줄바꿈 또는 콤마로 분리, 공백 제거, 빈 항목 제거, 중복 제거
+  const items = (text || '')
+    .split(/[\n,]+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+  return [...new Set(items)];
+}
+
+// ── 보드 렌더 ──────────────────────────────────────────────────────
+function renderSupplyPage() {
+  const el = document.getElementById('supply-content');
+  if (!el) return;
+  if (typeof allChars === 'undefined' || !Array.isArray(allChars)) {
+    el.innerHTML = `<div class="loading"><div class="spinner"></div> 불러오는 중...</div>`;
+    return;
+  }
+
+  const filteredSlots = supplySlots.filter(s => s.slot_type === _supplyTypeFilter);
+
+  let html = '<div class="supply-page-wrap">';
+
+  // ── 툴바 ──
+  html += `<div class="supply-toolbar">
+    <div class="supply-toolbar-left">
+      <button class="supply-type-pill urgent ${_supplyTypeFilter === 'urgent' ? 'active' : ''}"
+        onclick="setSupplyTypeFilter('urgent')">긴급</button>
+      <button class="supply-type-pill weekly ${_supplyTypeFilter === 'weekly' ? 'active' : ''}"
+        onclick="setSupplyTypeFilter('weekly')">주간</button>
+      <button class="supply-toggle-btn ${_supplyGroupByDungeon ? 'active' : ''}"
+        onclick="toggleSupplyGroupByDungeon()">던전별 묶기</button>
+    </div>
+    <div class="supply-toolbar-right">
+      <button class="supply-icon-btn" onclick="openSupplyDictModal()" title="아이템 도감">📖</button>
+      <button class="supply-add-btn" onclick="openSupplySlotModal()">＋ 슬롯 추가</button>
+    </div>
+  </div>`;
+
+  // ── 사용자별 섹션 ──
+  for (const owner of OWNERS) {
+    const ownerSlots = filteredSlots.filter(s => s.owner === owner);
+    const activeChars = allChars
+      .filter(c => c.owner === owner && c.name && !c.resting)
+      .sort((a, b) => (a.slot || 0) - (b.slot || 0));
+
+    // 사용자 섹션 요약 (남은 총합)
+    let totalRemaining = 0;
+    let totalRequired = 0;
+    ownerSlots.forEach(slot => {
+      const need = activeChars.length * slot.required_count;
+      let submitted = 0;
+      activeChars.forEach(c => {
+        const p = supplyProgress[`${slot.id}_${c.id}`];
+        submitted += Math.min((p?.submitted_count || 0), slot.required_count);
+      });
+      totalRemaining += Math.max(0, need - submitted);
+      totalRequired += need;
+    });
+
+    html += `<div class="supply-owner-section">
+      <div class="supply-owner-header">
+        <span class="supply-owner-name" data-owner="${owner}">
+          <span class="supply-owner-dot"></span>${owner}
+        </span>
+        <span class="supply-owner-summary">
+          ${ownerSlots.length === 0
+            ? '슬롯 없음'
+            : `남은 <strong style="color:var(--text)">${totalRemaining}</strong>개 / 총 ${totalRequired}개 · 활성 ${activeChars.length}캐릭`}
+        </span>
+      </div>`;
+
+    if (ownerSlots.length === 0) {
+      html += `<div class="supply-empty">
+        등록된 ${_supplyTypeFilter === 'urgent' ? '긴급' : '주간'} 슬롯이 없어요
+        <div class="supply-empty-hint">＋ 슬롯 추가 버튼으로 이번 주 보급의뢰를 등록해 주세요</div>
+      </div>`;
+    } else if (_supplyGroupByDungeon) {
+      // 던전별 그룹뷰 — 같은 던전·난이도끼리 묶어서
+      const groups = {};
+      ownerSlots.forEach(s => {
+        const k = `${s.dungeon}|${s.difficulty}`;
+        if (!groups[k]) groups[k] = { dungeon: s.dungeon, difficulty: s.difficulty, slots: [] };
+        groups[k].slots.push(s);
+      });
+      // 처리 가능 개수 합 큰 순 정렬
+      const groupList = Object.values(groups).map(g => {
+        let groupRemaining = 0;
+        g.slots.forEach(slot => {
+          const need = activeChars.length * slot.required_count;
+          let submitted = 0;
+          activeChars.forEach(c => {
+            const p = supplyProgress[`${slot.id}_${c.id}`];
+            submitted += Math.min((p?.submitted_count || 0), slot.required_count);
+          });
+          groupRemaining += Math.max(0, need - submitted);
+        });
+        return { ...g, remaining: groupRemaining };
+      }).sort((a, b) => b.remaining - a.remaining);
+
+      html += `<div class="supply-grid">`;
+      groupList.forEach(g => {
+        html += `<div class="supply-group-header">
+          <strong>${escapeHtml(g.dungeon)}</strong>
+          <span class="supply-card-diff ${supplyDiffClass(g.difficulty)}" style="margin-left:4px">${escapeHtml(g.difficulty)}</span>
+          <span class="supply-group-count">${g.remaining > 0 ? `${g.remaining}개 처리 가능` : '완료'}</span>
+        </div>`;
+        g.slots.forEach(slot => {
+          html += renderSupplySlotCard(slot, activeChars);
+        });
+      });
+      html += `</div>`;
+    } else {
+      // 일반 그리드 — 슬롯을 남은 개수 많은 순 → 던전 → 생성순으로 정렬
+      const sortedSlots = [...ownerSlots].sort((a, b) => {
+        const ar = computeSlotRemaining(a, activeChars);
+        const br = computeSlotRemaining(b, activeChars);
+        if (br !== ar) return br - ar;
+        return (a.dungeon || '').localeCompare(b.dungeon || '', 'ko');
+      });
+      html += `<div class="supply-grid">`;
+      sortedSlots.forEach(slot => {
+        html += renderSupplySlotCard(slot, activeChars);
+      });
+      html += `</div>`;
+    }
+
+    html += `</div>`;
+  }
+
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function supplyDiffClass(diff) {
+  if (diff === '탐험') return 'explo';
+  if (diff === '정복') return 'conq';
+  return 'all';
+}
+
+function computeSlotRemaining(slot, activeChars) {
+  const need = activeChars.length * slot.required_count;
+  let submitted = 0;
+  activeChars.forEach(c => {
+    const p = supplyProgress[`${slot.id}_${c.id}`];
+    submitted += Math.min((p?.submitted_count || 0), slot.required_count);
+  });
+  return Math.max(0, need - submitted);
+}
+
+function renderSupplySlotCard(slot, activeChars) {
+  const remaining = computeSlotRemaining(slot, activeChars);
+  const totalNeed = activeChars.length * slot.required_count;
+  let totalSubmitted = 0;
+  activeChars.forEach(c => {
+    const p = supplyProgress[`${slot.id}_${c.id}`];
+    totalSubmitted += Math.min((p?.submitted_count || 0), slot.required_count);
+  });
+  const isDone = remaining === 0 && activeChars.length > 0;
+
+  // 헤더
+  let html = `<div class="supply-card ${isDone ? 'done' : ''}">`;
+  html += `<div class="supply-card-head">
+    <span class="supply-card-type ${slot.slot_type}">${slot.slot_type === 'urgent' ? '긴급' : '주간'}</span>
+    <span class="supply-card-dungeon" title="${escapeAttr(slot.dungeon)}">${escapeHtml(slot.dungeon)}</span>
+    <span class="supply-card-diff ${supplyDiffClass(slot.difficulty)}">${escapeHtml(slot.difficulty)}</span>
+  </div>`;
+
+  // 필요 수량 큰 숫자
+  html += `<div class="supply-card-needed-row">
+    <span class="supply-card-needed">${remaining}</span>
+    <span class="supply-card-needed-label">${isDone ? '완료' : '개 더 필요'}</span>
+    <span class="supply-card-needed-detail">
+      ${totalSubmitted}/${totalNeed}<br>
+      <span style="font-size:0.62rem">${activeChars.length}캐릭 × ${slot.required_count}</span>
+    </span>
+  </div>`;
+
+  // 후보 아이템 칩
+  const items = Array.isArray(slot.items) ? slot.items : [];
+  if (items.length > 0) {
+    html += `<div class="supply-card-items">`;
+    items.forEach(name => {
+      html += `<span class="supply-item-chip" title="${escapeAttr(name)}">${escapeHtml(name)}</span>`;
+    });
+    html += `</div>`;
+  }
+
+  // 캐릭별 진행도
+  if (activeChars.length > 0) {
+    html += `<div class="supply-card-chars">`;
+    activeChars.forEach(c => {
+      const p = supplyProgress[`${slot.id}_${c.id}`];
+      const cnt = Math.min((p?.submitted_count || 0), slot.required_count);
+      let stateCls = '';
+      if (cnt >= slot.required_count) stateCls = 'done';
+      else if (cnt > 0) stateCls = 'partial';
+      const charName = c.name || '(이름없음)';
+      html += `<div class="supply-char-chip ${stateCls}"
+        onclick="cycleSupplyProgress(${slot.id}, '${escapeAttr(c.id)}')"
+        title="${escapeAttr(charName)} · 클릭으로 진행도 +1">
+        <span class="supply-char-chip-name">${escapeHtml(charName)}</span>
+        <span class="supply-char-chip-progress">${cnt}/${slot.required_count}</span>
+      </div>`;
+    });
+    html += `</div>`;
+  } else {
+    html += `<div class="supply-form-help" style="text-align:center;padding:6px 0">활성 캐릭 없음</div>`;
+  }
+
+  // 액션
+  html += `<div class="supply-card-actions">
+    <button class="supply-card-del" onclick="deleteSupplySlot(${slot.id})" title="슬롯 삭제">×</button>
+  </div>`;
+
+  html += `</div>`;
+  return html;
+}
+
+// ── 토글 핸들러 ────────────────────────────────────────────────────
+function setSupplyTypeFilter(type) {
+  if (type !== 'urgent' && type !== 'weekly') return;
+  _supplyTypeFilter = type;
+  renderSupplyPage();
+}
+
+function toggleSupplyGroupByDungeon() {
+  _supplyGroupByDungeon = !_supplyGroupByDungeon;
+  renderSupplyPage();
+}
+
+// ── 진행도 토글 (캐릭별 슬롯 진행도 cycle) ─────────────────────────
+async function cycleSupplyProgress(slotId, characterId) {
+  if (currentActor === 'guest') return;
+  const slot = supplySlots.find(s => s.id === slotId);
+  if (!slot) return;
+  const key = `${slotId}_${characterId}`;
+  const current = supplyProgress[key]?.submitted_count || 0;
+  const max = slot.required_count;
+  // 0 → 1 → ... → max → 0 cycle
+  const next = current >= max ? 0 : current + 1;
+
+  // 낙관적 UI 업데이트
+  if (!supplyProgress[key]) {
+    supplyProgress[key] = { slot_id: slotId, character_id: characterId, submitted_count: next };
+  } else {
+    supplyProgress[key] = { ...supplyProgress[key], submitted_count: next };
+  }
+  renderSupplyPage();
+
+  // upsert
+  const { data, error } = await sb.from('supply_progress')
+    .upsert({ slot_id: slotId, character_id: characterId, submitted_count: next },
+            { onConflict: 'slot_id,character_id' })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('[supply_progress upsert]', error);
+    showToast('진행도 저장 실패');
+    return;
+  }
+  if (data?.id) markSelfChange('supply_progress', data.id);
+  supplyProgress[key] = data;
+}
+
+// ── 슬롯 삭제 ──────────────────────────────────────────────────────
+async function deleteSupplySlot(slotId) {
+  if (currentActor === 'guest') return;
+  if (!confirm('이 슬롯을 삭제할까요? (캐릭별 진행도도 함께 사라집니다)')) return;
+  markSelfChange('supply_slot', slotId);
+  const { error } = await sb.from('supply_slot').delete().eq('id', slotId);
+  if (error) {
+    console.error('[supply_slot delete]', error);
+    showToast('삭제 실패');
+    return;
+  }
+  // 메모리에서도 제거
+  supplySlots = supplySlots.filter(s => s.id !== slotId);
+  Object.keys(supplyProgress).forEach(k => {
+    if (k.startsWith(`${slotId}_`)) delete supplyProgress[k];
+  });
+  renderSupplyPage();
+  showToast('슬롯 삭제됨');
+}
+
+// ── 슬롯 추가 모달 ─────────────────────────────────────────────────
+let _supplySlotForm = {
+  type: 'weekly',
+  owner: null,
+  required: 2,
+  itemsText: '',
+  newDungeon: '',
+  newDifficulty: '',
+};
+
+function openSupplySlotModal() {
+  if (currentActor === 'guest') return;
+  // 현재 actor 기반으로 owner 기본값 추론
+  const myOwner = Object.values(accountData).find(a => a.actor === currentActor)?.owner || OWNERS[0];
+  _supplySlotForm = {
+    type: _supplyTypeFilter,
+    owner: myOwner,
+    required: 2,
+    itemsText: '',
+    newDungeon: '',
+    newDifficulty: '',
+  };
+  document.getElementById('supply-slot-modal-title').textContent = '슬롯 추가';
+  document.getElementById('supply-slot-required').value = '2';
+  document.getElementById('supply-slot-items').value = '';
+  document.getElementById('supply-slot-dungeon').value = '';
+  document.getElementById('supply-slot-items-help').innerHTML = '';
+  document.getElementById('supply-slot-new-row').style.display = 'none';
+  refreshSlotFormPills();
+  document.getElementById('supply-slot-modal-overlay').classList.add('show');
+  setTimeout(() => document.getElementById('supply-slot-items').focus(), 80);
+}
+
+function closeSupplySlotModal() {
+  document.getElementById('supply-slot-modal-overlay').classList.remove('show');
+}
+
+function refreshSlotFormPills() {
+  document.querySelectorAll('#supply-slot-type-row .supply-form-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.type === _supplySlotForm.type);
+  });
+  document.querySelectorAll('#supply-slot-owner-row .supply-form-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.owner === _supplySlotForm.owner);
+  });
+  document.querySelectorAll('#supply-slot-difficulty-row .supply-form-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.diff === _supplySlotForm.newDifficulty);
+  });
+}
+
+function supplySlotSetType(type) {
+  _supplySlotForm.type = type;
+  refreshSlotFormPills();
+}
+function supplySlotSetOwner(owner) {
+  _supplySlotForm.owner = owner;
+  refreshSlotFormPills();
+}
+function supplySlotSetDifficulty(diff) {
+  _supplySlotForm.newDifficulty = diff;
+  refreshSlotFormPills();
+}
+
+function supplySlotItemsChanged() {
+  const text = document.getElementById('supply-slot-items').value;
+  _supplySlotForm.itemsText = text;
+  const items = parseSupplyItems(text);
+  const known = [];
+  const unknown = [];
+  let inferredDungeon = null;
+  let inferredDiff = null;
+  items.forEach(n => {
+    const d = findDictItem(n);
+    if (d) {
+      known.push(d);
+      if (!inferredDungeon) { inferredDungeon = d.dungeon; inferredDiff = d.difficulty; }
+    } else {
+      unknown.push(n);
+    }
+  });
+
+  const help = document.getElementById('supply-slot-items-help');
+  const newRow = document.getElementById('supply-slot-new-row');
+  let helpHtml = '';
+
+  if (items.length === 0) {
+    helpHtml = '한 줄에 하나씩, 또는 콤마로 구분해서 입력하세요.';
+    newRow.style.display = 'none';
+  } else if (known.length > 0 && unknown.length === 0) {
+    helpHtml = `<div class="supply-recognized-list">
+      도감 인식 → <strong>${escapeHtml(inferredDungeon)} · ${escapeHtml(inferredDiff)}</strong>
+    </div>`;
+    newRow.style.display = 'none';
+    _supplySlotForm.newDungeon = inferredDungeon;
+    _supplySlotForm.newDifficulty = inferredDiff;
+  } else if (known.length > 0 && unknown.length > 0) {
+    helpHtml = `<div class="supply-recognized-list">
+      도감 인식 → <strong>${escapeHtml(inferredDungeon)} · ${escapeHtml(inferredDiff)}</strong><br>
+      새 아이템 → ${unknown.map(n => `<strong>${escapeHtml(n)}</strong>`).join(', ')} (자동 등록됨)
+    </div>`;
+    newRow.style.display = 'none';
+    _supplySlotForm.newDungeon = inferredDungeon;
+    _supplySlotForm.newDifficulty = inferredDiff;
+  } else {
+    // 전부 새 아이템
+    helpHtml = `<div class="supply-recognized-list">
+      모두 처음 보는 아이템이에요. 아래에서 던전·난이도를 한 번만 등록해 주세요.
+    </div>`;
+    newRow.style.display = '';
+    if (!_supplySlotForm.newDungeon) {
+      document.getElementById('supply-slot-dungeon').value = '';
+    }
+  }
+  help.innerHTML = helpHtml;
+}
+
+async function saveSupplySlot() {
+  if (currentActor === 'guest') return;
+  const type = _supplySlotForm.type;
+  const owner = _supplySlotForm.owner;
+  const required = parseInt(document.getElementById('supply-slot-required').value || '0', 10);
+  const itemsText = document.getElementById('supply-slot-items').value;
+  const items = parseSupplyItems(itemsText);
+
+  if (!type || !owner) { showToast('유형과 사용자를 선택해 주세요'); return; }
+  if (!Number.isFinite(required) || required < 1 || required > 12) { showToast('필요 수량은 1~12'); return; }
+  if (items.length === 0) { showToast('후보 아이템을 한 개 이상 입력해 주세요'); return; }
+
+  // 던전/난이도 결정 (도감 인식 또는 사용자 입력)
+  let dungeon = '';
+  let difficulty = '';
+  let inferred = null;
+  for (const n of items) {
+    const d = findDictItem(n);
+    if (d) { inferred = d; break; }
+  }
+  if (inferred) {
+    dungeon = inferred.dungeon;
+    difficulty = inferred.difficulty;
+  } else {
+    dungeon = (document.getElementById('supply-slot-dungeon').value || '').trim();
+    difficulty = _supplySlotForm.newDifficulty;
+    if (!dungeon) { showToast('새 아이템 던전 이름을 입력해 주세요'); return; }
+    if (!difficulty) { showToast('난이도를 선택해 주세요'); return; }
+  }
+
+  const confirmBtn = document.getElementById('supply-slot-confirm');
+  confirmBtn.disabled = true;
+
+  try {
+    // 1) 새 아이템들을 도감에 등록
+    const newItems = items
+      .filter(n => !findDictItem(n))
+      .map(name => ({ name, dungeon, difficulty }));
+    if (newItems.length > 0) {
+      const { data: dictData, error: dictErr } = await sb.from('supply_item_dict')
+        .upsert(newItems, { onConflict: 'name' })
+        .select();
+      if (dictErr) throw dictErr;
+      (dictData || []).forEach(d => {
+        markSelfChange('supply_item_dict', d.id);
+        const idx = supplyDict.findIndex(x => x.id === d.id);
+        if (idx >= 0) supplyDict[idx] = d;
+        else supplyDict.push(d);
+      });
+    }
+
+    // 2) 슬롯 생성
+    const { data: slotData, error: slotErr } = await sb.from('supply_slot')
+      .insert({ owner, slot_type: type, dungeon, difficulty, required_count: required, items })
+      .select()
+      .single();
+    if (slotErr) throw slotErr;
+    if (slotData?.id) markSelfChange('supply_slot', slotData.id);
+    supplySlots.unshift(slotData);
+
+    closeSupplySlotModal();
+    renderSupplyPage();
+    showToast('슬롯 추가됨');
+  } catch (e) {
+    console.error('[supply slot save]', e);
+    showToast('저장 실패: ' + (e.message || ''));
+  } finally {
+    confirmBtn.disabled = false;
+  }
+}
+
+// ── 도감 모달 ──────────────────────────────────────────────────────
+function openSupplyDictModal() {
+  document.getElementById('supply-dict-search').value = _supplyDictSearch;
+  renderSupplyDictList();
+  document.getElementById('supply-dict-modal-overlay').classList.add('show');
+}
+function closeSupplyDictModal() {
+  document.getElementById('supply-dict-modal-overlay').classList.remove('show');
+}
+function supplyDictSearchChanged(v) {
+  _supplyDictSearch = v || '';
+  renderSupplyDictList();
+}
+function renderSupplyDictList() {
+  const el = document.getElementById('supply-dict-list');
+  if (!el) return;
+  const q = _supplyDictSearch.trim().toLowerCase();
+  const list = (q
+    ? supplyDict.filter(d =>
+        (d.name || '').toLowerCase().includes(q) ||
+        (d.dungeon || '').toLowerCase().includes(q))
+    : supplyDict
+  ).slice().sort((a, b) =>
+    (a.dungeon || '').localeCompare(b.dungeon || '', 'ko') ||
+    (a.name || '').localeCompare(b.name || '', 'ko')
+  );
+
+  if (list.length === 0) {
+    el.innerHTML = `<div class="supply-dict-empty">
+      ${supplyDict.length === 0 ? '아직 등록된 아이템이 없어요' : '검색 결과 없음'}
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = list.map(d => `
+    <div class="supply-dict-row">
+      <span class="supply-dict-row-name" title="${escapeAttr(d.name)}">${escapeHtml(d.name)}</span>
+      <span class="supply-dict-row-meta">${escapeHtml(d.dungeon)} · ${escapeHtml(d.difficulty)}</span>
+      <button class="supply-dict-row-edit" onclick="editSupplyDictItem(${d.id})" title="수정">✎</button>
+      <button class="supply-dict-row-del"  onclick="deleteSupplyDictItem(${d.id})" title="삭제">−</button>
+    </div>
+  `).join('');
+}
+
+async function editSupplyDictItem(id) {
+  if (currentActor === 'guest') return;
+  const item = supplyDict.find(d => d.id === id);
+  if (!item) return;
+  const newDungeon = prompt('던전 이름', item.dungeon);
+  if (newDungeon === null) return;
+  const trimmed = newDungeon.trim();
+  if (!trimmed) { showToast('던전 이름이 비었어요'); return; }
+  const newDiff = prompt('난이도 (탐험 / 정복 / 올)', item.difficulty);
+  if (newDiff === null) return;
+  const d = (newDiff || '').trim();
+  if (!['탐험', '정복', '올'].includes(d)) { showToast('난이도는 탐험/정복/올 중 하나'); return; }
+
+  const { data, error } = await sb.from('supply_item_dict')
+    .update({ dungeon: trimmed, difficulty: d })
+    .eq('id', id).select().single();
+  if (error) { console.error(error); showToast('수정 실패'); return; }
+  if (data?.id) markSelfChange('supply_item_dict', data.id);
+  const idx = supplyDict.findIndex(x => x.id === id);
+  if (idx >= 0) supplyDict[idx] = data;
+  renderSupplyDictList();
+  showToast('도감 수정됨');
+}
+
+async function deleteSupplyDictItem(id) {
+  if (currentActor === 'guest') return;
+  const item = supplyDict.find(d => d.id === id);
+  if (!item) return;
+  if (!confirm(`도감에서 "${item.name}"을(를) 삭제할까요?`)) return;
+  markSelfChange('supply_item_dict', id);
+  const { error } = await sb.from('supply_item_dict').delete().eq('id', id);
+  if (error) { console.error(error); showToast('삭제 실패'); return; }
+  supplyDict = supplyDict.filter(d => d.id !== id);
+  renderSupplyDictList();
+  showToast('도감 삭제됨');
+}
+
+// 전역 노출 (HTML onclick 에서 호출)
+window.renderSupplyPage = renderSupplyPage;
+window.setSupplyTypeFilter = setSupplyTypeFilter;
+window.toggleSupplyGroupByDungeon = toggleSupplyGroupByDungeon;
+window.cycleSupplyProgress = cycleSupplyProgress;
+window.deleteSupplySlot = deleteSupplySlot;
+window.openSupplySlotModal = openSupplySlotModal;
+window.closeSupplySlotModal = closeSupplySlotModal;
+window.supplySlotSetType = supplySlotSetType;
+window.supplySlotSetOwner = supplySlotSetOwner;
+window.supplySlotSetDifficulty = supplySlotSetDifficulty;
+window.supplySlotItemsChanged = supplySlotItemsChanged;
+window.saveSupplySlot = saveSupplySlot;
+window.openSupplyDictModal = openSupplyDictModal;
+window.closeSupplyDictModal = closeSupplyDictModal;
+window.supplyDictSearchChanged = supplyDictSearchChanged;
+window.editSupplyDictItem = editSupplyDictItem;
+window.deleteSupplyDictItem = deleteSupplyDictItem;
+
 </script>
 <!-- ── 계정 모달 ── -->
 <div id="acc-modal-overlay" style="
@@ -5612,6 +6948,92 @@ function expCandidateItem(c, idx, topChar) {
   </div>
 </div>
 
+<!-- ── 슬롯 추가/편집 모달 (v1.5.1) ── -->
+<div id="supply-slot-modal-overlay" class="supply-modal-overlay" onclick="closeSupplySlotModal()">
+  <div class="supply-modal-card" onclick="event.stopPropagation()">
+    <div class="supply-modal-head">
+      <span class="supply-modal-title" id="supply-slot-modal-title">슬롯 추가</span>
+      <button class="supply-modal-close" onclick="closeSupplySlotModal()">×</button>
+    </div>
+
+    <div class="supply-form-row">
+      <span class="supply-form-label">유형</span>
+      <div class="supply-form-pill-row" id="supply-slot-type-row">
+        <button type="button" class="supply-form-pill urgent" data-type="urgent" onclick="supplySlotSetType('urgent')">긴급 (일일)</button>
+        <button type="button" class="supply-form-pill weekly" data-type="weekly" onclick="supplySlotSetType('weekly')">주간</button>
+      </div>
+    </div>
+
+    <div class="supply-form-row">
+      <span class="supply-form-label">사용자</span>
+      <div class="supply-form-pill-row" id="supply-slot-owner-row">
+        <button type="button" class="supply-form-pill" data-owner="설냥" onclick="supplySlotSetOwner('설냥')">설냥</button>
+        <button type="button" class="supply-form-pill" data-owner="츄츄" onclick="supplySlotSetOwner('츄츄')">츄츄</button>
+      </div>
+    </div>
+
+    <div class="supply-form-row">
+      <span class="supply-form-label">필요 수량 (위 N개 납품)</span>
+      <input type="number" id="supply-slot-required" class="supply-form-input"
+        min="1" max="12" step="1" value="2"
+        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+        inputmode="numeric">
+    </div>
+
+    <div class="supply-form-row">
+      <span class="supply-form-label">후보 아이템 이름 (한 줄에 하나 또는 콤마)</span>
+      <textarea id="supply-slot-items" class="supply-form-textarea" rows="3"
+        placeholder="예) 분열의 갑주&#10;타락한 심판관의 대검"
+        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+        oninput="supplySlotItemsChanged()"></textarea>
+      <div class="supply-form-help" id="supply-slot-items-help"></div>
+    </div>
+
+    <!-- 새 아이템이 있을 때만 노출 -->
+    <div class="supply-form-row" id="supply-slot-new-row" style="display:none">
+      <span class="supply-form-label">새 아이템 던전</span>
+      <input type="text" id="supply-slot-dungeon" class="supply-form-input"
+        placeholder="예) 바크론의 공중섬"
+        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
+
+      <span class="supply-form-label" style="margin-top:8px">난이도</span>
+      <div class="supply-form-pill-row" id="supply-slot-difficulty-row">
+        <button type="button" class="supply-form-pill explo" data-diff="탐험" onclick="supplySlotSetDifficulty('탐험')">탐험</button>
+        <button type="button" class="supply-form-pill conq"  data-diff="정복" onclick="supplySlotSetDifficulty('정복')">정복</button>
+        <button type="button" class="supply-form-pill all"   data-diff="올"   onclick="supplySlotSetDifficulty('올')">탐험+정복</button>
+      </div>
+      <div class="supply-form-help">한 슬롯의 후보들은 모두 같은 던전·난이도에서 나옵니다.</div>
+    </div>
+
+    <div class="supply-form-actions">
+      <button type="button" class="btn-cancel" onclick="closeSupplySlotModal()">취소</button>
+      <button type="button" class="btn-confirm" id="supply-slot-confirm" onclick="saveSupplySlot()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 도감 관리 모달 (v1.5.1) ── -->
+<div id="supply-dict-modal-overlay" class="supply-modal-overlay" onclick="closeSupplyDictModal()">
+  <div class="supply-modal-card" onclick="event.stopPropagation()">
+    <div class="supply-modal-head">
+      <span class="supply-modal-title">아이템 도감</span>
+      <button class="supply-modal-close" onclick="closeSupplyDictModal()">×</button>
+    </div>
+
+    <input type="text" id="supply-dict-search" class="supply-dict-search"
+      placeholder="아이템 또는 던전명 검색"
+      autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+      oninput="supplyDictSearchChanged(this.value)">
+
+    <div id="supply-dict-list" class="supply-dict-list"></div>
+
+    <div class="supply-form-help" style="margin-top:10px;text-align:center">
+      슬롯 추가 시 새 아이템을 등록하면 자동으로 여기에 모입니다.<br>
+      잘못 등록한 매핑이 있으면 ✎ 로 수정, − 로 삭제 가능합니다.
+    </div>
+  </div>
+</div>
+
 <style>
   #vsw-badge {
     display: block;
@@ -5669,7 +7091,7 @@ function expCandidateItem(c, idx, topChar) {
   #vsw-overlay .vsw-btn.primary { background: var(--sage); color: white; border-color: var(--sage); }
 </style>
 
-<button id="vsw-badge" onclick="vswOpen()">v1.5</button>
+<button id="vsw-badge" onclick="vswOpen()">v1.5.1</button>
 
 <div id="vsw-overlay" onclick="vswClose()">
   <div class="vsw-card" onclick="event.stopPropagation()">
@@ -5692,7 +7114,7 @@ function expCandidateItem(c, idx, topChar) {
 
 <script>
 (function() {
-  const CURRENT_VERSION = 'v1.5';
+  const CURRENT_VERSION = 'v1.5.1';
   const VERSIONS_URL = '/aion_task/versions.json';
 
   function openModal() {
