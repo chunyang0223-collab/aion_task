@@ -2092,10 +2092,84 @@ body.guest-mode .page .fetch-pill {
   color: var(--text-sub);
 }
 
+/* 전체 요약 바 — 보드 상단 */
+.supply-summary-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  color: var(--text-sub);
+}
+.supply-summary-bar strong {
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: normal;
+  margin: 0 2px;
+}
+.supply-summary-bar-detail {
+  margin-left: auto;
+  font-size: 0.7rem;
+}
+
+/* 카드 내부 — 사용자별 섹션 */
+.supply-card-section {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px 10px;
+}
+.supply-card-section-label {
+  font-size: 0.66rem;
+  color: var(--text-sub);
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+}
+
+.supply-card-owner {
+  border-top: 1px dashed var(--border);
+  padding-top: 10px;
+}
+.supply-card-owner.done .supply-card-owner-summary {
+  color: var(--sage);
+}
+
+.supply-card-owner-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.supply-card-owner-head .supply-owner-name {
+  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.supply-card-owner-head .supply-owner-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.supply-card-owner-head .supply-owner-name[data-owner="설냥"] .supply-owner-dot { background: var(--color-owner-설냥); }
+.supply-card-owner-head .supply-owner-name[data-owner="츄츄"] .supply-owner-dot { background: var(--color-owner-츄츄); }
+
+.supply-card-owner-summary {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+}
+
 .supply-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
 }
 
 .supply-group-header {
@@ -2210,12 +2284,12 @@ body.guest-mode .page .fetch-pill {
 }
 
 .supply-item-chip {
-  font-size: 0.7rem;
-  padding: 3px 9px;
+  font-size: 0.72rem;
+  padding: 3px 10px;
   border-radius: 11px;
-  background: var(--surface2);
+  background: var(--surface);
   border: 1px solid var(--border);
-  color: var(--text-sub);
+  color: var(--text);
   white-space: nowrap;
   max-width: 100%;
   overflow: hidden;
@@ -2227,8 +2301,6 @@ body.guest-mode .page .fetch-pill {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
   gap: 4px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--border);
 }
 
 .supply-char-chip {
@@ -2288,6 +2360,7 @@ body.guest-mode .page .fetch-pill {
   margin-top: -4px;
 }
 
+.supply-card-edit,
 .supply-card-del {
   width: 22px; height: 22px;
   border-radius: 50%;
@@ -2302,11 +2375,17 @@ body.guest-mode .page .fetch-pill {
   transition: all 0.15s;
   font-family: 'Gowun Dodum', sans-serif;
 }
+.supply-card-edit:hover {
+  background: var(--sage-light);
+  border-color: var(--sage);
+  color: #5a7040;
+}
 .supply-card-del:hover {
   background: var(--peach-light);
   border-color: var(--peach);
   color: #8a5040;
 }
+.supply-card-actions { gap: 6px; }
 
 /* 빈 상태 */
 .supply-empty {
@@ -2551,6 +2630,7 @@ body.guest-mode .page .fetch-pill {
 
 /* 게스트 모드 — 보드 인터랙션 차단 */
 body.guest-mode .supply-add-btn,
+body.guest-mode .supply-card-edit,
 body.guest-mode .supply-card-del,
 body.guest-mode .supply-dict-row-edit,
 body.guest-mode .supply-dict-row-del { display: none !important; }
@@ -6314,6 +6394,16 @@ function parseSupplyItems(text) {
 }
 
 // ── 보드 렌더 ──────────────────────────────────────────────────────
+function getActiveCharsByOwner() {
+  const map = {};
+  for (const owner of OWNERS) {
+    map[owner] = allChars
+      .filter(c => c.owner === owner && c.name && !c.resting)
+      .sort((a, b) => (a.slot || 0) - (b.slot || 0));
+  }
+  return map;
+}
+
 function renderSupplyPage() {
   const el = document.getElementById('supply-content');
   if (!el) return;
@@ -6323,6 +6413,24 @@ function renderSupplyPage() {
   }
 
   const filteredSlots = supplySlots.filter(s => s.slot_type === _supplyTypeFilter);
+  const charsByOwner = getActiveCharsByOwner();
+
+  // 전체 합산 — 양쪽 사용자 통틀어 남은 개수
+  let grandRemaining = 0;
+  let grandRequired = 0;
+  filteredSlots.forEach(slot => {
+    OWNERS.forEach(owner => {
+      const chars = charsByOwner[owner];
+      const need = chars.length * slot.required_count;
+      grandRequired += need;
+      let submitted = 0;
+      chars.forEach(c => {
+        const p = supplyProgress[`${slot.id}_${c.id}`];
+        submitted += Math.min((p?.submitted_count || 0), slot.required_count);
+      });
+      grandRemaining += Math.max(0, need - submitted);
+    });
+  });
 
   let html = '<div class="supply-page-wrap">';
 
@@ -6342,94 +6450,68 @@ function renderSupplyPage() {
     </div>
   </div>`;
 
-  // ── 사용자별 섹션 ──
-  for (const owner of OWNERS) {
-    const ownerSlots = filteredSlots.filter(s => s.owner === owner);
-    const activeChars = allChars
-      .filter(c => c.owner === owner && c.name && !c.resting)
-      .sort((a, b) => (a.slot || 0) - (b.slot || 0));
+  // ── 전체 요약 바 ──
+  if (filteredSlots.length > 0) {
+    html += `<div class="supply-summary-bar">
+      <span>전체 남은 <strong>${grandRemaining}</strong>개 / 총 ${grandRequired}개</span>
+      <span class="supply-summary-bar-detail">슬롯 ${filteredSlots.length}개 · 설냥 ${charsByOwner['설냥'].length}캐릭 · 츄츄 ${charsByOwner['츄츄'].length}캐릭</span>
+    </div>`;
+  }
 
-    // 사용자 섹션 요약 (남은 총합)
-    let totalRemaining = 0;
-    let totalRequired = 0;
-    ownerSlots.forEach(slot => {
-      const need = activeChars.length * slot.required_count;
-      let submitted = 0;
-      activeChars.forEach(c => {
-        const p = supplyProgress[`${slot.id}_${c.id}`];
-        submitted += Math.min((p?.submitted_count || 0), slot.required_count);
-      });
-      totalRemaining += Math.max(0, need - submitted);
-      totalRequired += need;
+  if (filteredSlots.length === 0) {
+    html += `<div class="supply-empty">
+      등록된 ${_supplyTypeFilter === 'urgent' ? '긴급' : '주간'} 슬롯이 없어요
+      <div class="supply-empty-hint">＋ 슬롯 추가 버튼으로 이번 주 보급의뢰를 등록해 주세요</div>
+    </div>`;
+  } else if (_supplyGroupByDungeon) {
+    // 던전별 그룹뷰
+    const groups = {};
+    filteredSlots.forEach(s => {
+      const k = `${s.dungeon}|${s.difficulty}`;
+      if (!groups[k]) groups[k] = { dungeon: s.dungeon, difficulty: s.difficulty, slots: [] };
+      groups[k].slots.push(s);
     });
-
-    html += `<div class="supply-owner-section">
-      <div class="supply-owner-header">
-        <span class="supply-owner-name" data-owner="${owner}">
-          <span class="supply-owner-dot"></span>${owner}
-        </span>
-        <span class="supply-owner-summary">
-          ${ownerSlots.length === 0
-            ? '슬롯 없음'
-            : `남은 <strong style="color:var(--text)">${totalRemaining}</strong>개 / 총 ${totalRequired}개 · 활성 ${activeChars.length}캐릭`}
-        </span>
-      </div>`;
-
-    if (ownerSlots.length === 0) {
-      html += `<div class="supply-empty">
-        등록된 ${_supplyTypeFilter === 'urgent' ? '긴급' : '주간'} 슬롯이 없어요
-        <div class="supply-empty-hint">＋ 슬롯 추가 버튼으로 이번 주 보급의뢰를 등록해 주세요</div>
-      </div>`;
-    } else if (_supplyGroupByDungeon) {
-      // 던전별 그룹뷰 — 같은 던전·난이도끼리 묶어서
-      const groups = {};
-      ownerSlots.forEach(s => {
-        const k = `${s.dungeon}|${s.difficulty}`;
-        if (!groups[k]) groups[k] = { dungeon: s.dungeon, difficulty: s.difficulty, slots: [] };
-        groups[k].slots.push(s);
-      });
-      // 처리 가능 개수 합 큰 순 정렬
-      const groupList = Object.values(groups).map(g => {
-        let groupRemaining = 0;
-        g.slots.forEach(slot => {
-          const need = activeChars.length * slot.required_count;
+    const groupList = Object.values(groups).map(g => {
+      let groupRemaining = 0;
+      g.slots.forEach(slot => {
+        OWNERS.forEach(owner => {
+          const chars = charsByOwner[owner];
+          const need = chars.length * slot.required_count;
           let submitted = 0;
-          activeChars.forEach(c => {
+          chars.forEach(c => {
             const p = supplyProgress[`${slot.id}_${c.id}`];
             submitted += Math.min((p?.submitted_count || 0), slot.required_count);
           });
           groupRemaining += Math.max(0, need - submitted);
         });
-        return { ...g, remaining: groupRemaining };
-      }).sort((a, b) => b.remaining - a.remaining);
+      });
+      return { ...g, remaining: groupRemaining };
+    }).sort((a, b) => b.remaining - a.remaining);
 
-      html += `<div class="supply-grid">`;
-      groupList.forEach(g => {
-        html += `<div class="supply-group-header">
-          <strong>${escapeHtml(g.dungeon)}</strong>
-          <span class="supply-card-diff ${supplyDiffClass(g.difficulty)}" style="margin-left:4px">${escapeHtml(g.difficulty)}</span>
-          <span class="supply-group-count">${g.remaining > 0 ? `${g.remaining}개 처리 가능` : '완료'}</span>
-        </div>`;
-        g.slots.forEach(slot => {
-          html += renderSupplySlotCard(slot, activeChars);
-        });
+    html += `<div class="supply-grid">`;
+    groupList.forEach(g => {
+      html += `<div class="supply-group-header">
+        <strong>${escapeHtml(g.dungeon)}</strong>
+        <span class="supply-card-diff ${supplyDiffClass(g.difficulty)}" style="margin-left:4px">${escapeHtml(g.difficulty)}</span>
+        <span class="supply-group-count">${g.remaining > 0 ? `${g.remaining}개 더 필요` : '완료'}</span>
+      </div>`;
+      g.slots.forEach(slot => {
+        html += renderSupplySlotCard(slot, charsByOwner);
       });
-      html += `</div>`;
-    } else {
-      // 일반 그리드 — 슬롯을 남은 개수 많은 순 → 던전 → 생성순으로 정렬
-      const sortedSlots = [...ownerSlots].sort((a, b) => {
-        const ar = computeSlotRemaining(a, activeChars);
-        const br = computeSlotRemaining(b, activeChars);
-        if (br !== ar) return br - ar;
-        return (a.dungeon || '').localeCompare(b.dungeon || '', 'ko');
-      });
-      html += `<div class="supply-grid">`;
-      sortedSlots.forEach(slot => {
-        html += renderSupplySlotCard(slot, activeChars);
-      });
-      html += `</div>`;
-    }
-
+    });
+    html += `</div>`;
+  } else {
+    // 일반 그리드 — 남은 개수 많은 순
+    const sortedSlots = [...filteredSlots].sort((a, b) => {
+      const ar = computeSlotRemainingAll(a, charsByOwner);
+      const br = computeSlotRemainingAll(b, charsByOwner);
+      if (br !== ar) return br - ar;
+      return (a.dungeon || '').localeCompare(b.dungeon || '', 'ko');
+    });
+    html += `<div class="supply-grid">`;
+    sortedSlots.forEach(slot => {
+      html += renderSupplySlotCard(slot, charsByOwner);
+    });
     html += `</div>`;
   }
 
@@ -6443,25 +6525,35 @@ function supplyDiffClass(diff) {
   return 'all';
 }
 
-function computeSlotRemaining(slot, activeChars) {
-  const need = activeChars.length * slot.required_count;
+function computeOwnerRemaining(slot, chars) {
+  const need = chars.length * slot.required_count;
   let submitted = 0;
-  activeChars.forEach(c => {
+  chars.forEach(c => {
     const p = supplyProgress[`${slot.id}_${c.id}`];
     submitted += Math.min((p?.submitted_count || 0), slot.required_count);
   });
-  return Math.max(0, need - submitted);
+  return { need, submitted, remaining: Math.max(0, need - submitted) };
 }
 
-function renderSupplySlotCard(slot, activeChars) {
-  const remaining = computeSlotRemaining(slot, activeChars);
-  const totalNeed = activeChars.length * slot.required_count;
-  let totalSubmitted = 0;
-  activeChars.forEach(c => {
-    const p = supplyProgress[`${slot.id}_${c.id}`];
-    totalSubmitted += Math.min((p?.submitted_count || 0), slot.required_count);
+function computeSlotRemainingAll(slot, charsByOwner) {
+  let total = 0;
+  OWNERS.forEach(owner => {
+    total += computeOwnerRemaining(slot, charsByOwner[owner]).remaining;
   });
-  const isDone = remaining === 0 && activeChars.length > 0;
+  return total;
+}
+
+function renderSupplySlotCard(slot, charsByOwner) {
+  let totalNeed = 0, totalSubmitted = 0;
+  const ownerStats = {};
+  OWNERS.forEach(owner => {
+    const stats = computeOwnerRemaining(slot, charsByOwner[owner]);
+    totalNeed += stats.need;
+    totalSubmitted += stats.submitted;
+    ownerStats[owner] = stats;
+  });
+  const totalRemaining = Math.max(0, totalNeed - totalSubmitted);
+  const isDone = totalNeed > 0 && totalRemaining === 0;
 
   // 헤더
   let html = `<div class="supply-card ${isDone ? 'done' : ''}">`;
@@ -6471,50 +6563,71 @@ function renderSupplySlotCard(slot, activeChars) {
     <span class="supply-card-diff ${supplyDiffClass(slot.difficulty)}">${escapeHtml(slot.difficulty)}</span>
   </div>`;
 
-  // 필요 수량 큰 숫자
+  // 필요 수량 큰 숫자 (양쪽 합산)
   html += `<div class="supply-card-needed-row">
-    <span class="supply-card-needed">${remaining}</span>
+    <span class="supply-card-needed">${totalRemaining}</span>
     <span class="supply-card-needed-label">${isDone ? '완료' : '개 더 필요'}</span>
     <span class="supply-card-needed-detail">
       ${totalSubmitted}/${totalNeed}<br>
-      <span style="font-size:0.62rem">${activeChars.length}캐릭 × ${slot.required_count}</span>
+      <span style="font-size:0.62rem">위 ${slot.required_count}개 납품</span>
     </span>
   </div>`;
 
-  // 후보 아이템 칩
+  // 후보 아이템 영역 (라벨 박스)
   const items = Array.isArray(slot.items) ? slot.items : [];
   if (items.length > 0) {
-    html += `<div class="supply-card-items">`;
+    html += `<div class="supply-card-section">
+      <div class="supply-card-section-label">후보 아이템</div>
+      <div class="supply-card-items">`;
     items.forEach(name => {
       html += `<span class="supply-item-chip" title="${escapeAttr(name)}">${escapeHtml(name)}</span>`;
     });
-    html += `</div>`;
+    html += `</div></div>`;
   }
 
-  // 캐릭별 진행도
-  if (activeChars.length > 0) {
-    html += `<div class="supply-card-chars">`;
-    activeChars.forEach(c => {
-      const p = supplyProgress[`${slot.id}_${c.id}`];
-      const cnt = Math.min((p?.submitted_count || 0), slot.required_count);
-      let stateCls = '';
-      if (cnt >= slot.required_count) stateCls = 'done';
-      else if (cnt > 0) stateCls = 'partial';
-      const charName = c.name || '(이름없음)';
-      html += `<div class="supply-char-chip ${stateCls}"
-        onclick="cycleSupplyProgress(${slot.id}, '${escapeAttr(c.id)}')"
-        title="${escapeAttr(charName)} · 클릭으로 진행도 +1">
-        <span class="supply-char-chip-name">${escapeHtml(charName)}</span>
-        <span class="supply-char-chip-progress">${cnt}/${slot.required_count}</span>
+  // 캐릭별 진행도 — 사용자별로 분리 (설냥 / 츄츄)
+  OWNERS.forEach(owner => {
+    const chars = charsByOwner[owner];
+    const stats = ownerStats[owner];
+    const ownerDone = stats.need > 0 && stats.remaining === 0;
+    let summary;
+    if (chars.length === 0) summary = '활성 캐릭 없음';
+    else if (ownerDone)     summary = '완료';
+    else                    summary = `${stats.remaining}개 남음`;
+
+    html += `<div class="supply-card-owner ${ownerDone ? 'done' : ''}">
+      <div class="supply-card-owner-head">
+        <span class="supply-owner-name" data-owner="${owner}">
+          <span class="supply-owner-dot"></span>${owner}
+        </span>
+        <span class="supply-card-owner-summary">${summary}</span>
       </div>`;
-    });
+
+    if (chars.length > 0) {
+      html += `<div class="supply-card-chars">`;
+      chars.forEach(c => {
+        const p = supplyProgress[`${slot.id}_${c.id}`];
+        const cnt = Math.min((p?.submitted_count || 0), slot.required_count);
+        let stateCls = '';
+        if (cnt >= slot.required_count) stateCls = 'done';
+        else if (cnt > 0) stateCls = 'partial';
+        const charName = c.name || '(이름없음)';
+        html += `<div class="supply-char-chip ${stateCls}"
+          onclick="cycleSupplyProgress(${slot.id}, '${escapeAttr(c.id)}')"
+          title="${escapeAttr(charName)} · 클릭으로 진행도 +1">
+          <span class="supply-char-chip-name">${escapeHtml(charName)}</span>
+          <span class="supply-char-chip-progress">${cnt}/${slot.required_count}</span>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
     html += `</div>`;
-  } else {
-    html += `<div class="supply-form-help" style="text-align:center;padding:6px 0">활성 캐릭 없음</div>`;
-  }
+  });
 
   // 액션
   html += `<div class="supply-card-actions">
+    <button class="supply-card-edit" onclick="editSupplySlot(${slot.id})" title="슬롯 편집">✎</button>
     <button class="supply-card-del" onclick="deleteSupplySlot(${slot.id})" title="슬롯 삭제">×</button>
   </div>`;
 
@@ -6591,8 +6704,8 @@ async function deleteSupplySlot(slotId) {
 
 // ── 슬롯 추가 모달 ─────────────────────────────────────────────────
 let _supplySlotForm = {
+  editingId: null,
   type: 'weekly',
-  owner: null,
   required: 2,
   itemsText: '',
   newDungeon: '',
@@ -6601,11 +6714,9 @@ let _supplySlotForm = {
 
 function openSupplySlotModal() {
   if (currentActor === 'guest') return;
-  // 현재 actor 기반으로 owner 기본값 추론
-  const myOwner = Object.values(accountData).find(a => a.actor === currentActor)?.owner || OWNERS[0];
   _supplySlotForm = {
+    editingId: null,
     type: _supplyTypeFilter,
-    owner: myOwner,
     required: 2,
     itemsText: '',
     newDungeon: '',
@@ -6622,6 +6733,30 @@ function openSupplySlotModal() {
   setTimeout(() => document.getElementById('supply-slot-items').focus(), 80);
 }
 
+function editSupplySlot(slotId) {
+  if (currentActor === 'guest') return;
+  const slot = supplySlots.find(s => s.id === slotId);
+  if (!slot) return;
+  const items = Array.isArray(slot.items) ? slot.items : [];
+  _supplySlotForm = {
+    editingId: slot.id,
+    type: slot.slot_type,
+    required: slot.required_count,
+    itemsText: items.join('\n'),
+    newDungeon: slot.dungeon || '',
+    newDifficulty: slot.difficulty || '',
+  };
+  document.getElementById('supply-slot-modal-title').textContent = '슬롯 편집';
+  document.getElementById('supply-slot-required').value = String(slot.required_count);
+  document.getElementById('supply-slot-items').value = items.join('\n');
+  document.getElementById('supply-slot-dungeon').value = slot.dungeon || '';
+  refreshSlotFormPills();
+  // 도감 인식 상태 재계산 (도움말, 새 아이템 행 표시 여부)
+  supplySlotItemsChanged();
+  document.getElementById('supply-slot-modal-overlay').classList.add('show');
+  setTimeout(() => document.getElementById('supply-slot-required').focus(), 80);
+}
+
 function closeSupplySlotModal() {
   document.getElementById('supply-slot-modal-overlay').classList.remove('show');
 }
@@ -6629,9 +6764,6 @@ function closeSupplySlotModal() {
 function refreshSlotFormPills() {
   document.querySelectorAll('#supply-slot-type-row .supply-form-pill').forEach(p => {
     p.classList.toggle('active', p.dataset.type === _supplySlotForm.type);
-  });
-  document.querySelectorAll('#supply-slot-owner-row .supply-form-pill').forEach(p => {
-    p.classList.toggle('active', p.dataset.owner === _supplySlotForm.owner);
   });
   document.querySelectorAll('#supply-slot-difficulty-row .supply-form-pill').forEach(p => {
     p.classList.toggle('active', p.dataset.diff === _supplySlotForm.newDifficulty);
@@ -6642,10 +6774,7 @@ function supplySlotSetType(type) {
   _supplySlotForm.type = type;
   refreshSlotFormPills();
 }
-function supplySlotSetOwner(owner) {
-  _supplySlotForm.owner = owner;
-  refreshSlotFormPills();
-}
+function supplySlotSetOwner() { /* deprecated — slots are common across owners */ }
 function supplySlotSetDifficulty(diff) {
   _supplySlotForm.newDifficulty = diff;
   refreshSlotFormPills();
@@ -6707,12 +6836,11 @@ function supplySlotItemsChanged() {
 async function saveSupplySlot() {
   if (currentActor === 'guest') return;
   const type = _supplySlotForm.type;
-  const owner = _supplySlotForm.owner;
   const required = parseInt(document.getElementById('supply-slot-required').value || '0', 10);
   const itemsText = document.getElementById('supply-slot-items').value;
   const items = parseSupplyItems(itemsText);
 
-  if (!type || !owner) { showToast('유형과 사용자를 선택해 주세요'); return; }
+  if (!type) { showToast('유형을 선택해 주세요'); return; }
   if (!Number.isFinite(required) || required < 1 || required > 12) { showToast('필요 수량은 1~12'); return; }
   if (items.length === 0) { showToast('후보 아이템을 한 개 이상 입력해 주세요'); return; }
 
@@ -6755,18 +6883,31 @@ async function saveSupplySlot() {
       });
     }
 
-    // 2) 슬롯 생성
-    const { data: slotData, error: slotErr } = await sb.from('supply_slot')
-      .insert({ owner, slot_type: type, dungeon, difficulty, required_count: required, items })
-      .select()
-      .single();
-    if (slotErr) throw slotErr;
-    if (slotData?.id) markSelfChange('supply_slot', slotData.id);
-    supplySlots.unshift(slotData);
-
-    closeSupplySlotModal();
-    renderSupplyPage();
-    showToast('슬롯 추가됨');
+    // 2) 슬롯 INSERT 또는 UPDATE
+    if (_supplySlotForm.editingId) {
+      markSelfChange('supply_slot', _supplySlotForm.editingId);
+      const { data: updated, error: updErr } = await sb.from('supply_slot')
+        .update({ slot_type: type, dungeon, difficulty, required_count: required, items })
+        .eq('id', _supplySlotForm.editingId)
+        .select().single();
+      if (updErr) throw updErr;
+      const idx = supplySlots.findIndex(s => s.id === _supplySlotForm.editingId);
+      if (idx >= 0) supplySlots[idx] = updated;
+      closeSupplySlotModal();
+      renderSupplyPage();
+      showToast('슬롯 수정됨');
+    } else {
+      const { data: slotData, error: slotErr } = await sb.from('supply_slot')
+        .insert({ slot_type: type, dungeon, difficulty, required_count: required, items })
+        .select()
+        .single();
+      if (slotErr) throw slotErr;
+      if (slotData?.id) markSelfChange('supply_slot', slotData.id);
+      supplySlots.unshift(slotData);
+      closeSupplySlotModal();
+      renderSupplyPage();
+      showToast('슬롯 추가됨');
+    }
   } catch (e) {
     console.error('[supply slot save]', e);
     showToast('저장 실패: ' + (e.message || ''));
@@ -6827,10 +6968,10 @@ async function editSupplyDictItem(id) {
   if (newDungeon === null) return;
   const trimmed = newDungeon.trim();
   if (!trimmed) { showToast('던전 이름이 비었어요'); return; }
-  const newDiff = prompt('난이도 (탐험 / 정복 / 올)', item.difficulty);
+  const newDiff = prompt('난이도 (탐험 / 정복 / 탐험+정복)', item.difficulty);
   if (newDiff === null) return;
   const d = (newDiff || '').trim();
-  if (!['탐험', '정복', '올'].includes(d)) { showToast('난이도는 탐험/정복/올 중 하나'); return; }
+  if (!['탐험', '정복', '탐험+정복'].includes(d)) { showToast('난이도는 탐험 / 정복 / 탐험+정복 중 하나'); return; }
 
   const { data, error } = await sb.from('supply_item_dict')
     .update({ dungeon: trimmed, difficulty: d })
@@ -6863,6 +7004,7 @@ window.toggleSupplyGroupByDungeon = toggleSupplyGroupByDungeon;
 window.cycleSupplyProgress = cycleSupplyProgress;
 window.deleteSupplySlot = deleteSupplySlot;
 window.openSupplySlotModal = openSupplySlotModal;
+window.editSupplySlot = editSupplySlot;
 window.closeSupplySlotModal = closeSupplySlotModal;
 window.supplySlotSetType = supplySlotSetType;
 window.supplySlotSetOwner = supplySlotSetOwner;
@@ -6962,14 +7104,7 @@ window.deleteSupplyDictItem = deleteSupplyDictItem;
         <button type="button" class="supply-form-pill urgent" data-type="urgent" onclick="supplySlotSetType('urgent')">긴급 (일일)</button>
         <button type="button" class="supply-form-pill weekly" data-type="weekly" onclick="supplySlotSetType('weekly')">주간</button>
       </div>
-    </div>
-
-    <div class="supply-form-row">
-      <span class="supply-form-label">사용자</span>
-      <div class="supply-form-pill-row" id="supply-slot-owner-row">
-        <button type="button" class="supply-form-pill" data-owner="설냥" onclick="supplySlotSetOwner('설냥')">설냥</button>
-        <button type="button" class="supply-form-pill" data-owner="츄츄" onclick="supplySlotSetOwner('츄츄')">츄츄</button>
-      </div>
+      <div class="supply-form-help">슬롯은 양쪽 사용자(설냥/츄츄) 모두에게 공통입니다.</div>
     </div>
 
     <div class="supply-form-row">
@@ -7000,7 +7135,7 @@ window.deleteSupplyDictItem = deleteSupplyDictItem;
       <div class="supply-form-pill-row" id="supply-slot-difficulty-row">
         <button type="button" class="supply-form-pill explo" data-diff="탐험" onclick="supplySlotSetDifficulty('탐험')">탐험</button>
         <button type="button" class="supply-form-pill conq"  data-diff="정복" onclick="supplySlotSetDifficulty('정복')">정복</button>
-        <button type="button" class="supply-form-pill all"   data-diff="올"   onclick="supplySlotSetDifficulty('올')">탐험+정복</button>
+        <button type="button" class="supply-form-pill all"   data-diff="탐험+정복"   onclick="supplySlotSetDifficulty('탐험+정복')">탐험+정복</button>
       </div>
       <div class="supply-form-help">한 슬롯의 후보들은 모두 같은 던전·난이도에서 나옵니다.</div>
     </div>
@@ -7091,7 +7226,7 @@ window.deleteSupplyDictItem = deleteSupplyDictItem;
   #vsw-overlay .vsw-btn.primary { background: var(--sage); color: white; border-color: var(--sage); }
 </style>
 
-<button id="vsw-badge" onclick="vswOpen()">v1.5.1</button>
+<button id="vsw-badge" onclick="vswOpen()">v1.5</button>
 
 <div id="vsw-overlay" onclick="vswClose()">
   <div class="vsw-card" onclick="event.stopPropagation()">
@@ -7114,7 +7249,7 @@ window.deleteSupplyDictItem = deleteSupplyDictItem;
 
 <script>
 (function() {
-  const CURRENT_VERSION = 'v1.5.1';
+  const CURRENT_VERSION = 'v1.5';
   const VERSIONS_URL = '/aion_task/versions.json';
 
   function openModal() {
