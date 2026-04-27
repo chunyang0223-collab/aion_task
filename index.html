@@ -2174,8 +2174,8 @@ body.guest-mode .page .fetch-pill {
 
 .supply-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
 }
 
 .supply-group-header {
@@ -2264,6 +2264,26 @@ body.guest-mode .page .fetch-pill {
   white-space: nowrap;
 }
 
+/* 드래그 핸들 */
+.supply-card-drag {
+  cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
+  color: var(--text-sub);
+  font-size: 0.9rem;
+  letter-spacing: -3px;
+  padding: 0 2px 0 0;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.supply-card-drag:hover { color: var(--text); }
+.supply-card-drag:active { cursor: grabbing; }
+.supply-card.dragging { opacity: 0.45; }
+.supply-card.drag-over {
+  outline: 2px dashed var(--sage);
+  outline-offset: -2px;
+}
+
 .supply-card-needed-row {
   display: flex;
   align-items: baseline;
@@ -2313,7 +2333,7 @@ body.guest-mode .page .fetch-pill {
 /* 캐릭별 진행도 영역 */
 .supply-card-chars {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
   gap: 4px;
 }
 
@@ -2943,7 +2963,7 @@ let currentCharId = null;
 let supplyDict = [];          // [{id, name, dungeon, difficulty}]
 let supplySlots = [];         // [{id, owner, slot_type, dungeon, difficulty, required_count, items, created_at}]
 let supplyProgress = {};      // key: `${slot_id}_${character_id}` → {submitted_count, ...}
-let _supplyTypeFilter = 'weekly';  // 'urgent' | 'weekly'
+let _supplyTypeFilter = 'urgent';  // 'urgent' | 'weekly'
 let _supplyGroupByDungeon = false;
 let _supplyDictSearch = '';
 
@@ -6498,8 +6518,8 @@ function renderSupplyPage() {
     });
     html += `</div>`;
   } else {
-    // 일반 그리드 — id 기준 안정 정렬 (진행도 클릭 시 카드가 안 움직이도록)
-    const sortedSlots = [...filteredSlots].sort((a, b) => (a.id || 0) - (b.id || 0));
+    // 일반 그리드 — 사용자 지정 순서(localStorage) → id 기준 안정 정렬
+    const sortedSlots = applySupplyOrder(filteredSlots, getSupplyOrder());
     html += `<div class="supply-grid">`;
     sortedSlots.forEach(slot => {
       html += renderSupplySlotCard(slot, charsByOwner);
@@ -6546,9 +6566,18 @@ function renderSupplySlotCard(slot, charsByOwner) {
   });
   const isDone = totalNeed > 0 && totalRemaining === 0;
 
-  // 헤더 (난이도 + 던전 + 위 N개 납품)
-  let html = `<div class="supply-card ${isDone ? 'done' : ''}">`;
+  // 헤더 (드래그 핸들 + 유형 + 던전 + 난이도 + 위 N개)
+  let html = `<div class="supply-card ${isDone ? 'done' : ''}"
+    data-slot-id="${slot.id}"
+    ondragover="supplyDragOver(event, ${slot.id})"
+    ondragleave="supplyDragLeave(event, ${slot.id})"
+    ondrop="supplyDrop(event, ${slot.id})">`;
   html += `<div class="supply-card-head">
+    <span class="supply-card-drag"
+      draggable="true"
+      ondragstart="supplyDragStart(event, ${slot.id})"
+      ondragend="supplyDragEnd(event)"
+      title="드래그해서 순서 바꾸기">⋮⋮</span>
     <span class="supply-card-type ${slot.slot_type}">${slot.slot_type === 'urgent' ? '긴급' : '주간'}</span>
     <span class="supply-card-dungeon" title="${escapeAttr(slot.dungeon)}">${escapeHtml(slot.dungeon)}</span>
     <span class="supply-card-diff ${supplyDiffClass(slot.difficulty)}">${escapeHtml(slot.difficulty)}</span>
@@ -6979,9 +7008,97 @@ async function deleteSupplyDictItem(id) {
   showToast('도감 삭제됨');
 }
 
+// ── 카드 드래그 정렬 (사용자별 localStorage) ──────────────────────
+const SUPPLY_ORDER_KEY = 'aion2_supply_slot_order';
+let _draggingSupplySlotId = null;
+
+function getSupplyOrder() {
+  try {
+    const v = JSON.parse(localStorage.getItem(SUPPLY_ORDER_KEY) || '[]');
+    return Array.isArray(v) ? v : [];
+  } catch { return []; }
+}
+function saveSupplyOrder(arr) {
+  try { localStorage.setItem(SUPPLY_ORDER_KEY, JSON.stringify(arr)); } catch {}
+}
+function applySupplyOrder(slots, order) {
+  if (!order || order.length === 0) {
+    return [...slots].sort((a, b) => (a.id || 0) - (b.id || 0));
+  }
+  const orderMap = new Map(order.map((id, idx) => [id, idx]));
+  return [...slots].sort((a, b) => {
+    const ai = orderMap.has(a.id) ? orderMap.get(a.id) : Number.MAX_SAFE_INTEGER;
+    const bi = orderMap.has(b.id) ? orderMap.get(b.id) : Number.MAX_SAFE_INTEGER;
+    if (ai !== bi) return ai - bi;
+    return (a.id || 0) - (b.id || 0);  // 새 슬롯 안정성
+  });
+}
+
+function supplyDragStart(e, slotId) {
+  _draggingSupplySlotId = slotId;
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(slotId));
+  }
+  const card = e.target.closest('.supply-card');
+  if (card) card.classList.add('dragging');
+}
+function supplyDragOver(e, targetId) {
+  if (_draggingSupplySlotId == null) return;
+  if (_draggingSupplySlotId === targetId) return;
+  e.preventDefault();
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+  const card = e.currentTarget;
+  if (card && !card.classList.contains('drag-over')) card.classList.add('drag-over');
+}
+function supplyDragLeave(e, targetId) {
+  const card = e.currentTarget;
+  if (card) card.classList.remove('drag-over');
+}
+function supplyDrop(e, targetId) {
+  e.preventDefault();
+  const source = _draggingSupplySlotId;
+  _draggingSupplySlotId = null;
+  document.querySelectorAll('.supply-card.drag-over,.supply-card.dragging')
+    .forEach(el => el.classList.remove('drag-over', 'dragging'));
+  if (source == null || source === targetId) return;
+  reorderSupplySlots(source, targetId);
+}
+function supplyDragEnd() {
+  _draggingSupplySlotId = null;
+  document.querySelectorAll('.supply-card.drag-over,.supply-card.dragging')
+    .forEach(el => el.classList.remove('drag-over', 'dragging'));
+}
+
+function reorderSupplySlots(sourceId, targetId) {
+  // 현재 필터링된 슬롯들의 현재 순서를 가져와 source를 target 위치로 이동
+  const filteredSlots = supplySlots.filter(s => s.slot_type === _supplyTypeFilter);
+  const order = getSupplyOrder();
+  const sortedSlots = applySupplyOrder(filteredSlots, order);
+  const ids = sortedSlots.map(s => s.id);
+  const fromIdx = ids.indexOf(sourceId);
+  const toIdx = ids.indexOf(targetId);
+  if (fromIdx < 0 || toIdx < 0) return;
+  ids.splice(fromIdx, 1);
+  ids.splice(toIdx, 0, sourceId);
+  // 다른 필터의 슬롯 순서는 유지하면서 합치기
+  const filteredIdSet = new Set(ids);
+  const newGlobalOrder = [...ids];
+  order.forEach(id => { if (!filteredIdSet.has(id) && !newGlobalOrder.includes(id)) newGlobalOrder.push(id); });
+  // 아직 순서에 없는 슬롯들 뒤에 붙이기
+  supplySlots.forEach(s => { if (!newGlobalOrder.includes(s.id)) newGlobalOrder.push(s.id); });
+  saveSupplyOrder(newGlobalOrder);
+  renderSupplyPage();
+}
+
 // 전역 노출 (HTML onclick 에서 호출)
 window.renderSupplyPage = renderSupplyPage;
 window.setSupplyTypeFilter = setSupplyTypeFilter;
+window.supplyDragStart = supplyDragStart;
+window.supplyDragOver = supplyDragOver;
+window.supplyDragLeave = supplyDragLeave;
+window.supplyDrop = supplyDrop;
+window.supplyDragEnd = supplyDragEnd;
 window.toggleSupplyGroupByDungeon = toggleSupplyGroupByDungeon;
 window.cycleSupplyProgress = cycleSupplyProgress;
 window.deleteSupplySlot = deleteSupplySlot;
