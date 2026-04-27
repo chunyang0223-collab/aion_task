@@ -2147,7 +2147,8 @@ body.guest-mode .page .fetch-pill {
 }
 
 .supply-card-owner-head .supply-owner-name {
-  font-size: 0.82rem;
+  font-size: 0.84rem;
+  color: var(--text);
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -2162,9 +2163,14 @@ body.guest-mode .page .fetch-pill {
 
 .supply-card-owner-summary {
   margin-left: auto;
-  font-size: 0.72rem;
-  color: var(--text-sub);
+  font-size: 0.88rem;
+  color: var(--text);
+  font-feature-settings: 'tnum';
 }
+.supply-card-owner-summary strong {
+  font-weight: normal;
+}
+.supply-card-owner.done .supply-card-owner-summary { color: var(--sage); }
 
 .supply-grid {
   display: grid;
@@ -2249,6 +2255,14 @@ body.guest-mode .page .fetch-pill {
 .supply-card-diff.explo  { background: var(--sky-light);  color: #4a708a; border-color: var(--sky); }
 .supply-card-diff.conq   { background: var(--sage-light); color: #5a7040; border-color: var(--sage); }
 .supply-card-diff.all    { background: var(--peach-light); color: #8a5040; border-color: var(--peach); }
+
+/* "위 N개 납품" — 헤더 우측 메타 배지 */
+.supply-card-required {
+  margin-left: auto;
+  font-size: 0.66rem;
+  color: var(--text-sub);
+  white-space: nowrap;
+}
 
 .supply-card-needed-row {
   display: flex;
@@ -2362,12 +2376,9 @@ body.guest-mode .page .fetch-pill {
 
 .supply-card-edit,
 .supply-card-del {
-  width: 22px; height: 22px;
+  width: 24px; height: 24px;
   border-radius: 50%;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-sub);
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -2375,15 +2386,23 @@ body.guest-mode .page .fetch-pill {
   transition: all 0.15s;
   font-family: 'Gowun Dodum', sans-serif;
 }
-.supply-card-edit:hover {
+.supply-card-edit {
   background: var(--sage-light);
-  border-color: var(--sage);
-  color: #5a7040;
+  border: 1px solid var(--sage);
+  color: #4d6534;
+}
+.supply-card-edit:hover {
+  background: var(--sage);
+  color: #fff;
+}
+.supply-card-del {
+  background: var(--peach-light);
+  border: 1px solid var(--peach);
+  color: #8a4a30;
 }
 .supply-card-del:hover {
-  background: var(--peach-light);
-  border-color: var(--peach);
-  color: #8a5040;
+  background: var(--peach);
+  color: #fff;
 }
 .supply-card-actions { gap: 6px; }
 
@@ -2656,8 +2675,8 @@ body.guest-mode .supply-char-chip { pointer-events: none; }
   <div class="tab-pills">
     <button class="tab-pill active" id="tab-overview" onclick="showPage('overview')">전체</button>
     <button class="tab-pill" onclick="showPage('detail-page')" id="detail-tab" style="display:none">상세</button>
-    <button class="tab-pill" id="tab-expedition" onclick="showPage('expedition-page')">원정</button>
     <button class="tab-pill" id="tab-supply" onclick="showPage('supply-page')">보급의뢰</button>
+    <button class="tab-pill" id="tab-expedition" onclick="showPage('expedition-page')">원정</button>
     <button class="tab-pill" id="tab-log" onclick="showPage('log-page')">로그</button>
   </div>
   <div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;gap:2px">
@@ -6415,23 +6434,6 @@ function renderSupplyPage() {
   const filteredSlots = supplySlots.filter(s => s.slot_type === _supplyTypeFilter);
   const charsByOwner = getActiveCharsByOwner();
 
-  // 전체 합산 — 양쪽 사용자 통틀어 남은 개수
-  let grandRemaining = 0;
-  let grandRequired = 0;
-  filteredSlots.forEach(slot => {
-    OWNERS.forEach(owner => {
-      const chars = charsByOwner[owner];
-      const need = chars.length * slot.required_count;
-      grandRequired += need;
-      let submitted = 0;
-      chars.forEach(c => {
-        const p = supplyProgress[`${slot.id}_${c.id}`];
-        submitted += Math.min((p?.submitted_count || 0), slot.required_count);
-      });
-      grandRemaining += Math.max(0, need - submitted);
-    });
-  });
-
   let html = '<div class="supply-page-wrap">';
 
   // ── 툴바 ──
@@ -6449,14 +6451,6 @@ function renderSupplyPage() {
       <button class="supply-add-btn" onclick="openSupplySlotModal()">＋ 슬롯 추가</button>
     </div>
   </div>`;
-
-  // ── 전체 요약 바 ──
-  if (filteredSlots.length > 0) {
-    html += `<div class="supply-summary-bar">
-      <span>전체 남은 <strong>${grandRemaining}</strong>개 / 총 ${grandRequired}개</span>
-      <span class="supply-summary-bar-detail">슬롯 ${filteredSlots.length}개 · 설냥 ${charsByOwner['설냥'].length}캐릭 · 츄츄 ${charsByOwner['츄츄'].length}캐릭</span>
-    </div>`;
-  }
 
   if (filteredSlots.length === 0) {
     html += `<div class="supply-empty">
@@ -6486,7 +6480,10 @@ function renderSupplyPage() {
         });
       });
       return { ...g, remaining: groupRemaining };
-    }).sort((a, b) => b.remaining - a.remaining);
+    }).sort((a, b) =>
+      // 진행도 클릭 시 자리가 바뀌지 않게 던전명 기준 안정 정렬
+      (a.dungeon || '').localeCompare(b.dungeon || '', 'ko')
+    );
 
     html += `<div class="supply-grid">`;
     groupList.forEach(g => {
@@ -6501,13 +6498,8 @@ function renderSupplyPage() {
     });
     html += `</div>`;
   } else {
-    // 일반 그리드 — 남은 개수 많은 순
-    const sortedSlots = [...filteredSlots].sort((a, b) => {
-      const ar = computeSlotRemainingAll(a, charsByOwner);
-      const br = computeSlotRemainingAll(b, charsByOwner);
-      if (br !== ar) return br - ar;
-      return (a.dungeon || '').localeCompare(b.dungeon || '', 'ko');
-    });
+    // 일반 그리드 — id 기준 안정 정렬 (진행도 클릭 시 카드가 안 움직이도록)
+    const sortedSlots = [...filteredSlots].sort((a, b) => (a.id || 0) - (b.id || 0));
     html += `<div class="supply-grid">`;
     sortedSlots.forEach(slot => {
       html += renderSupplySlotCard(slot, charsByOwner);
@@ -6544,33 +6536,23 @@ function computeSlotRemainingAll(slot, charsByOwner) {
 }
 
 function renderSupplySlotCard(slot, charsByOwner) {
-  let totalNeed = 0, totalSubmitted = 0;
   const ownerStats = {};
+  let totalNeed = 0, totalRemaining = 0;
   OWNERS.forEach(owner => {
     const stats = computeOwnerRemaining(slot, charsByOwner[owner]);
     totalNeed += stats.need;
-    totalSubmitted += stats.submitted;
+    totalRemaining += stats.remaining;
     ownerStats[owner] = stats;
   });
-  const totalRemaining = Math.max(0, totalNeed - totalSubmitted);
   const isDone = totalNeed > 0 && totalRemaining === 0;
 
-  // 헤더
+  // 헤더 (난이도 + 던전 + 위 N개 납품)
   let html = `<div class="supply-card ${isDone ? 'done' : ''}">`;
   html += `<div class="supply-card-head">
     <span class="supply-card-type ${slot.slot_type}">${slot.slot_type === 'urgent' ? '긴급' : '주간'}</span>
     <span class="supply-card-dungeon" title="${escapeAttr(slot.dungeon)}">${escapeHtml(slot.dungeon)}</span>
     <span class="supply-card-diff ${supplyDiffClass(slot.difficulty)}">${escapeHtml(slot.difficulty)}</span>
-  </div>`;
-
-  // 필요 수량 큰 숫자 (양쪽 합산)
-  html += `<div class="supply-card-needed-row">
-    <span class="supply-card-needed">${totalRemaining}</span>
-    <span class="supply-card-needed-label">${isDone ? '완료' : '개 더 필요'}</span>
-    <span class="supply-card-needed-detail">
-      ${totalSubmitted}/${totalNeed}<br>
-      <span style="font-size:0.62rem">위 ${slot.required_count}개 납품</span>
-    </span>
+    <span class="supply-card-required">위 ${slot.required_count}개 납품</span>
   </div>`;
 
   // 후보 아이템 영역 (라벨 박스)
@@ -7104,7 +7086,6 @@ window.deleteSupplyDictItem = deleteSupplyDictItem;
         <button type="button" class="supply-form-pill urgent" data-type="urgent" onclick="supplySlotSetType('urgent')">긴급 (일일)</button>
         <button type="button" class="supply-form-pill weekly" data-type="weekly" onclick="supplySlotSetType('weekly')">주간</button>
       </div>
-      <div class="supply-form-help">슬롯은 양쪽 사용자(설냥/츄츄) 모두에게 공통입니다.</div>
     </div>
 
     <div class="supply-form-row">
