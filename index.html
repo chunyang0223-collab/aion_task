@@ -2713,6 +2713,268 @@ body.guest-mode .supply-char-chip { pointer-events: none; }
   .supply-toolbar { gap: 6px; padding: 8px 10px; }
   .supply-card-needed { font-size: 1.4rem; }
 }
+
+/* ══════════════════════ SUPPLY BOARD v1.5.2 — 3단 구조 재설계 ══════════════════════ */
+/* 던전 요약 + 퀘스트 정보 + 캐릭별 체크. 위쪽 v1.5.1 스타일은 cascade로 덮어쓰기 */
+
+/* 패널 공통 (던전 요약 / 퀘스트 정보) */
+.supply-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 14px;
+}
+.supply-panel-head {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.82rem; color: var(--text);
+  letter-spacing: 0.04em;
+}
+.supply-panel-head-title {
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer;
+  -webkit-user-select: none; user-select: none;
+}
+.supply-panel-head .chev {
+  transition: transform 0.18s;
+  font-size: 0.7rem; color: var(--text-sub);
+}
+.supply-panel.collapsed .chev { transform: rotate(-90deg); }
+.supply-panel.collapsed .supply-panel-body { display: none; }
+.supply-panel:not(.collapsed) .supply-panel-body { margin-top: 10px; }
+.supply-panel-summary {
+  margin-left: 8px; font-size: 0.72rem; color: var(--text-sub);
+  font-feature-settings: 'tnum';
+}
+.supply-panel-summary strong { color: var(--text); font-weight: normal; }
+
+/* 던전 요약 */
+.dungeon-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+.dungeon-card {
+  display: flex; flex-direction: column;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.dungeon-card:hover { background: var(--hover); }
+.dungeon-card.done { background: var(--sage-light); border-color: var(--sage); opacity: 0.85; }
+.dungeon-card.selected {
+  background: var(--peach-light);
+  border-color: var(--peach);
+  box-shadow: 0 0 0 1px var(--peach) inset;
+}
+.dungeon-card-head {
+  display: flex; align-items: center; gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--border);
+  margin-bottom: 6px;
+}
+.dungeon-name {
+  font-size: 0.86rem; color: var(--text);
+  flex: 1 1 auto; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dungeon-diff {
+  font-size: 0.7rem; color: var(--text-sub);
+  white-space: nowrap; flex-shrink: 0;
+}
+.dungeon-totals { display: flex; gap: 8px; flex-shrink: 0; font-feature-settings: 'tnum'; }
+.dungeon-total {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.84rem; white-space: nowrap;
+}
+.dungeon-total .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.dungeon-total[data-owner="설냥"] .dot { background: var(--color-owner-설냥); }
+.dungeon-total[data-owner="츄츄"] .dot { background: var(--color-owner-츄츄); }
+.dungeon-total strong { color: var(--text); font-weight: normal; }
+.dungeon-total.zero strong { color: var(--text-sub); }
+.dungeon-total.zero { opacity: 0.55; }
+
+.dungeon-slots { display: flex; flex-direction: column; gap: 3px; }
+.dungeon-slot {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.74rem; padding: 2px 0;
+}
+.dungeon-slot-name {
+  flex: 1 1 auto; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--text);
+}
+.dungeon-slot-counts { display: flex; gap: 8px; font-feature-settings: 'tnum'; flex-shrink: 0; }
+.dungeon-slot-count {
+  font-size: 0.72rem; color: var(--text-sub); white-space: nowrap;
+}
+.dungeon-slot-count.zero { opacity: 0.45; }
+.dungeon-slot-count strong { color: var(--text); font-weight: normal; }
+.dungeon-slot-count.zero strong { color: var(--text-sub); }
+
+/* "원정 목표에 추가" 버튼 */
+.supply-target-btn {
+  margin-left: auto;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--peach);
+  background: transparent;
+  color: #8a5040;
+  font-size: 0.75rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.supply-target-btn:hover:not(:disabled) { background: var(--peach-light); }
+.supply-target-btn:disabled { opacity: 0.4; cursor: not-allowed; border-color: var(--border); color: var(--text-sub); }
+
+/* 퀘스트 정보 */
+.quest-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+}
+.quest-card {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 12px 12px;
+  display: flex; flex-direction: column; gap: 8px;
+  position: relative;
+}
+.quest-card-head {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.quest-card-type { font-size: 0.7rem; color: var(--text-sub); white-space: nowrap; background: transparent !important; padding: 0 !important; border-radius: 0 !important; }
+.quest-card-name {
+  font-size: 0.84rem; color: var(--text);
+  flex: 1 1 auto; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.quest-card-required {
+  font-size: 0.66rem; color: var(--text-sub); white-space: nowrap;
+  margin-right: 56px;  /* 액션 버튼 자리 비움 */
+}
+.quest-card-sub {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.7rem; color: var(--text-sub); flex-wrap: wrap;
+}
+.quest-card-diff { font-size: 0.7rem; color: var(--text-sub); white-space: nowrap; background: transparent !important; padding: 0 !important; border: none !important; border-radius: 0 !important; }
+.quest-card-items {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  padding-top: 4px; border-top: 1px dashed var(--border);
+}
+.quest-item-chip {
+  font-size: 0.68rem; padding: 2px 9px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  white-space: nowrap;
+}
+.quest-card-actions {
+  position: absolute; top: 8px; right: 10px;
+  display: flex; gap: 4px;
+}
+.quest-card-edit, .quest-card-del {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  font-size: 0.72rem; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  font-family: 'Gowun Dodum', sans-serif;
+}
+.quest-card-edit { background: var(--sage-light); border: 1px solid var(--sage); color: #4d6534; }
+.quest-card-edit:hover { background: var(--sage); color: #fff; }
+.quest-card-del { background: var(--peach-light); border: 1px solid var(--peach); color: #8a4a30; }
+.quest-card-del:hover { background: var(--peach); color: #fff; }
+
+/* 캐릭별 체크 */
+.supply-owner-section { margin-bottom: 18px; }
+.owner-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px; padding: 4px 6px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  -webkit-user-select: none; user-select: none;
+  border-radius: var(--radius-sm);
+}
+.owner-header:hover { background: var(--hover); }
+.owner-header .chev {
+  transition: transform 0.18s;
+  font-size: 0.7rem; color: var(--text-sub);
+  margin-left: 2px;
+}
+.supply-owner-section.collapsed .chev { transform: rotate(-90deg); }
+.supply-owner-section.collapsed .char-grid { display: none; }
+.owner-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.supply-owner-section[data-owner="설냥"] .owner-dot { background: var(--color-owner-설냥); }
+.supply-owner-section[data-owner="츄츄"] .owner-dot { background: var(--color-owner-츄츄); }
+
+.char-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+.char-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 12px;
+  box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.char-card.done { background: var(--surface2); opacity: 0.85; }
+.char-card-head {
+  display: flex; align-items: baseline; gap: 8px;
+  border-bottom: 1px dashed var(--border); padding-bottom: 6px;
+}
+.char-card-name {
+  font-size: 0.84rem; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.char-card-progress {
+  margin-left: auto; font-size: 0.74rem; color: var(--text);
+  font-feature-settings: 'tnum'; flex-shrink: 0;
+}
+.char-card.done .char-card-progress { color: var(--sage); }
+.slot-group { display: flex; flex-direction: column; gap: 4px; }
+
+.slot-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px; border-radius: var(--radius-sm);
+  background: var(--surface2); border: 1px solid var(--border);
+  cursor: pointer; transition: background 0.15s, border-color 0.15s;
+}
+.slot-row:hover { background: var(--hover); border-color: var(--text-sub); }
+.slot-row.done { background: var(--sage-light); border-color: var(--sage); }
+.slot-row.partial { background: var(--peach-light); border-color: var(--peach); }
+.slot-row-name {
+  font-size: 0.76rem; color: var(--text);
+  flex: 1 1 auto; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.slot-row.done .slot-row-name { color: #4d6534; }
+.slot-row.partial .slot-row-name { color: #8a4a30; }
+.slot-row-count {
+  font-size: 0.74rem; color: var(--text);
+  font-feature-settings: 'tnum';
+  white-space: nowrap; flex-shrink: 0;
+}
+.slot-row.done .slot-row-count { color: #4d6534; }
+.slot-row.partial .slot-row-count { color: #8a4a30; }
+
+/* v1.5.2 — guest mode 보강 */
+body.guest-mode .quest-card-edit,
+body.guest-mode .quest-card-del,
+body.guest-mode .supply-target-btn { display: none !important; }
+body.guest-mode .slot-row,
+body.guest-mode .dungeon-card { pointer-events: none; }
+
+/* v1.5.2 — 모바일 보정 */
+@media (max-width: 540px) {
+  .dungeon-list { grid-template-columns: 1fr; }
+  .quest-list { grid-template-columns: 1fr; }
+  .char-grid { grid-template-columns: 1fr 1fr; }
+}
 </style>
 </head>
 <body>
@@ -2995,8 +3257,13 @@ let supplyDict = [];          // [{id, name, dungeon, difficulty}]
 let supplySlots = [];         // [{id, owner, slot_type, dungeon, difficulty, required_count, items, created_at}]
 let supplyProgress = {};      // key: `${slot_id}_${character_id}` → {submitted_count, ...}
 let _supplyTypeFilter = 'urgent';  // 'urgent' | 'weekly'
-let _supplyGroupByDungeon = false;
+let _supplyGroupByDungeon = false; // (deprecated v1.5.2 — 던전 요약 패널이 대체)
 let _supplyDictSearch = '';
+// v1.5.2 — 패널 접기/펼치기 + 던전 다중 선택
+let _supplyDungeonCollapsed = false;
+let _supplyQuestCollapsed = false;
+const _supplyOwnerCollapsed = { '설냥': false, '츄츄': false };
+let _supplySelectedDungeons = new Set();  // key: `${dungeon}|${diff}` (원정 목표에 추가용)
 
 // ── UTIL ──
 // 성장 로그 전용: 5시 보정 없이 KST 달력 날짜 그대로 반환 (자정 0시 기준)
@@ -6483,6 +6750,7 @@ function renderSupplyPage() {
   }
 
   const filteredSlots = supplySlots.filter(s => s.slot_type === _supplyTypeFilter);
+  const sortedSlots = applySupplyOrder(filteredSlots, getSupplyOrder());
   const charsByOwner = getActiveCharsByOwner();
 
   let html = '<div class="supply-page-wrap">';
@@ -6494,8 +6762,6 @@ function renderSupplyPage() {
         onclick="setSupplyTypeFilter('urgent')">긴급</button>
       <button class="supply-type-pill weekly ${_supplyTypeFilter === 'weekly' ? 'active' : ''}"
         onclick="setSupplyTypeFilter('weekly')">주간</button>
-      <button class="supply-toggle-btn ${_supplyGroupByDungeon ? 'active' : ''}"
-        onclick="toggleSupplyGroupByDungeon()">던전별 묶기</button>
     </div>
     <div class="supply-toolbar-right">
       <button class="supply-icon-btn" onclick="openSupplyDictModal()" title="아이템 도감">📖</button>
@@ -6503,63 +6769,211 @@ function renderSupplyPage() {
     </div>
   </div>`;
 
-  if (filteredSlots.length === 0) {
+  if (sortedSlots.length === 0) {
     html += `<div class="supply-empty">
       등록된 ${_supplyTypeFilter === 'urgent' ? '긴급' : '주간'} 슬롯이 없어요
       <div class="supply-empty-hint">＋ 슬롯 추가 버튼으로 이번 주 보급의뢰를 등록해 주세요</div>
-    </div>`;
-  } else if (_supplyGroupByDungeon) {
-    // 던전별 그룹뷰
-    const groups = {};
-    filteredSlots.forEach(s => {
-      const k = `${s.dungeon}|${s.difficulty}`;
-      if (!groups[k]) groups[k] = { dungeon: s.dungeon, difficulty: s.difficulty, slots: [] };
-      groups[k].slots.push(s);
-    });
-    const groupList = Object.values(groups).map(g => {
-      let groupRemaining = 0;
-      g.slots.forEach(slot => {
-        OWNERS.forEach(owner => {
-          const chars = charsByOwner[owner];
-          const need = chars.length * slot.required_count;
-          let submitted = 0;
-          chars.forEach(c => {
-            const p = supplyProgress[`${slot.id}_${c.id}`];
-            submitted += Math.min((p?.submitted_count || 0), slot.required_count);
-          });
-          groupRemaining += Math.max(0, need - submitted);
-        });
-      });
-      return { ...g, remaining: groupRemaining };
-    }).sort((a, b) =>
-      // 진행도 클릭 시 자리가 바뀌지 않게 던전명 기준 안정 정렬
-      (a.dungeon || '').localeCompare(b.dungeon || '', 'ko')
-    );
-
-    html += `<div class="supply-grid">`;
-    groupList.forEach(g => {
-      html += `<div class="supply-group-header">
-        <strong>${escapeHtml(g.dungeon)}</strong>
-        <span class="supply-card-diff ${supplyDiffClass(g.difficulty)}" style="margin-left:4px">${escapeHtml(g.difficulty)}</span>
-        <span class="supply-group-count">${g.remaining > 0 ? `${g.remaining}개 더 필요` : '완료'}</span>
-      </div>`;
-      g.slots.forEach(slot => {
-        html += renderSupplySlotCard(slot, charsByOwner);
-      });
-    });
-    html += `</div>`;
-  } else {
-    // 일반 그리드 — 사용자 지정 순서(localStorage) → id 기준 안정 정렬
-    const sortedSlots = applySupplyOrder(filteredSlots, getSupplyOrder());
-    html += `<div class="supply-grid">`;
-    sortedSlots.forEach(slot => {
-      html += renderSupplySlotCard(slot, charsByOwner);
-    });
-    html += `</div>`;
+    </div></div>`;
+    el.innerHTML = html;
+    return;
   }
+
+  // ── 1) 던전 요약 패널 ──
+  html += renderSupplyDungeonPanel(sortedSlots, charsByOwner);
+
+  // ── 2) 퀘스트 정보 패널 ──
+  html += renderSupplyQuestPanel(sortedSlots);
+
+  // ── 3) 캐릭별 체크 ──
+  html += renderSupplyCharBoard(sortedSlots, charsByOwner);
 
   html += '</div>';
   el.innerHTML = html;
+}
+
+// ── 던전 요약 패널 ─────────────────────────────────────────────────
+function buildDungeonSummary(slots, charsByOwner) {
+  // [{dungeon, difficulty, slots: [{slot, owners: {설냥: rem, 츄츄: rem}}], owners: {설냥, 츄츄}}]
+  const map = new Map();
+  slots.forEach(slot => {
+    const key = `${slot.dungeon}|${slot.difficulty}`;
+    if (!map.has(key)) {
+      map.set(key, { dungeon: slot.dungeon, difficulty: slot.difficulty, slots: [], owners: { 설냥: 0, 츄츄: 0 } });
+    }
+    const entry = map.get(key);
+    const slotOwners = { 설냥: 0, 츄츄: 0 };
+    OWNERS.forEach(o => {
+      const r = computeOwnerRemaining(slot, charsByOwner[o]).remaining;
+      slotOwners[o] = r;
+      entry.owners[o] += r;
+    });
+    entry.slots.push({ slot, owners: slotOwners });
+  });
+  return [...map.values()].sort((a, b) =>
+    (a.dungeon + a.difficulty).localeCompare(b.dungeon + b.difficulty, 'ko')
+  );
+}
+
+function renderSupplyDungeonPanel(slots, charsByOwner) {
+  const summary = buildDungeonSummary(slots, charsByOwner);
+  const collapsedCls = _supplyDungeonCollapsed ? 'collapsed' : '';
+  let totalSeol = 0, totalChu = 0;
+  summary.forEach(d => { totalSeol += d.owners['설냥']; totalChu += d.owners['츄츄']; });
+  const headerSummary = `${summary.length}개 던전 · 설냥 <strong>${totalSeol}</strong> · 츄츄 <strong>${totalChu}</strong>`;
+
+  const selectedCount = _supplySelectedDungeons.size;
+  const targetBtn = `<button class="supply-target-btn"
+    ${selectedCount === 0 ? 'disabled' : ''}
+    onclick="addSelectedDungeonsToExpedition()">
+    원정 목표에 추가${selectedCount > 0 ? ` (${selectedCount})` : ''}
+  </button>`;
+
+  let html = `<div class="supply-panel ${collapsedCls}">
+    <div class="supply-panel-head">
+      <div class="supply-panel-head-title" onclick="toggleSupplyDungeonPanel()">
+        <span class="chev">▼</span>
+        <span>📍 던전 요약</span>
+      </div>
+      <span class="supply-panel-summary">${headerSummary}</span>
+      ${targetBtn}
+    </div>
+    <div class="supply-panel-body">
+      <div class="dungeon-list">`;
+
+  summary.forEach(d => {
+    const allDone = d.owners['설냥'] === 0 && d.owners['츄츄'] === 0;
+    const key = `${d.dungeon}|${d.difficulty}`;
+    const selected = _supplySelectedDungeons.has(key);
+    const slotsHtml = d.slots.map(({ slot, owners }) => `
+      <div class="dungeon-slot">
+        <span class="dungeon-slot-name">${escapeHtml(supplySlotLabel(slot))}</span>
+        <span class="dungeon-slot-counts">
+          <span class="dungeon-slot-count ${owners['설냥'] === 0 ? 'zero' : ''}">설냥 <strong>${owners['설냥']}</strong></span>
+          <span class="dungeon-slot-count ${owners['츄츄'] === 0 ? 'zero' : ''}">츄츄 <strong>${owners['츄츄']}</strong></span>
+        </span>
+      </div>
+    `).join('');
+    html += `<div class="dungeon-card ${allDone ? 'done' : ''} ${selected ? 'selected' : ''}"
+      onclick="toggleSupplyDungeonSelect('${escapeAttr(d.dungeon)}', '${escapeAttr(d.difficulty)}')">
+      <div class="dungeon-card-head">
+        <span class="dungeon-name" title="${escapeAttr(d.dungeon)}">${escapeHtml(d.dungeon)}</span>
+        <span class="dungeon-diff">(${escapeHtml(d.difficulty)})</span>
+        <span class="dungeon-totals">
+          <span class="dungeon-total ${d.owners['설냥'] === 0 ? 'zero' : ''}" data-owner="설냥">
+            <span class="dot"></span><strong>${d.owners['설냥']}</strong>
+          </span>
+          <span class="dungeon-total ${d.owners['츄츄'] === 0 ? 'zero' : ''}" data-owner="츄츄">
+            <span class="dot"></span><strong>${d.owners['츄츄']}</strong>
+          </span>
+        </span>
+      </div>
+      <div class="dungeon-slots">${slotsHtml}</div>
+    </div>`;
+  });
+
+  html += `</div></div></div>`;
+  return html;
+}
+
+// ── 퀘스트 정보 패널 ───────────────────────────────────────────────
+function renderSupplyQuestPanel(slots) {
+  const collapsedCls = _supplyQuestCollapsed ? 'collapsed' : '';
+  let html = `<div class="supply-panel ${collapsedCls}">
+    <div class="supply-panel-head">
+      <div class="supply-panel-head-title" onclick="toggleSupplyQuestPanel()">
+        <span class="chev">▼</span>
+        <span>📋 퀘스트 정보</span>
+      </div>
+      <span class="supply-panel-summary">${slots.length}개</span>
+    </div>
+    <div class="supply-panel-body">
+      <div class="quest-list">`;
+
+  slots.forEach(slot => {
+    const items = Array.isArray(slot.items) ? slot.items : [];
+    html += `<div class="quest-card" data-slot-id="${slot.id}"
+      ondragover="supplyDragOver(event, ${slot.id})"
+      ondragleave="supplyDragLeave(event, ${slot.id})"
+      ondrop="supplyDrop(event, ${slot.id})">
+      <div class="quest-card-actions">
+        <span class="supply-card-drag" draggable="true"
+          ondragstart="supplyDragStart(event, ${slot.id})"
+          ondragend="supplyDragEnd(event)"
+          title="드래그해서 순서 바꾸기">⋮⋮</span>
+        <button class="quest-card-edit" onclick="editSupplySlot(${slot.id})" title="편집">✎</button>
+        <button class="quest-card-del" onclick="deleteSupplySlot(${slot.id})" title="삭제">×</button>
+      </div>
+      <div class="quest-card-head">
+        <span class="quest-card-type">[${slot.slot_type === 'urgent' ? '긴급' : '주간'}]</span>
+        <span class="quest-card-name" title="${escapeAttr(supplySlotLabel(slot))}">${escapeHtml(supplySlotLabel(slot))}</span>
+      </div>
+      <div class="quest-card-sub">
+        <span>${escapeHtml(slot.dungeon)}</span>
+        <span class="quest-card-diff">(${escapeHtml(slot.difficulty)})</span>
+        <span class="quest-card-required">각 ${slot.required_count}개씩</span>
+      </div>
+      ${items.length ? `<div class="quest-card-items">
+        ${items.map(n => `<span class="quest-item-chip">${escapeHtml(n)}</span>`).join('')}
+      </div>` : ''}
+    </div>`;
+  });
+
+  html += `</div></div></div>`;
+  return html;
+}
+
+// ── 캐릭별 체크 영역 ───────────────────────────────────────────────
+function renderSupplyCharBoard(slots, charsByOwner) {
+  let html = '';
+  for (const owner of OWNERS) {
+    const chars = charsByOwner[owner];
+    if (chars.length === 0) continue;  // 활성 캐릭 0인 사용자 섹션은 숨김
+    const collapsed = _supplyOwnerCollapsed[owner];
+    html += `<div class="supply-owner-section ${collapsed ? 'collapsed' : ''}" data-owner="${owner}">
+      <div class="owner-header" onclick="toggleSupplyOwnerSection('${owner}')">
+        <span class="chev">▼</span>
+        <span class="owner-dot"></span>
+        <span>${owner}</span>
+      </div>
+      <div class="char-grid">`;
+    chars.forEach(c => {
+      let charDone = 0, charTotal = 0;
+      slots.forEach(slot => {
+        charTotal += slot.required_count;
+        const p = supplyProgress[`${slot.id}_${c.id}`];
+        charDone += Math.min((p?.submitted_count || 0), slot.required_count);
+      });
+      const allDone = charTotal > 0 && charDone >= charTotal;
+      const charName = c.name || '(이름없음)';
+      html += `<div class="char-card ${allDone ? 'done' : ''}">
+        <div class="char-card-head">
+          <span class="char-card-name">${escapeHtml(charName)}</span>
+          <span class="char-card-progress">${charDone}/${charTotal}</span>
+        </div>
+        <div class="slot-group">`;
+      slots.forEach(slot => {
+        const p = supplyProgress[`${slot.id}_${c.id}`];
+        const cnt = Math.min((p?.submitted_count || 0), slot.required_count);
+        let stateCls = '';
+        if (cnt >= slot.required_count) stateCls = 'done';
+        else if (cnt > 0) stateCls = 'partial';
+        html += `<div class="slot-row ${stateCls}"
+          onclick="cycleSupplyProgress(${slot.id}, '${escapeAttr(c.id)}')"
+          title="${escapeAttr(supplySlotLabel(slot))} · 클릭으로 진행도 +1">
+          <span class="slot-row-name">${escapeHtml(supplySlotLabel(slot))}</span>
+          <span class="slot-row-count">${cnt}/${slot.required_count}</span>
+        </div>`;
+      });
+      html += `</div></div>`;
+    });
+    html += `</div></div>`;
+  }
+  return html;
+}
+
+// 슬롯 라벨 — DB의 name 우선, 없으면 던전명 (v1.5.2: localStorage 사용 안 함)
+function supplySlotLabel(slot) {
+  return (slot && slot.name && slot.name.trim()) || (slot && slot.dungeon) || '(이름없음)';
 }
 
 function supplyDiffClass(diff) {
@@ -6702,12 +7116,87 @@ function renderSupplySlotCard(slot, charsByOwner) {
 function setSupplyTypeFilter(type) {
   if (type !== 'urgent' && type !== 'weekly') return;
   _supplyTypeFilter = type;
+  // 필터 바뀌면 던전 선택 초기화 (다른 슬롯 셋이라 의미 없어짐)
+  _supplySelectedDungeons = new Set();
   renderSupplyPage();
 }
 
 function toggleSupplyGroupByDungeon() {
   _supplyGroupByDungeon = !_supplyGroupByDungeon;
   renderSupplyPage();
+}
+
+function toggleSupplyDungeonPanel() {
+  _supplyDungeonCollapsed = !_supplyDungeonCollapsed;
+  renderSupplyPage();
+}
+function toggleSupplyQuestPanel() {
+  _supplyQuestCollapsed = !_supplyQuestCollapsed;
+  renderSupplyPage();
+}
+function toggleSupplyOwnerSection(owner) {
+  _supplyOwnerCollapsed[owner] = !_supplyOwnerCollapsed[owner];
+  renderSupplyPage();
+}
+function toggleSupplyDungeonSelect(dungeon, diff) {
+  if (currentActor === 'guest') return;
+  const key = `${dungeon}|${diff}`;
+  if (_supplySelectedDungeons.has(key)) _supplySelectedDungeons.delete(key);
+  else _supplySelectedDungeons.add(key);
+  renderSupplyPage();
+}
+
+// ── 보급의뢰 던전 → 원정 던전 키 매핑 ──────────────────────────────
+//   '탐험'      → explo
+//   '정복'      → normal + hard 둘 다
+//   '탐험+정복' → explo + normal + hard 셋 다
+function getExpKeysForSupplyDungeon(dungeonName, diff) {
+  const d = (typeof EXP_DUNGEONS !== 'undefined' ? EXP_DUNGEONS : []).find(x => x.name === dungeonName);
+  if (!d) return [];
+  const modes = [];
+  if (diff === '탐험' || diff === '탐험+정복') modes.push('explo');
+  if (diff === '정복' || diff === '탐험+정복') { modes.push('normal'); modes.push('hard'); }
+  return modes.map(m => expKey(dungeonName, m, d[m]));
+}
+
+async function addSelectedDungeonsToExpedition() {
+  if (currentActor === 'guest') return;
+  if (_supplySelectedDungeons.size === 0) return;
+
+  // 키 모으기 (중복 제거)
+  const keys = new Set();
+  const skipped = [];
+  for (const sel of _supplySelectedDungeons) {
+    const [dungeon, diff] = sel.split('|');
+    const expKeys = getExpKeysForSupplyDungeon(dungeon, diff);
+    if (expKeys.length === 0) {
+      skipped.push(`${dungeon}·${diff}`);
+    } else {
+      expKeys.forEach(k => keys.add(k));
+    }
+  }
+
+  if (keys.size === 0) {
+    showToast(skipped.length ? `원정 매칭 실패: ${skipped[0]}` : '추가할 항목 없음');
+    return;
+  }
+
+  // upsert (중복 키는 onConflict로 무시)
+  const rows = [...keys].map(k => ({ dungeon_key: k }));
+  const { error } = await sb.from('expedition_supply')
+    .upsert(rows, { onConflict: 'dungeon_key', ignoreDuplicates: true });
+  if (error) {
+    console.error('[원정 목표 추가]', error);
+    showToast('추가 실패: ' + (error.message || ''));
+    return;
+  }
+
+  // 로컬 메모리 즉시 반영
+  keys.forEach(k => _expChecked.add(k));
+  _supplySelectedDungeons = new Set();
+  renderSupplyPage();
+  const msg = `원정 목표에 ${keys.size}개 추가됨` + (skipped.length ? ` (매칭 실패 ${skipped.length})` : '');
+  showToast(msg);
 }
 
 // ── 진행도 토글 (캐릭별 슬롯 진행도 cycle) ─────────────────────────
@@ -6804,7 +7293,8 @@ function editSupplySlot(slotId) {
   const slot = supplySlots.find(s => s.id === slotId);
   if (!slot) return;
   const items = Array.isArray(slot.items) ? slot.items : [];
-  const existingQuestName = getSupplyQuestName(slot.id);
+  // v1.5.2 — DB의 name 우선, 호환성 위해 fallback으로 localStorage도 봄
+  const existingQuestName = (slot.name && slot.name.trim()) || getSupplyQuestName(slot.id) || '';
   _supplySlotForm = {
     editingId: slot.id,
     type: slot.slot_type,
@@ -6952,30 +7442,33 @@ async function saveSupplySlot() {
       });
     }
 
-    // 2) 슬롯 INSERT 또는 UPDATE
+    // 2) 슬롯 INSERT 또는 UPDATE  (v1.5.2 — name 컬럼 DB 저장으로 양쪽 사용자 공유)
     const questName = (document.getElementById('supply-slot-quest-name')?.value || '').trim();
+    const slotPayload = {
+      slot_type: type, dungeon, difficulty,
+      required_count: required, items,
+      name: questName || null,
+    };
     if (_supplySlotForm.editingId) {
       markSelfChange('supply_slot', _supplySlotForm.editingId);
       const { data: updated, error: updErr } = await sb.from('supply_slot')
-        .update({ slot_type: type, dungeon, difficulty, required_count: required, items })
+        .update(slotPayload)
         .eq('id', _supplySlotForm.editingId)
         .select().single();
       if (updErr) throw updErr;
       const idx = supplySlots.findIndex(s => s.id === _supplySlotForm.editingId);
       if (idx >= 0) supplySlots[idx] = updated;
-      setSupplyQuestName(_supplySlotForm.editingId, questName);
       closeSupplySlotModal();
       renderSupplyPage();
       showToast('슬롯 수정됨');
     } else {
       const { data: slotData, error: slotErr } = await sb.from('supply_slot')
-        .insert({ slot_type: type, dungeon, difficulty, required_count: required, items })
+        .insert(slotPayload)
         .select()
         .single();
       if (slotErr) throw slotErr;
       if (slotData?.id) markSelfChange('supply_slot', slotData.id);
       supplySlots.unshift(slotData);
-      if (slotData?.id && questName) setSupplyQuestName(slotData.id, questName);
       closeSupplySlotModal();
       renderSupplyPage();
       showToast('슬롯 추가됨');
@@ -7195,6 +7688,12 @@ window.closeSupplyDictModal = closeSupplyDictModal;
 window.supplyDictSearchChanged = supplyDictSearchChanged;
 window.editSupplyDictItem = editSupplyDictItem;
 window.deleteSupplyDictItem = deleteSupplyDictItem;
+// v1.5.2 — 새 토글/선택/원정 추가
+window.toggleSupplyDungeonPanel = toggleSupplyDungeonPanel;
+window.toggleSupplyQuestPanel = toggleSupplyQuestPanel;
+window.toggleSupplyOwnerSection = toggleSupplyOwnerSection;
+window.toggleSupplyDungeonSelect = toggleSupplyDungeonSelect;
+window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
 
 </script>
 <!-- ── 계정 모달 ── -->
