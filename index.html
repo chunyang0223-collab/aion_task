@@ -2264,6 +2264,37 @@ body.guest-mode .page .fetch-pill {
   white-space: nowrap;
 }
 
+/* 퀘 이름 라벨 (있으면 던전명을 보조로 내림) */
+.supply-card-quest {
+  font-size: 0.88rem;
+  color: var(--text);
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.supply-card-subhead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: var(--text-sub);
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+.supply-card-subhead .supply-card-diff {
+  font-size: 0.62rem;
+  padding: 1px 6px;
+}
+.supply-card-subhead .supply-card-dungeon-mini {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
 /* 드래그 핸들 */
 .supply-card-drag {
   cursor: grab;
@@ -6566,23 +6597,44 @@ function renderSupplySlotCard(slot, charsByOwner) {
   });
   const isDone = totalNeed > 0 && totalRemaining === 0;
 
-  // 헤더 (드래그 핸들 + 유형 + 던전 + 난이도 + 위 N개)
+  // 헤더 (드래그 핸들 + 유형 + 퀘 이름 또는 던전 + 난이도 + 위 N개)
+  const questName = getSupplyQuestName(slot.id);
   let html = `<div class="supply-card ${isDone ? 'done' : ''}"
     data-slot-id="${slot.id}"
     ondragover="supplyDragOver(event, ${slot.id})"
     ondragleave="supplyDragLeave(event, ${slot.id})"
     ondrop="supplyDrop(event, ${slot.id})">`;
-  html += `<div class="supply-card-head">
-    <span class="supply-card-drag"
-      draggable="true"
-      ondragstart="supplyDragStart(event, ${slot.id})"
-      ondragend="supplyDragEnd(event)"
-      title="드래그해서 순서 바꾸기">⋮⋮</span>
-    <span class="supply-card-type ${slot.slot_type}">${slot.slot_type === 'urgent' ? '긴급' : '주간'}</span>
-    <span class="supply-card-dungeon" title="${escapeAttr(slot.dungeon)}">${escapeHtml(slot.dungeon)}</span>
-    <span class="supply-card-diff ${supplyDiffClass(slot.difficulty)}">${escapeHtml(slot.difficulty)}</span>
-    <span class="supply-card-required">위 ${slot.required_count}개 납품</span>
-  </div>`;
+
+  if (questName) {
+    // 퀘 이름이 있으면 그게 메인, 던전·난이도는 보조 라인으로
+    html += `<div class="supply-card-head">
+      <span class="supply-card-drag"
+        draggable="true"
+        ondragstart="supplyDragStart(event, ${slot.id})"
+        ondragend="supplyDragEnd(event)"
+        title="드래그해서 순서 바꾸기">⋮⋮</span>
+      <span class="supply-card-type ${slot.slot_type}">${slot.slot_type === 'urgent' ? '긴급' : '주간'}</span>
+      <span class="supply-card-quest" title="${escapeAttr(questName)}">${escapeHtml(questName)}</span>
+      <span class="supply-card-required">위 ${slot.required_count}개 납품</span>
+    </div>
+    <div class="supply-card-subhead">
+      <span class="supply-card-dungeon-mini" title="${escapeAttr(slot.dungeon)}">${escapeHtml(slot.dungeon)}</span>
+      <span class="supply-card-diff ${supplyDiffClass(slot.difficulty)}">${escapeHtml(slot.difficulty)}</span>
+    </div>`;
+  } else {
+    // 퀘 이름이 없으면 기존처럼 던전을 메인 타이틀로
+    html += `<div class="supply-card-head">
+      <span class="supply-card-drag"
+        draggable="true"
+        ondragstart="supplyDragStart(event, ${slot.id})"
+        ondragend="supplyDragEnd(event)"
+        title="드래그해서 순서 바꾸기">⋮⋮</span>
+      <span class="supply-card-type ${slot.slot_type}">${slot.slot_type === 'urgent' ? '긴급' : '주간'}</span>
+      <span class="supply-card-dungeon" title="${escapeAttr(slot.dungeon)}">${escapeHtml(slot.dungeon)}</span>
+      <span class="supply-card-diff ${supplyDiffClass(slot.difficulty)}">${escapeHtml(slot.difficulty)}</span>
+      <span class="supply-card-required">위 ${slot.required_count}개 납품</span>
+    </div>`;
+  }
 
   // 후보 아이템 영역 (라벨 박스)
   const items = Array.isArray(slot.items) ? slot.items : [];
@@ -6719,6 +6771,7 @@ let _supplySlotForm = {
   type: 'weekly',
   required: 2,
   itemsText: '',
+  questName: '',
   newDungeon: '',
   newDifficulty: '',
 };
@@ -6730,6 +6783,7 @@ function openSupplySlotModal() {
     type: _supplyTypeFilter,
     required: 2,
     itemsText: '',
+    questName: '',
     newDungeon: '',
     newDifficulty: '',
   };
@@ -6737,11 +6791,12 @@ function openSupplySlotModal() {
   document.getElementById('supply-slot-required').value = '2';
   document.getElementById('supply-slot-items').value = '';
   document.getElementById('supply-slot-dungeon').value = '';
+  document.getElementById('supply-slot-quest-name').value = '';
   document.getElementById('supply-slot-items-help').innerHTML = '';
   document.getElementById('supply-slot-new-row').style.display = 'none';
   refreshSlotFormPills();
   document.getElementById('supply-slot-modal-overlay').classList.add('show');
-  setTimeout(() => document.getElementById('supply-slot-items').focus(), 80);
+  setTimeout(() => document.getElementById('supply-slot-quest-name').focus(), 80);
 }
 
 function editSupplySlot(slotId) {
@@ -6749,11 +6804,13 @@ function editSupplySlot(slotId) {
   const slot = supplySlots.find(s => s.id === slotId);
   if (!slot) return;
   const items = Array.isArray(slot.items) ? slot.items : [];
+  const existingQuestName = getSupplyQuestName(slot.id);
   _supplySlotForm = {
     editingId: slot.id,
     type: slot.slot_type,
     required: slot.required_count,
     itemsText: items.join('\n'),
+    questName: existingQuestName,
     newDungeon: slot.dungeon || '',
     newDifficulty: slot.difficulty || '',
   };
@@ -6761,11 +6818,12 @@ function editSupplySlot(slotId) {
   document.getElementById('supply-slot-required').value = String(slot.required_count);
   document.getElementById('supply-slot-items').value = items.join('\n');
   document.getElementById('supply-slot-dungeon').value = slot.dungeon || '';
+  document.getElementById('supply-slot-quest-name').value = existingQuestName;
   refreshSlotFormPills();
   // 도감 인식 상태 재계산 (도움말, 새 아이템 행 표시 여부)
   supplySlotItemsChanged();
   document.getElementById('supply-slot-modal-overlay').classList.add('show');
-  setTimeout(() => document.getElementById('supply-slot-required').focus(), 80);
+  setTimeout(() => document.getElementById('supply-slot-quest-name').focus(), 80);
 }
 
 function closeSupplySlotModal() {
@@ -6895,6 +6953,7 @@ async function saveSupplySlot() {
     }
 
     // 2) 슬롯 INSERT 또는 UPDATE
+    const questName = (document.getElementById('supply-slot-quest-name')?.value || '').trim();
     if (_supplySlotForm.editingId) {
       markSelfChange('supply_slot', _supplySlotForm.editingId);
       const { data: updated, error: updErr } = await sb.from('supply_slot')
@@ -6904,6 +6963,7 @@ async function saveSupplySlot() {
       if (updErr) throw updErr;
       const idx = supplySlots.findIndex(s => s.id === _supplySlotForm.editingId);
       if (idx >= 0) supplySlots[idx] = updated;
+      setSupplyQuestName(_supplySlotForm.editingId, questName);
       closeSupplySlotModal();
       renderSupplyPage();
       showToast('슬롯 수정됨');
@@ -6915,6 +6975,7 @@ async function saveSupplySlot() {
       if (slotErr) throw slotErr;
       if (slotData?.id) markSelfChange('supply_slot', slotData.id);
       supplySlots.unshift(slotData);
+      if (slotData?.id && questName) setSupplyQuestName(slotData.id, questName);
       closeSupplySlotModal();
       renderSupplyPage();
       showToast('슬롯 추가됨');
@@ -7006,6 +7067,25 @@ async function deleteSupplyDictItem(id) {
   supplyDict = supplyDict.filter(d => d.id !== id);
   renderSupplyDictList();
   showToast('도감 삭제됨');
+}
+
+// ── 퀘 이름 (사용자별 localStorage 라벨) ──────────────────────────
+const SUPPLY_QUEST_NAMES_KEY = 'aion2_supply_slot_names';
+function getSupplyQuestNames() {
+  try {
+    const v = JSON.parse(localStorage.getItem(SUPPLY_QUEST_NAMES_KEY) || '{}');
+    return (v && typeof v === 'object' && !Array.isArray(v)) ? v : {};
+  } catch { return {}; }
+}
+function getSupplyQuestName(slotId) {
+  return getSupplyQuestNames()[slotId] || '';
+}
+function setSupplyQuestName(slotId, name) {
+  const all = getSupplyQuestNames();
+  const trimmed = (name || '').trim();
+  if (trimmed) all[slotId] = trimmed;
+  else delete all[slotId];
+  try { localStorage.setItem(SUPPLY_QUEST_NAMES_KEY, JSON.stringify(all)); } catch {}
 }
 
 // ── 카드 드래그 정렬 (사용자별 localStorage) ──────────────────────
@@ -7203,6 +7283,13 @@ window.deleteSupplyDictItem = deleteSupplyDictItem;
         <button type="button" class="supply-form-pill urgent" data-type="urgent" onclick="supplySlotSetType('urgent')">긴급 (일일)</button>
         <button type="button" class="supply-form-pill weekly" data-type="weekly" onclick="supplySlotSetType('weekly')">주간</button>
       </div>
+    </div>
+
+    <div class="supply-form-row">
+      <span class="supply-form-label">퀘 이름 (선택)</span>
+      <input type="text" id="supply-slot-quest-name" class="supply-form-input"
+        placeholder="예) 분열의 갑주 II"
+        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
     </div>
 
     <div class="supply-form-row">
