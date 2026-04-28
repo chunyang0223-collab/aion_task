@@ -2816,9 +2816,28 @@ body.guest-mode .supply-char-chip { pointer-events: none; }
 .dungeon-slot-count strong { color: var(--text); font-weight: normal; }
 .dungeon-slot-count.zero strong { color: var(--text-sub); }
 
+/* 던전 요약 패널 우측 버튼 그룹 */
+.supply-panel-actions {
+  margin-left: auto;
+  display: flex; gap: 6px; align-items: center;
+}
+.supply-select-all-btn {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 0.75rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.supply-select-all-btn:hover { background: var(--hover); }
+.supply-select-all-btn.deselect { border-color: var(--text-sub); color: var(--text-sub); }
+
 /* "원정 목표에 추가" 버튼 */
 .supply-target-btn {
-  margin-left: auto;
   padding: 5px 12px;
   border-radius: 20px;
   border: 1px solid var(--peach);
@@ -2832,6 +2851,9 @@ body.guest-mode .supply-char-chip { pointer-events: none; }
 }
 .supply-target-btn:hover:not(:disabled) { background: var(--peach-light); }
 .supply-target-btn:disabled { opacity: 0.4; cursor: not-allowed; border-color: var(--border); color: var(--text-sub); }
+
+/* 긴급+주간 통합 탭 */
+.supply-type-pill.all-mode.active { background: var(--sage-light); border-color: var(--sage); color: var(--text); }
 
 /* 퀘스트 정보 */
 .quest-list {
@@ -2965,7 +2987,8 @@ body.guest-mode .supply-char-chip { pointer-events: none; }
 /* v1.5.2 — guest mode 보강 */
 body.guest-mode .quest-card-edit,
 body.guest-mode .quest-card-del,
-body.guest-mode .supply-target-btn { display: none !important; }
+body.guest-mode .supply-target-btn,
+body.guest-mode .supply-select-all-btn { display: none !important; }
 body.guest-mode .slot-row,
 body.guest-mode .dungeon-card { pointer-events: none; }
 
@@ -6795,7 +6818,9 @@ function renderSupplyPage() {
     return;
   }
 
-  const filteredSlots = supplySlots.filter(s => s.slot_type === _supplyTypeFilter);
+  const filteredSlots = _supplyTypeFilter === 'all'
+    ? supplySlots.slice()
+    : supplySlots.filter(s => s.slot_type === _supplyTypeFilter);
   const sortedSlots = applySupplyOrder(filteredSlots, getSupplyOrder());
   const charsByOwner = getActiveCharsByOwner();
 
@@ -6808,6 +6833,8 @@ function renderSupplyPage() {
         onclick="setSupplyTypeFilter('urgent')">긴급</button>
       <button class="supply-type-pill weekly ${_supplyTypeFilter === 'weekly' ? 'active' : ''}"
         onclick="setSupplyTypeFilter('weekly')">주간</button>
+      <button class="supply-type-pill all-mode ${_supplyTypeFilter === 'all' ? 'active' : ''}"
+        onclick="setSupplyTypeFilter('all')">긴급+주간</button>
     </div>
     <div class="supply-toolbar-right">
       <button class="supply-icon-btn" onclick="openSupplyDictModal()" title="아이템 도감">📖</button>
@@ -6816,22 +6843,28 @@ function renderSupplyPage() {
   </div>`;
 
   if (sortedSlots.length === 0) {
+    const emptyLabel = _supplyTypeFilter === 'urgent' ? '긴급'
+                     : _supplyTypeFilter === 'weekly' ? '주간'
+                     : '';
     html += `<div class="supply-empty">
-      등록된 ${_supplyTypeFilter === 'urgent' ? '긴급' : '주간'} 슬롯이 없어요
+      등록된 ${emptyLabel} 슬롯이 없어요
       <div class="supply-empty-hint">＋ 슬롯 추가 버튼으로 이번 주 보급의뢰를 등록해 주세요</div>
     </div></div>`;
     el.innerHTML = html;
     return;
   }
 
-  // ── 1) 던전 요약 패널 ──
+  // ── 1) 던전 요약 패널 (모든 모드에서 표시) ──
   html += renderSupplyDungeonPanel(sortedSlots, charsByOwner);
 
-  // ── 2) 퀘스트 정보 패널 ──
-  html += renderSupplyQuestPanel(sortedSlots);
+  // 'all' 모드에선 던전 요약만, 퀘스트 정보 / 캐릭별 체크 생략
+  if (_supplyTypeFilter !== 'all') {
+    // ── 2) 퀘스트 정보 패널 ──
+    html += renderSupplyQuestPanel(sortedSlots);
 
-  // ── 3) 캐릭별 체크 ──
-  html += renderSupplyCharBoard(sortedSlots, charsByOwner);
+    // ── 3) 캐릭별 체크 ──
+    html += renderSupplyCharBoard(sortedSlots, charsByOwner);
+  }
 
   html += '</div>';
   el.innerHTML = html;
@@ -6868,6 +6901,13 @@ function renderSupplyDungeonPanel(slots, charsByOwner) {
   const headerSummary = `${summary.length}개 던전 · 설냥 <strong>${totalSeol}</strong> · 츄츄 <strong>${totalChu}</strong>`;
 
   const selectedCount = _supplySelectedDungeons.size;
+  // 화면에 보이는 던전 키 (선택/해제 토글 판정용)
+  const visibleKeys = summary.map(d => `${d.dungeon}|${d.difficulty}`);
+  const allSelected = visibleKeys.length > 0 && visibleKeys.every(k => _supplySelectedDungeons.has(k));
+  const selectAllBtn = `<button class="supply-select-all-btn ${allSelected ? 'deselect' : ''}"
+    onclick="toggleSelectAllDungeons()">
+    ${allSelected ? '모두 해제' : '모두 선택'}
+  </button>`;
   const targetBtn = `<button class="supply-target-btn"
     ${selectedCount === 0 ? 'disabled' : ''}
     onclick="addSelectedDungeonsToExpedition()">
@@ -6881,7 +6921,10 @@ function renderSupplyDungeonPanel(slots, charsByOwner) {
         <span>📍 던전 요약</span>
       </div>
       <span class="supply-panel-summary">${headerSummary}</span>
-      ${targetBtn}
+      <div class="supply-panel-actions">
+        ${selectAllBtn}
+        ${targetBtn}
+      </div>
     </div>
     <div class="supply-panel-body">
       <div class="dungeon-list">`;
@@ -7160,7 +7203,7 @@ function renderSupplySlotCard(slot, charsByOwner) {
 
 // ── 토글 핸들러 ────────────────────────────────────────────────────
 function setSupplyTypeFilter(type) {
-  if (type !== 'urgent' && type !== 'weekly') return;
+  if (type !== 'urgent' && type !== 'weekly' && type !== 'all') return;
   _supplyTypeFilter = type;
   // 필터 바뀌면 던전 선택 초기화 (다른 슬롯 셋이라 의미 없어짐)
   _supplySelectedDungeons = new Set();
@@ -7189,6 +7232,26 @@ function toggleSupplyDungeonSelect(dungeon, diff) {
   const key = `${dungeon}|${diff}`;
   if (_supplySelectedDungeons.has(key)) _supplySelectedDungeons.delete(key);
   else _supplySelectedDungeons.add(key);
+  renderSupplyPage();
+}
+
+function toggleSelectAllDungeons() {
+  if (currentActor === 'guest') return;
+  // 현재 필터에 보이는 던전 키 모음
+  const filtered = _supplyTypeFilter === 'all'
+    ? supplySlots.slice()
+    : supplySlots.filter(s => s.slot_type === _supplyTypeFilter);
+  const summary = buildDungeonSummary(filtered, getActiveCharsByOwner());
+  const visibleKeys = summary.map(d => `${d.dungeon}|${d.difficulty}`);
+  if (visibleKeys.length === 0) return;
+
+  // 전부 선택돼있으면 해제, 아니면 전부 선택
+  const allSelected = visibleKeys.every(k => _supplySelectedDungeons.has(k));
+  if (allSelected) {
+    visibleKeys.forEach(k => _supplySelectedDungeons.delete(k));
+  } else {
+    visibleKeys.forEach(k => _supplySelectedDungeons.add(k));
+  }
   renderSupplyPage();
 }
 
@@ -7748,6 +7811,7 @@ window.toggleSupplyDungeonPanel = toggleSupplyDungeonPanel;
 window.toggleSupplyQuestPanel = toggleSupplyQuestPanel;
 window.toggleSupplyOwnerSection = toggleSupplyOwnerSection;
 window.toggleSupplyDungeonSelect = toggleSupplyDungeonSelect;
+window.toggleSelectAllDungeons = toggleSelectAllDungeons;
 window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
 
 </script>
