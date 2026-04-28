@@ -3537,9 +3537,55 @@ async function init() {
     renderOverview();
     subscribeRealtime();
     renderResetInfo();
+    // v1.5.2 — localStorage에 있던 퀘 이름을 DB로 복구 (1회 마이그레이션)
+    migrateLocalStorageQuestNames().catch(e => console.error('[name migrate]', e));
   } catch(e) {
     console.error(e);
     document.getElementById('rt-dot').classList.add('error');
+  }
+}
+
+// v1.5.2 — localStorage 라벨 → DB name 컬럼 일회성 마이그레이션
+async function migrateLocalStorageQuestNames() {
+  if (currentActor === 'guest') return;
+  let local;
+  try { local = JSON.parse(localStorage.getItem('aion2_supply_slot_names') || '{}'); }
+  catch { return; }
+  if (!local || typeof local !== 'object' || Array.isArray(local)) return;
+  const entries = Object.entries(local).filter(([_, v]) => v && String(v).trim());
+  if (entries.length === 0) return;
+
+  let migrated = 0, skipped = 0;
+  for (const [slotIdStr, name] of entries) {
+    const slotId = parseInt(slotIdStr, 10);
+    if (!Number.isFinite(slotId)) { skipped++; continue; }
+    const slot = supplySlots.find(s => s.id === slotId);
+    if (!slot) { skipped++; continue; }                 // 슬롯이 이미 사라졌으면 패스
+    if (slot.name && slot.name.trim()) { skipped++; continue; }  // 이미 DB에 name 있으면 패스
+    markSelfChange('supply_slot', slotId);
+    const { data, error } = await sb.from('supply_slot')
+      .update({ name: String(name).trim() })
+      .eq('id', slotId)
+      .select().single();
+    if (error) { console.error('[name migrate]', slotId, error); skipped++; continue; }
+    const idx = supplySlots.findIndex(s => s.id === slotId);
+    if (idx >= 0) supplySlots[idx] = data;
+    migrated++;
+  }
+
+  if (migrated > 0) {
+    // 성공한 것만 localStorage에서 제거 (실패는 다음 시도 위해 남겨둠)
+    const remain = {};
+    entries.forEach(([k, v]) => {
+      const slotId = parseInt(k, 10);
+      const slot = supplySlots.find(s => s.id === slotId);
+      if (!slot || !(slot.name && slot.name.trim())) remain[k] = v;
+    });
+    try { localStorage.setItem('aion2_supply_slot_names', JSON.stringify(remain)); } catch {}
+    showToast(`퀘 이름 ${migrated}개 복구됨`);
+    if (document.getElementById('supply-page')?.classList.contains('active')) {
+      renderSupplyPage();
+    }
   }
 }
 
@@ -6048,7 +6094,7 @@ setInterval(() => {
 // EXPEDITION TAB
 // ═══════════════════════════════════════════════════════════════
 const EXP_DUNGEONS = [
-  { name: '크라오동굴',           explo: 200,  normal: 1000, hard: 2400, star: 1 },
+  { name: '크라오 동굴',          explo: 200,  normal: 1000, hard: 2400, star: 1 },
   { name: '드라웁니르',           explo: 900,  normal: 1000, hard: 2400, star: 1 },
   { name: '우루구구 협곡',        explo: 350,  normal: 1600, hard: 2500, star: 2 },
   { name: '바크론의 공중섬',      explo: 1600, normal: 1600, hard: 2500, star: 2 },
@@ -7176,8 +7222,17 @@ async function addSelectedDungeonsToExpedition() {
     }
   }
 
+  // 매칭 실패는 콘솔에도 박아둠 (사용자가 어느 던전인지 확인 가능)
+  if (skipped.length > 0) {
+    console.warn('[원정 매칭 실패] EXP_DUNGEONS에 없는 던전:', skipped);
+  }
+
+  const skippedLabel = skipped.length
+    ? skipped.slice(0, 2).join(', ') + (skipped.length > 2 ? ` 외 ${skipped.length - 2}개` : '')
+    : '';
+
   if (keys.size === 0) {
-    showToast(skipped.length ? `원정 매칭 실패: ${skipped[0]}` : '추가할 항목 없음');
+    showToast(skipped.length ? `원정 매칭 실패: ${skippedLabel}` : '추가할 항목 없음');
     return;
   }
 
@@ -7195,7 +7250,7 @@ async function addSelectedDungeonsToExpedition() {
   keys.forEach(k => _expChecked.add(k));
   _supplySelectedDungeons = new Set();
   renderSupplyPage();
-  const msg = `원정 목표에 ${keys.size}개 추가됨` + (skipped.length ? ` (매칭 실패 ${skipped.length})` : '');
+  const msg = `${keys.size}개 추가됨` + (skipped.length ? ` (매칭 실패: ${skippedLabel})` : '');
   showToast(msg);
 }
 
