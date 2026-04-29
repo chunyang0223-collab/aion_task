@@ -2295,6 +2295,30 @@ body.guest-mode .page .fetch-pill {
   min-width: 0;
 }
 
+/* v1.5.3 — supply-card 안 던전 매핑들 세로 나열 */
+.supply-card-dungeons {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: var(--text);
+}
+.supply-card-dungeon-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.supply-card-dungeon-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+
 /* 드래그 핸들 */
 .supply-card-drag {
   cursor: grab;
@@ -2630,6 +2654,73 @@ body.guest-mode .page .fetch-pill {
 }
 .supply-recognized-list strong { color: var(--text); font-weight: normal; }
 
+/* ── v1.5.3: 슬롯 모달 — 던전 매핑 리스트 ── */
+.supply-dungeon-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+.supply-dungeon-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  position: relative;
+}
+.supply-dungeon-row-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.supply-dungeon-row-head .supply-form-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.supply-dungeon-row-del {
+  flex: 0 0 auto;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.78rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Gowun Dodum', sans-serif;
+}
+.supply-dungeon-row-del:hover {
+  background: var(--peach-light);
+  border-color: var(--peach);
+  color: #8a5040;
+}
+.supply-dungeon-row-del:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.supply-dungeon-add-btn {
+  margin-top: 8px;
+  align-self: flex-start;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.78rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+}
+.supply-dungeon-add-btn:hover {
+  border-color: var(--sage);
+  color: var(--sage);
+  background: var(--sage-light);
+}
+
 /* ── 도감 관리 모달 리스트 ── */
 .supply-dict-search {
   width: 100%;
@@ -2698,49 +2789,61 @@ body.guest-mode .page .fetch-pill {
 .supply-dict-row-edit:hover { background: var(--sage-light); border-color: var(--sage); color: #5a7040; }
 .supply-dict-row-del:hover  { background: var(--peach-light); border-color: var(--peach); color: #8a5040; }
 
-/* ── v1.5.3: 도감 그룹 행 (한 name당 다중 던전 매핑을 칩으로) ── */
+/* ── v1.5.3: 도감 그룹 행 (한 name당 매핑들을 세로 나열) ── */
 .supply-dict-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   padding: 10px 12px;
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
 }
 .supply-dict-group-name {
-  font-size: 0.84rem;
+  font-size: 0.86rem;
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.supply-dict-group-chips {
+.supply-dict-group-rows {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
+  gap: 4px;
 }
-.supply-dict-chip {
-  display: inline-flex;
+.supply-dict-mapping-row {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 8px 4px 10px;
+  gap: 8px;
+  padding: 4px 10px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 999px;
-  font-size: 0.74rem;
-  color: var(--text-sub);
+  border-radius: var(--radius-sm);
+}
+.supply-dict-mapping-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.78rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: 'Gowun Dodum', sans-serif;
 }
-.supply-dict-chip-meta { color: var(--text); }
-.supply-dict-chip-edit,
-.supply-dict-chip-del {
-  width: 20px; height: 20px;
+.supply-dict-mapping-diff {
+  margin-left: 4px;
+  color: var(--text-sub);
+  font-size: 0.72rem;
+}
+.supply-dict-mapping-edit,
+.supply-dict-mapping-del {
+  flex: 0 0 auto;
+  width: 22px; height: 22px;
   border-radius: 50%;
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-sub);
-  font-size: 0.66rem;
+  font-size: 0.68rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -2748,8 +2851,8 @@ body.guest-mode .page .fetch-pill {
   font-family: 'Gowun Dodum', sans-serif;
   padding: 0;
 }
-.supply-dict-chip-edit:hover { background: var(--sage-light); border-color: var(--sage); color: #5a7040; }
-.supply-dict-chip-del:hover  { background: var(--peach-light); border-color: var(--peach); color: #8a5040; }
+.supply-dict-mapping-edit:hover { background: var(--sage-light); border-color: var(--sage); color: #5a7040; }
+.supply-dict-mapping-del:hover  { background: var(--peach-light); border-color: var(--peach); color: #8a5040; }
 
 /* 게스트 모드 — 보드 인터랙션 차단 */
 body.guest-mode .supply-add-btn,
@@ -2938,6 +3041,30 @@ body.guest-mode .supply-char-chip { pointer-events: none; }
   font-size: 0.7rem; color: var(--text-sub); flex-wrap: wrap;
 }
 .quest-card-diff { font-size: 0.7rem; color: var(--text-sub); white-space: nowrap; background: transparent !important; padding: 0 !important; border: none !important; border-radius: 0 !important; }
+
+/* v1.5.3 — 슬롯 카드 안 던전 매핑들을 세로 나열 */
+.quest-card-dungeons {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.78rem;
+  color: var(--text);
+  margin-top: 2px;
+}
+.quest-card-dungeon-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.quest-card-dungeon-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
 .quest-card-items {
   display: flex; flex-wrap: wrap; gap: 4px;
   padding-top: 4px; border-top: 1px dashed var(--border);
@@ -6847,6 +6974,31 @@ function isSlotActive(slot) {
   return false;
 }
 
+// ── 슬롯 다중 던전 헬퍼 (v1.5.3) ────────────────────────────────────
+//   슬롯 자체도 여러 (던전, 난이도)에 동시에 귀속될 수 있음.
+//   진실의 원천은 slot.dungeons jsonb 배열. 옛 단일 컬럼(dungeon, difficulty)는
+//   미러링·폴백 용도로만 사용.
+function getSlotDungeons(slot) {
+  if (!slot) return [];
+  if (Array.isArray(slot.dungeons) && slot.dungeons.length > 0) {
+    return slot.dungeons
+      .map(d => ({
+        dungeon:    (d && d.dungeon)    || '',
+        difficulty: (d && d.difficulty) || '',
+      }))
+      .filter(d => d.dungeon && d.difficulty);
+  }
+  // 폴백 — 마이그레이션 이전 데이터 / 옛 클라이언트 작성 슬롯
+  if (slot.dungeon && slot.difficulty) {
+    return [{ dungeon: slot.dungeon, difficulty: slot.difficulty }];
+  }
+  return [];
+}
+
+function slotDungeonKeys(slot) {
+  return getSlotDungeons(slot).map(d => `${d.dungeon}|${d.difficulty}`);
+}
+
 // ── 도감 검색 헬퍼 ─────────────────────────────────────────────────
 //   v1.5.3: 한 이름이 여러 (던전, 난이도)에 매핑될 수 있으므로 배열 반환.
 function findDictEntries(name) {
@@ -6971,22 +7123,28 @@ function renderSupplyPage() {
 }
 
 // ── 던전 요약 패널 ─────────────────────────────────────────────────
+//   v1.5.3 — 한 슬롯이 여러 (던전, 난이도)에 귀속될 수 있으므로,
+//   슬롯의 dungeons 배열을 펼쳐서 각 매핑마다 던전 카드에 등장.
+//   슬롯의 잔여 카운트는 슬롯 단위로 계산되며, 슬롯이 여러 던전 카드에
+//   등장해도 같은 잔여를 표시 (어느 던전을 가도 처리 가능하다는 의미).
 function buildDungeonSummary(slots, charsByOwner) {
-  // [{dungeon, difficulty, slots: [{slot, owners: {설냥: rem, 츄츄: rem}}], owners: {설냥, 츄츄}}]
+  // [{dungeon, difficulty, slots: [{slot, owners: {설냥, 츄츄}}], owners: {설냥, 츄츄}}]
   const map = new Map();
   slots.forEach(slot => {
-    const key = `${slot.dungeon}|${slot.difficulty}`;
-    if (!map.has(key)) {
-      map.set(key, { dungeon: slot.dungeon, difficulty: slot.difficulty, slots: [], owners: { 설냥: 0, 츄츄: 0 } });
-    }
-    const entry = map.get(key);
     const slotOwners = { 설냥: 0, 츄츄: 0 };
     OWNERS.forEach(o => {
-      const r = computeOwnerRemaining(slot, charsByOwner[o]).remaining;
-      slotOwners[o] = r;
-      entry.owners[o] += r;
+      slotOwners[o] = computeOwnerRemaining(slot, charsByOwner[o]).remaining;
     });
-    entry.slots.push({ slot, owners: slotOwners });
+    const dgs = getSlotDungeons(slot);
+    dgs.forEach(({ dungeon, difficulty }) => {
+      const key = `${dungeon}|${difficulty}`;
+      if (!map.has(key)) {
+        map.set(key, { dungeon, difficulty, slots: [], owners: { 설냥: 0, 츄츄: 0 } });
+      }
+      const entry = map.get(key);
+      OWNERS.forEach(o => { entry.owners[o] += slotOwners[o]; });
+      entry.slots.push({ slot, owners: { ...slotOwners } });
+    });
   });
   return [...map.values()].sort((a, b) =>
     (a.dungeon + a.difficulty).localeCompare(b.dungeon + b.difficulty, 'ko')
@@ -6996,8 +7154,16 @@ function buildDungeonSummary(slots, charsByOwner) {
 function renderSupplyDungeonPanel(slots, charsByOwner) {
   const summary = buildDungeonSummary(slots, charsByOwner);
   const collapsedCls = _supplyDungeonCollapsed ? 'collapsed' : '';
+
+  // 헤더 잔여 합계 — 슬롯이 여러 던전 카드에 등장해도 슬롯 단위로 한 번만 합산.
   let totalSeol = 0, totalChu = 0;
-  summary.forEach(d => { totalSeol += d.owners['설냥']; totalChu += d.owners['츄츄']; });
+  slots.forEach(slot => {
+    OWNERS.forEach(o => {
+      const r = computeOwnerRemaining(slot, charsByOwner[o]).remaining;
+      if (o === '설냥') totalSeol += r;
+      else if (o === '츄츄') totalChu += r;
+    });
+  });
   const headerSummary = `${summary.length}개 던전 · 설냥 <strong>${totalSeol}</strong> · 츄츄 <strong>${totalChu}</strong>`;
 
   const selectedCount = _supplySelectedDungeons.size;
@@ -7096,10 +7262,14 @@ function renderSupplyQuestPanel(slots) {
         <span class="quest-card-type">[${slot.slot_type === 'urgent' ? '긴급' : '주간'}]</span>
         <span class="quest-card-name" title="${escapeAttr(supplySlotLabel(slot))}">${escapeHtml(supplySlotLabel(slot))}</span>
       </div>
-      <div class="quest-card-sub">
-        <span>${escapeHtml(slot.dungeon)}</span>
-        <span class="quest-card-diff">(${escapeHtml(slot.difficulty)})</span>
-        <span class="quest-card-required">각 ${slot.required_count}개씩</span>
+      <div class="quest-card-dungeons">
+        ${getSlotDungeons(slot).map(d => `
+          <div class="quest-card-dungeon-line">
+            <span class="quest-card-dungeon-name">${escapeHtml(d.dungeon)}</span>
+            <span class="quest-card-diff ${supplyDiffClass(d.difficulty)}">${escapeHtml(d.difficulty)}</span>
+          </div>
+        `).join('')}
+        <div class="quest-card-required">각 ${slot.required_count}개씩</div>
       </div>
       ${items.length ? `<div class="quest-card-items">
         ${items.map(n => `<span class="quest-item-chip">${escapeHtml(n)}</span>`).join('')}
@@ -7160,9 +7330,12 @@ function renderSupplyCharBoard(slots, charsByOwner) {
   return html;
 }
 
-// 슬롯 라벨 — DB의 name 우선, 없으면 던전명 (v1.5.2: localStorage 사용 안 함)
+// 슬롯 라벨 — DB의 name 우선, 없으면 첫 던전명 (v1.5.3: dungeons[0])
 function supplySlotLabel(slot) {
-  return (slot && slot.name && slot.name.trim()) || (slot && slot.dungeon) || '(이름없음)';
+  if (slot && slot.name && slot.name.trim()) return slot.name.trim();
+  const dgs = getSlotDungeons(slot);
+  if (dgs.length > 0) return dgs[0].dungeon;
+  return '(이름없음)';
 }
 
 function supplyDiffClass(diff) {
@@ -7208,6 +7381,14 @@ function renderSupplySlotCard(slot, charsByOwner) {
     ondragleave="supplyDragLeave(event, ${slot.id})"
     ondrop="supplyDrop(event, ${slot.id})">`;
 
+  // v1.5.3 — slot의 던전 매핑들을 세로로 나열
+  const slotDgs = getSlotDungeons(slot);
+  const dgLines = slotDgs.map(d => `
+    <div class="supply-card-dungeon-line">
+      <span class="supply-card-dungeon-name" title="${escapeAttr(d.dungeon)}">${escapeHtml(d.dungeon)}</span>
+      <span class="supply-card-diff ${supplyDiffClass(d.difficulty)}">${escapeHtml(d.difficulty)}</span>
+    </div>
+  `).join('');
   if (questName) {
     // 퀘 이름이 있으면 그게 메인, 던전·난이도는 보조 라인으로
     html += `<div class="supply-card-head">
@@ -7220,12 +7401,9 @@ function renderSupplySlotCard(slot, charsByOwner) {
       <span class="supply-card-quest" title="${escapeAttr(questName)}">${escapeHtml(questName)}</span>
       <span class="supply-card-required">위 ${slot.required_count}개 납품</span>
     </div>
-    <div class="supply-card-subhead">
-      <span class="supply-card-dungeon-mini" title="${escapeAttr(slot.dungeon)}">${escapeHtml(slot.dungeon)}</span>
-      <span class="supply-card-diff ${supplyDiffClass(slot.difficulty)}">${escapeHtml(slot.difficulty)}</span>
-    </div>`;
+    <div class="supply-card-dungeons">${dgLines}</div>`;
   } else {
-    // 퀘 이름이 없으면 기존처럼 던전을 메인 타이틀로
+    // 퀘 이름이 없으면 던전 매핑들이 메인
     html += `<div class="supply-card-head">
       <span class="supply-card-drag"
         draggable="true"
@@ -7233,10 +7411,9 @@ function renderSupplySlotCard(slot, charsByOwner) {
         ondragend="supplyDragEnd(event)"
         title="드래그해서 순서 바꾸기">⋮⋮</span>
       <span class="supply-card-type ${slot.slot_type}">${slot.slot_type === 'urgent' ? '긴급' : '주간'}</span>
-      <span class="supply-card-dungeon" title="${escapeAttr(slot.dungeon)}">${escapeHtml(slot.dungeon)}</span>
-      <span class="supply-card-diff ${supplyDiffClass(slot.difficulty)}">${escapeHtml(slot.difficulty)}</span>
       <span class="supply-card-required">위 ${slot.required_count}개 납품</span>
-    </div>`;
+    </div>
+    <div class="supply-card-dungeons">${dgLines}</div>`;
   }
 
   // 후보 아이템 영역 (라벨 박스)
@@ -7472,15 +7649,18 @@ async function deleteSupplySlot(slotId) {
   showToast('슬롯 삭제됨');
 }
 
-// ── 슬롯 추가 모달 ─────────────────────────────────────────────────
+// ── 슬롯 추가 모달 (v1.5.3 — 다중 던전 매핑) ───────────────────────
+//   _supplySlotForm.dungeons: [{ dungeon, difficulty }, ...]
+//   _supplySlotForm.userTouchedDungeons: 사용자가 직접 손댔는지 여부.
+//     true 이후엔 도감 추론으로 자동 덮어쓰지 않음.
 let _supplySlotForm = {
   editingId: null,
   type: 'weekly',
   required: 2,
   itemsText: '',
   questName: '',
-  newDungeon: '',
-  newDifficulty: '',
+  dungeons: [],
+  userTouchedDungeons: false,
 };
 
 function openSupplySlotModal() {
@@ -7491,17 +7671,16 @@ function openSupplySlotModal() {
     required: 2,
     itemsText: '',
     questName: '',
-    newDungeon: '',
-    newDifficulty: '',
+    dungeons: [],
+    userTouchedDungeons: false,
   };
   document.getElementById('supply-slot-modal-title').textContent = '슬롯 추가';
   document.getElementById('supply-slot-required').value = '2';
   document.getElementById('supply-slot-items').value = '';
-  document.getElementById('supply-slot-dungeon').value = '';
   document.getElementById('supply-slot-quest-name').value = '';
   document.getElementById('supply-slot-items-help').innerHTML = '';
-  document.getElementById('supply-slot-new-row').style.display = 'none';
   refreshSlotFormPills();
+  renderSlotDungeonRows();
   document.getElementById('supply-slot-modal-overlay').classList.add('show');
   setTimeout(() => document.getElementById('supply-slot-quest-name').focus(), 80);
 }
@@ -7519,16 +7698,16 @@ function editSupplySlot(slotId) {
     required: slot.required_count,
     itemsText: items.join('\n'),
     questName: existingQuestName,
-    newDungeon: slot.dungeon || '',
-    newDifficulty: slot.difficulty || '',
+    dungeons: getSlotDungeons(slot),  // v1.5.3 — 슬롯에 박힌 매핑 그대로 로드
+    userTouchedDungeons: true,        // 편집 모드는 사용자가 명시한 매핑이므로 자동 덮어쓰기 금지
   };
   document.getElementById('supply-slot-modal-title').textContent = '슬롯 편집';
   document.getElementById('supply-slot-required').value = String(slot.required_count);
   document.getElementById('supply-slot-items').value = items.join('\n');
-  document.getElementById('supply-slot-dungeon').value = slot.dungeon || '';
   document.getElementById('supply-slot-quest-name').value = existingQuestName;
   refreshSlotFormPills();
-  // 도감 인식 상태 재계산 (도움말, 새 아이템 행 표시 여부)
+  renderSlotDungeonRows();
+  // 도감 인식 상태 재계산 (도움말 영역만 갱신; 매핑은 사용자 의지 유지)
   supplySlotItemsChanged();
   document.getElementById('supply-slot-modal-overlay').classList.add('show');
   setTimeout(() => document.getElementById('supply-slot-quest-name').focus(), 80);
@@ -7542,9 +7721,6 @@ function refreshSlotFormPills() {
   document.querySelectorAll('#supply-slot-type-row .supply-form-pill').forEach(p => {
     p.classList.toggle('active', p.dataset.type === _supplySlotForm.type);
   });
-  document.querySelectorAll('#supply-slot-difficulty-row .supply-form-pill').forEach(p => {
-    p.classList.toggle('active', p.dataset.diff === _supplySlotForm.newDifficulty);
-  });
 }
 
 function supplySlotSetType(type) {
@@ -7552,9 +7728,75 @@ function supplySlotSetType(type) {
   refreshSlotFormPills();
 }
 function supplySlotSetOwner() { /* deprecated — slots are common across owners */ }
-function supplySlotSetDifficulty(diff) {
-  _supplySlotForm.newDifficulty = diff;
-  refreshSlotFormPills();
+
+// ── v1.5.3 — 던전 매핑 행 동적 관리 ────────────────────────────────
+function renderSlotDungeonRows() {
+  const el = document.getElementById('supply-slot-dungeons-list');
+  if (!el) return;
+  const dungeons = _supplySlotForm.dungeons;
+  if (dungeons.length === 0) {
+    // 빈 행 1개를 기본으로
+    _supplySlotForm.dungeons = [{ dungeon: '', difficulty: '' }];
+  }
+  const rows = _supplySlotForm.dungeons;
+  const onlyOne = rows.length === 1;
+  el.innerHTML = rows.map((row, idx) => `
+    <div class="supply-dungeon-row" data-idx="${idx}">
+      <div class="supply-dungeon-row-head">
+        <input type="text" class="supply-form-input" data-dg-idx="${idx}"
+          value="${escapeAttr(row.dungeon)}"
+          placeholder="예) 바크론의 공중섬"
+          autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+          oninput="setSlotDungeonName(${idx}, this.value)">
+        <button type="button" class="supply-dungeon-row-del"
+          onclick="removeSlotDungeonRow(${idx})"
+          ${onlyOne ? 'disabled title="최소 1개 매핑은 필요해요"' : 'title="이 매핑 제거"'}>−</button>
+      </div>
+      <div class="supply-form-pill-row" data-diff-idx="${idx}">
+        <button type="button" class="supply-form-pill explo ${row.difficulty === '탐험' ? 'active' : ''}"
+          onclick="setSlotDungeonDifficulty(${idx}, '탐험')">탐험</button>
+        <button type="button" class="supply-form-pill conq ${row.difficulty === '정복' ? 'active' : ''}"
+          onclick="setSlotDungeonDifficulty(${idx}, '정복')">정복</button>
+        <button type="button" class="supply-form-pill all ${row.difficulty === '탐험+정복' ? 'active' : ''}"
+          onclick="setSlotDungeonDifficulty(${idx}, '탐험+정복')">탐험+정복</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function setSlotDungeonName(idx, value) {
+  const row = _supplySlotForm.dungeons[idx];
+  if (!row) return;
+  row.dungeon = value;
+  _supplySlotForm.userTouchedDungeons = true;
+  // 입력 중 포커스 잃지 않게 전체 재렌더는 안 함 (DOM에 이미 반영됨)
+}
+
+function setSlotDungeonDifficulty(idx, diff) {
+  const row = _supplySlotForm.dungeons[idx];
+  if (!row) return;
+  row.difficulty = diff;
+  _supplySlotForm.userTouchedDungeons = true;
+  renderSlotDungeonRows();
+}
+
+function addSlotDungeonRow() {
+  _supplySlotForm.dungeons.push({ dungeon: '', difficulty: '' });
+  _supplySlotForm.userTouchedDungeons = true;
+  renderSlotDungeonRows();
+  // 새로 추가한 행에 포커스
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('#supply-slot-dungeons-list input[data-dg-idx]');
+    const last = inputs[inputs.length - 1];
+    if (last) last.focus();
+  }, 0);
+}
+
+function removeSlotDungeonRow(idx) {
+  if (_supplySlotForm.dungeons.length <= 1) return;
+  _supplySlotForm.dungeons.splice(idx, 1);
+  _supplySlotForm.userTouchedDungeons = true;
+  renderSlotDungeonRows();
 }
 
 function supplySlotItemsChanged() {
@@ -7563,72 +7805,60 @@ function supplySlotItemsChanged() {
   const items = parseSupplyItems(text);
 
   const help = document.getElementById('supply-slot-items-help');
-  const newRow = document.getElementById('supply-slot-new-row');
 
   if (items.length === 0) {
     help.innerHTML = '한 줄에 하나씩, 또는 콤마로 구분해서 입력하세요.';
-    newRow.style.display = 'none';
     return;
   }
 
-  // v1.5.3 — (던전, 난이도) 교집합 기반 추론.
-  //   교집합 1개      → 자동 설정, 입력행 숨김.
-  //   교집합 2개 이상 → 데이터로 결정 불가. 현재 던전이 후보에 있으면 유지, 입력행 노출.
-  //   교집합 0개      → 충돌. 입력행 노출하여 사용자가 직접 지정.
-  //   알려진 항목이 없는 경우(unknown만) → 입력행 노출.
-  const { keys, unknown } = computeDungeonIntersection(items);
+  // v1.5.3 — 도감 합집합 기반 자동 채움
+  //   후보 아이템들이 가진 모든 (던전, 난이도) 매핑의 합집합을 사용자가 손대지 않은 경우에 한해
+  //   form.dungeons로 자동 채움. 사용자가 + - 로 손댄 뒤엔 자동 갱신 안 함.
   const known = items.filter(n => findDictEntries(n).length > 0);
+  const unknown = items.filter(n => findDictEntries(n).length === 0);
 
+  // 합집합 (모든 후보 아이템의 매핑을 합쳐서)
+  const unionMap = new Map();
+  for (const n of known) {
+    for (const e of findDictEntries(n)) {
+      const key = `${e.dungeon}|${e.difficulty}`;
+      if (!unionMap.has(key)) unionMap.set(key, { dungeon: e.dungeon, difficulty: e.difficulty });
+    }
+  }
+  const unionList = [...unionMap.values()];
+
+  // 사용자가 손대지 않은 상태에서만 자동 채움
+  if (!_supplySlotForm.userTouchedDungeons && unionList.length > 0) {
+    _supplySlotForm.dungeons = unionList.map(d => ({ ...d }));
+    renderSlotDungeonRows();
+  }
+
+  // 안내 텍스트
   let helpHtml = '';
   if (known.length === 0) {
     helpHtml = `<div class="supply-recognized-list">
-      모두 처음 보는 아이템이에요. 아래에서 던전·난이도를 한 번만 등록해 주세요.
+      모두 처음 보는 아이템이에요. 아래에서 던전·난이도를 직접 입력해 주세요.
     </div>`;
-    newRow.style.display = '';
-  } else if (keys.length === 1) {
-    const [dungeon, difficulty] = keys[0].split('|');
-    _supplySlotForm.newDungeon = dungeon;
-    _supplySlotForm.newDifficulty = difficulty;
+  } else if (unionList.length === 1) {
+    const { dungeon, difficulty } = unionList[0];
     const unknownLine = unknown.length > 0
       ? `<br>새 아이템 → ${unknown.map(n => `<strong>${escapeHtml(n)}</strong>`).join(', ')} (자동 등록됨)`
       : '';
     helpHtml = `<div class="supply-recognized-list">
       도감 인식 → <strong>${escapeHtml(dungeon)} · ${escapeHtml(difficulty)}</strong>${unknownLine}
     </div>`;
-    newRow.style.display = 'none';
-    refreshSlotFormPills();
-  } else if (keys.length >= 2) {
-    // 후보 던전이 둘 이상 — 사용자가 직접 골라야 함.
-    const candidates = keys.map(k => {
-      const [dn, df] = k.split('|');
-      return `<strong>${escapeHtml(dn)} · ${escapeHtml(df)}</strong>`;
-    }).join(', ');
-    helpHtml = `<div class="supply-recognized-list">
-      후보 던전이 여러 개예요 → ${candidates}<br>
-      어느 던전 슬롯인지 아래에서 직접 지정해 주세요.
-    </div>`;
-    newRow.style.display = '';
-    // 현재 폼의 던전이 후보에 없으면 비움.
-    const curKey = `${_supplySlotForm.newDungeon}|${_supplySlotForm.newDifficulty}`;
-    if (!keys.includes(curKey)) {
-      _supplySlotForm.newDungeon = '';
-      _supplySlotForm.newDifficulty = '';
-      const dgEl = document.getElementById('supply-slot-dungeon');
-      if (dgEl) dgEl.value = '';
-      refreshSlotFormPills();
-    }
   } else {
-    // 교집합 0개 — 입력된 알려진 아이템들이 서로 다른 던전을 가리킴.
-    const knownPerItem = known.map(n => {
-      const list = findDictEntries(n);
-      const sample = list.map(e => `${e.dungeon}·${e.difficulty}`).join(' / ');
-      return `<strong>${escapeHtml(n)}</strong>(${escapeHtml(sample)})`;
-    }).join(', ');
+    // 합집합이 여러 개 — 다중 던전이거나 후보들 매핑이 갈림
+    const candidates = unionList.map(d =>
+      `<strong>${escapeHtml(d.dungeon)} · ${escapeHtml(d.difficulty)}</strong>`
+    ).join(', ');
+    const unknownLine = unknown.length > 0
+      ? `<br>새 아이템 → ${unknown.map(n => `<strong>${escapeHtml(n)}</strong>`).join(', ')} (위 매핑들로 등록됨)`
+      : '';
     helpHtml = `<div class="supply-recognized-list">
-      후보 아이템들이 서로 다른 던전 매핑을 가져요 → ${knownPerItem}<br>
-      이 슬롯의 던전·난이도를 직접 지정해 주세요.
+      도감 인식 → ${candidates}${unknownLine}<br>
+      필요하면 아래에서 + 또는 − 로 던전을 직접 조정할 수 있어요.
     </div>`;
-    newRow.style.display = '';
   }
   help.innerHTML = helpHtml;
 }
@@ -7644,19 +7874,23 @@ async function saveSupplySlot() {
   if (!Number.isFinite(required) || required < 1 || required > 12) { showToast('필요 수량은 1~12'); return; }
   if (items.length === 0) { showToast('후보 아이템을 한 개 이상 입력해 주세요'); return; }
 
-  // v1.5.3 — 던전/난이도 결정
-  //   1순위: 후보 아이템들의 (던전, 난이도) 교집합이 정확히 1개면 그걸로 자동 설정.
-  //   2순위: 그 외(0개/2개 이상/모두 unknown)는 사용자가 입력행에서 직접 지정.
-  let dungeon = '';
-  let difficulty = '';
-  const { keys: intersectionKeys } = computeDungeonIntersection(items);
-  if (intersectionKeys.length === 1) {
-    [dungeon, difficulty] = intersectionKeys[0].split('|');
-  } else {
-    dungeon = (document.getElementById('supply-slot-dungeon').value || '').trim();
-    difficulty = _supplySlotForm.newDifficulty;
-    if (!dungeon) { showToast('던전 이름을 입력해 주세요'); return; }
-    if (!difficulty) { showToast('난이도를 선택해 주세요'); return; }
+  // v1.5.3 — 던전 매핑(다중) 검증
+  //   form.dungeons에서 빈 행 제거하고 중복 제거.
+  const seen = new Set();
+  const dungeons = [];
+  for (const row of (_supplySlotForm.dungeons || [])) {
+    const dn = (row.dungeon || '').trim();
+    const df = (row.difficulty || '').trim();
+    if (!dn || !df) continue;
+    if (!['탐험', '정복', '탐험+정복'].includes(df)) continue;
+    const key = `${dn}|${df}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    dungeons.push({ dungeon: dn, difficulty: df });
+  }
+  if (dungeons.length === 0) {
+    showToast('던전·난이도를 한 개 이상 입력해 주세요');
+    return;
   }
 
   const confirmBtn = document.getElementById('supply-slot-confirm');
@@ -7664,14 +7898,16 @@ async function saveSupplySlot() {
 
   try {
     // v1.5.3 — 도감 upsert
-    //   각 후보 아이템에 대해 (name, dungeon, difficulty) 행이 없으면 INSERT.
-    //   같은 name의 다른 (던전, 난이도) 매핑은 그대로 보존됨.
-    const dictRowsToUpsert = items
-      .filter(n => {
-        const list = findDictEntries(n);
-        return !list.some(e => e.dungeon === dungeon && e.difficulty === difficulty);
-      })
-      .map(name => ({ name, dungeon, difficulty }));
+    //   각 후보 아이템 × 각 (던전, 난이도) 매핑 조합에 대해 도감에 없으면 INSERT.
+    //   같은 name의 기존 다른 매핑은 그대로 보존됨.
+    const dictRowsToUpsert = [];
+    for (const n of items) {
+      const existing = findDictEntries(n);
+      for (const dg of dungeons) {
+        const has = existing.some(e => e.dungeon === dg.dungeon && e.difficulty === dg.difficulty);
+        if (!has) dictRowsToUpsert.push({ name: n, dungeon: dg.dungeon, difficulty: dg.difficulty });
+      }
+    }
     if (dictRowsToUpsert.length > 0) {
       const { data: dictData, error: dictErr } = await sb.from('supply_item_dict')
         .upsert(dictRowsToUpsert, { onConflict: 'name,dungeon,difficulty', ignoreDuplicates: false })
@@ -7685,10 +7921,15 @@ async function saveSupplySlot() {
       });
     }
 
-    // 2) 슬롯 INSERT 또는 UPDATE  (v1.5.2 — name 컬럼 DB 저장으로 양쪽 사용자 공유)
+    // 2) 슬롯 INSERT 또는 UPDATE
+    //    dungeons 배열을 진실의 원천으로 저장. 옛 dungeon/difficulty 컬럼은 dungeons[0]으로 미러링
+    //    (구버전 클라이언트 호환 + 정렬/필터 키 용도).
     const questName = (document.getElementById('supply-slot-quest-name')?.value || '').trim();
     const slotPayload = {
-      slot_type: type, dungeon, difficulty,
+      slot_type: type,
+      dungeon:    dungeons[0].dungeon,
+      difficulty: dungeons[0].difficulty,
+      dungeons,
       required_count: required, items,
       name: questName || null,
     };
@@ -7776,17 +8017,19 @@ function renderSupplyDictList() {
   }
 
   el.innerHTML = groupList.map(g => {
-    const chips = g.entries.map(e => `
-      <span class="supply-dict-chip">
-        <span class="supply-dict-chip-meta">${escapeHtml(e.dungeon)} · ${escapeHtml(e.difficulty)}</span>
-        <button class="supply-dict-chip-edit" onclick="editSupplyDictItem(${e.id})" title="수정">✎</button>
-        <button class="supply-dict-chip-del"  onclick="deleteSupplyDictItem(${e.id})" title="삭제">−</button>
-      </span>
+    const rows = g.entries.map(e => `
+      <div class="supply-dict-mapping-row">
+        <span class="supply-dict-mapping-meta">
+          ${escapeHtml(e.dungeon)}<span class="supply-dict-mapping-diff">· ${escapeHtml(e.difficulty)}</span>
+        </span>
+        <button class="supply-dict-mapping-edit" onclick="editSupplyDictItem(${e.id})" title="수정">✎</button>
+        <button class="supply-dict-mapping-del"  onclick="deleteSupplyDictItem(${e.id})" title="삭제">−</button>
+      </div>
     `).join('');
     return `
       <div class="supply-dict-group">
         <span class="supply-dict-group-name" title="${escapeAttr(g.name)}">${escapeHtml(g.name)}</span>
-        <div class="supply-dict-group-chips">${chips}</div>
+        <div class="supply-dict-group-rows">${rows}</div>
       </div>
     `;
   }).join('');
@@ -7962,8 +8205,12 @@ window.editSupplySlot = editSupplySlot;
 window.closeSupplySlotModal = closeSupplySlotModal;
 window.supplySlotSetType = supplySlotSetType;
 window.supplySlotSetOwner = supplySlotSetOwner;
-window.supplySlotSetDifficulty = supplySlotSetDifficulty;
 window.supplySlotItemsChanged = supplySlotItemsChanged;
+// v1.5.3 — 슬롯 모달 다중 던전 행 동적 관리
+window.setSlotDungeonName = setSlotDungeonName;
+window.setSlotDungeonDifficulty = setSlotDungeonDifficulty;
+window.addSlotDungeonRow = addSlotDungeonRow;
+window.removeSlotDungeonRow = removeSlotDungeonRow;
 window.saveSupplySlot = saveSupplySlot;
 window.openSupplyDictModal = openSupplyDictModal;
 window.closeSupplyDictModal = closeSupplyDictModal;
@@ -8091,20 +8338,11 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
       <div class="supply-form-help" id="supply-slot-items-help"></div>
     </div>
 
-    <!-- 도감 인식이 불가/모호할 때 노출 (v1.5.3) -->
-    <div class="supply-form-row" id="supply-slot-new-row" style="display:none">
-      <span class="supply-form-label">던전 이름</span>
-      <input type="text" id="supply-slot-dungeon" class="supply-form-input"
-        placeholder="예) 바크론의 공중섬"
-        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
-
-      <span class="supply-form-label" style="margin-top:8px">난이도</span>
-      <div class="supply-form-pill-row" id="supply-slot-difficulty-row">
-        <button type="button" class="supply-form-pill explo" data-diff="탐험" onclick="supplySlotSetDifficulty('탐험')">탐험</button>
-        <button type="button" class="supply-form-pill conq"  data-diff="정복" onclick="supplySlotSetDifficulty('정복')">정복</button>
-        <button type="button" class="supply-form-pill all"   data-diff="탐험+정복"   onclick="supplySlotSetDifficulty('탐험+정복')">탐험+정복</button>
-      </div>
-      <div class="supply-form-help">이 슬롯의 던전·난이도예요. 후보 아이템들이 이 매핑으로 도감에 추가/유지됩니다.</div>
+    <!-- 던전 매핑 리스트 (v1.5.3) — 슬롯이 여러 (던전, 난이도)에 귀속될 수 있음 -->
+    <div class="supply-form-row">
+      <span class="supply-form-label">던전·난이도 (여러 곳에서 나오면 + 로 추가)</span>
+      <div id="supply-slot-dungeons-list" class="supply-dungeon-list"></div>
+      <button type="button" class="supply-dungeon-add-btn" onclick="addSlotDungeonRow()">＋ 던전 추가</button>
     </div>
 
     <div class="supply-form-actions">
