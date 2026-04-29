@@ -2698,6 +2698,59 @@ body.guest-mode .page .fetch-pill {
 .supply-dict-row-edit:hover { background: var(--sage-light); border-color: var(--sage); color: #5a7040; }
 .supply-dict-row-del:hover  { background: var(--peach-light); border-color: var(--peach); color: #8a5040; }
 
+/* ── v1.5.3: 도감 그룹 행 (한 name당 다중 던전 매핑을 칩으로) ── */
+.supply-dict-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.supply-dict-group-name {
+  font-size: 0.84rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.supply-dict-group-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.supply-dict-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.74rem;
+  color: var(--text-sub);
+  font-family: 'Gowun Dodum', sans-serif;
+}
+.supply-dict-chip-meta { color: var(--text); }
+.supply-dict-chip-edit,
+.supply-dict-chip-del {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.66rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Gowun Dodum', sans-serif;
+  padding: 0;
+}
+.supply-dict-chip-edit:hover { background: var(--sage-light); border-color: var(--sage); color: #5a7040; }
+.supply-dict-chip-del:hover  { background: var(--peach-light); border-color: var(--peach); color: #8a5040; }
+
 /* 게스트 모드 — 보드 인터랙션 차단 */
 body.guest-mode .supply-add-btn,
 body.guest-mode .supply-card-edit,
@@ -6722,8 +6775,19 @@ function expCandidateItem(c, idx, topChar) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//   SUPPLY BOARD (v1.5.1) — 보급의뢰 보드
+//   SUPPLY BOARD (v1.5.1, v1.5.2 3단 재설계, v1.5.3 도감 다중 던전)
 // ═══════════════════════════════════════════════════════════════════
+//
+//  v1.5.3 변경 요지:
+//    - 도감(supply_item_dict)이 한 아이템 이름에 대해 여러 (던전, 난이도)
+//      매핑을 가질 수 있도록 변경.
+//    - 슬롯 모달은 입력된 후보 아이템들의 (던전, 난이도) 매핑 교집합으로
+//      슬롯의 던전·난이도를 추론. 교집합이 정확히 1개면 자동 설정,
+//      그 외(0개/2개 이상)는 던전·난이도 입력행을 노출하여 직접 지정.
+//    - 슬롯 저장 시 도감은 (name, dungeon, difficulty) 복합 키로 upsert,
+//      기존 다른 던전 매핑을 덮어쓰지 않음.
+//    - 도감 모달은 동일 name을 묶어 한 행에 (던전·난이도) 칩들을 나열,
+//      칩 단위로 편집/삭제.
 
 // ── 시간 경계 헬퍼 ─────────────────────────────────────────────────
 //   - 일일 경계: 가장 최근의 KST 05:00 (하루 1번)
@@ -6784,10 +6848,46 @@ function isSlotActive(slot) {
 }
 
 // ── 도감 검색 헬퍼 ─────────────────────────────────────────────────
-function findDictItem(name) {
+//   v1.5.3: 한 이름이 여러 (던전, 난이도)에 매핑될 수 있으므로 배열 반환.
+function findDictEntries(name) {
   const n = (name || '').trim();
-  if (!n) return null;
-  return supplyDict.find(d => d.name === n) || null;
+  if (!n) return [];
+  return supplyDict.filter(d => d.name === n);
+}
+
+// 기존 코드 호환용 (단일 매핑이 보장되는 경우에만 사용 — 첫 번째 항목 반환).
+function findDictItem(name) {
+  const list = findDictEntries(name);
+  return list.length > 0 ? list[0] : null;
+}
+
+// 후보 아이템들의 (던전, 난이도) 집합 교집합 계산.
+//   - 모든 아이템이 도감에 등록된 경우에만 의미가 있음.
+//   - 미등록(unknown) 아이템이 하나라도 있으면 추론은 보류 (교집합 계산에서 제외).
+//   - 반환: { keys: ["던전|난이도", ...], unknown: [name, ...] }
+function computeDungeonIntersection(itemNames) {
+  const unknown = [];
+  let intersection = null;          // null = 아직 미초기화, Set = 누적 중
+  for (const name of itemNames) {
+    const entries = findDictEntries(name);
+    if (entries.length === 0) {
+      unknown.push(name);
+      continue;
+    }
+    const cur = new Set(entries.map(e => `${e.dungeon}|${e.difficulty}`));
+    if (intersection === null) {
+      intersection = cur;
+    } else {
+      // 교집합 갱신
+      for (const k of [...intersection]) {
+        if (!cur.has(k)) intersection.delete(k);
+      }
+    }
+  }
+  return {
+    keys: intersection ? [...intersection] : [],
+    unknown,
+  };
 }
 
 function parseSupplyItems(text) {
@@ -7461,51 +7561,74 @@ function supplySlotItemsChanged() {
   const text = document.getElementById('supply-slot-items').value;
   _supplySlotForm.itemsText = text;
   const items = parseSupplyItems(text);
-  const known = [];
-  const unknown = [];
-  let inferredDungeon = null;
-  let inferredDiff = null;
-  items.forEach(n => {
-    const d = findDictItem(n);
-    if (d) {
-      known.push(d);
-      if (!inferredDungeon) { inferredDungeon = d.dungeon; inferredDiff = d.difficulty; }
-    } else {
-      unknown.push(n);
-    }
-  });
 
   const help = document.getElementById('supply-slot-items-help');
   const newRow = document.getElementById('supply-slot-new-row');
-  let helpHtml = '';
 
   if (items.length === 0) {
-    helpHtml = '한 줄에 하나씩, 또는 콤마로 구분해서 입력하세요.';
+    help.innerHTML = '한 줄에 하나씩, 또는 콤마로 구분해서 입력하세요.';
     newRow.style.display = 'none';
-  } else if (known.length > 0 && unknown.length === 0) {
-    helpHtml = `<div class="supply-recognized-list">
-      도감 인식 → <strong>${escapeHtml(inferredDungeon)} · ${escapeHtml(inferredDiff)}</strong>
-    </div>`;
-    newRow.style.display = 'none';
-    _supplySlotForm.newDungeon = inferredDungeon;
-    _supplySlotForm.newDifficulty = inferredDiff;
-  } else if (known.length > 0 && unknown.length > 0) {
-    helpHtml = `<div class="supply-recognized-list">
-      도감 인식 → <strong>${escapeHtml(inferredDungeon)} · ${escapeHtml(inferredDiff)}</strong><br>
-      새 아이템 → ${unknown.map(n => `<strong>${escapeHtml(n)}</strong>`).join(', ')} (자동 등록됨)
-    </div>`;
-    newRow.style.display = 'none';
-    _supplySlotForm.newDungeon = inferredDungeon;
-    _supplySlotForm.newDifficulty = inferredDiff;
-  } else {
-    // 전부 새 아이템
+    return;
+  }
+
+  // v1.5.3 — (던전, 난이도) 교집합 기반 추론.
+  //   교집합 1개      → 자동 설정, 입력행 숨김.
+  //   교집합 2개 이상 → 데이터로 결정 불가. 현재 던전이 후보에 있으면 유지, 입력행 노출.
+  //   교집합 0개      → 충돌. 입력행 노출하여 사용자가 직접 지정.
+  //   알려진 항목이 없는 경우(unknown만) → 입력행 노출.
+  const { keys, unknown } = computeDungeonIntersection(items);
+  const known = items.filter(n => findDictEntries(n).length > 0);
+
+  let helpHtml = '';
+  if (known.length === 0) {
     helpHtml = `<div class="supply-recognized-list">
       모두 처음 보는 아이템이에요. 아래에서 던전·난이도를 한 번만 등록해 주세요.
     </div>`;
     newRow.style.display = '';
-    if (!_supplySlotForm.newDungeon) {
-      document.getElementById('supply-slot-dungeon').value = '';
+  } else if (keys.length === 1) {
+    const [dungeon, difficulty] = keys[0].split('|');
+    _supplySlotForm.newDungeon = dungeon;
+    _supplySlotForm.newDifficulty = difficulty;
+    const unknownLine = unknown.length > 0
+      ? `<br>새 아이템 → ${unknown.map(n => `<strong>${escapeHtml(n)}</strong>`).join(', ')} (자동 등록됨)`
+      : '';
+    helpHtml = `<div class="supply-recognized-list">
+      도감 인식 → <strong>${escapeHtml(dungeon)} · ${escapeHtml(difficulty)}</strong>${unknownLine}
+    </div>`;
+    newRow.style.display = 'none';
+    refreshSlotFormPills();
+  } else if (keys.length >= 2) {
+    // 후보 던전이 둘 이상 — 사용자가 직접 골라야 함.
+    const candidates = keys.map(k => {
+      const [dn, df] = k.split('|');
+      return `<strong>${escapeHtml(dn)} · ${escapeHtml(df)}</strong>`;
+    }).join(', ');
+    helpHtml = `<div class="supply-recognized-list">
+      후보 던전이 여러 개예요 → ${candidates}<br>
+      어느 던전 슬롯인지 아래에서 직접 지정해 주세요.
+    </div>`;
+    newRow.style.display = '';
+    // 현재 폼의 던전이 후보에 없으면 비움.
+    const curKey = `${_supplySlotForm.newDungeon}|${_supplySlotForm.newDifficulty}`;
+    if (!keys.includes(curKey)) {
+      _supplySlotForm.newDungeon = '';
+      _supplySlotForm.newDifficulty = '';
+      const dgEl = document.getElementById('supply-slot-dungeon');
+      if (dgEl) dgEl.value = '';
+      refreshSlotFormPills();
     }
+  } else {
+    // 교집합 0개 — 입력된 알려진 아이템들이 서로 다른 던전을 가리킴.
+    const knownPerItem = known.map(n => {
+      const list = findDictEntries(n);
+      const sample = list.map(e => `${e.dungeon}·${e.difficulty}`).join(' / ');
+      return `<strong>${escapeHtml(n)}</strong>(${escapeHtml(sample)})`;
+    }).join(', ');
+    helpHtml = `<div class="supply-recognized-list">
+      후보 아이템들이 서로 다른 던전 매핑을 가져요 → ${knownPerItem}<br>
+      이 슬롯의 던전·난이도를 직접 지정해 주세요.
+    </div>`;
+    newRow.style.display = '';
   }
   help.innerHTML = helpHtml;
 }
@@ -7521,21 +7644,18 @@ async function saveSupplySlot() {
   if (!Number.isFinite(required) || required < 1 || required > 12) { showToast('필요 수량은 1~12'); return; }
   if (items.length === 0) { showToast('후보 아이템을 한 개 이상 입력해 주세요'); return; }
 
-  // 던전/난이도 결정 (도감 인식 또는 사용자 입력)
+  // v1.5.3 — 던전/난이도 결정
+  //   1순위: 후보 아이템들의 (던전, 난이도) 교집합이 정확히 1개면 그걸로 자동 설정.
+  //   2순위: 그 외(0개/2개 이상/모두 unknown)는 사용자가 입력행에서 직접 지정.
   let dungeon = '';
   let difficulty = '';
-  let inferred = null;
-  for (const n of items) {
-    const d = findDictItem(n);
-    if (d) { inferred = d; break; }
-  }
-  if (inferred) {
-    dungeon = inferred.dungeon;
-    difficulty = inferred.difficulty;
+  const { keys: intersectionKeys } = computeDungeonIntersection(items);
+  if (intersectionKeys.length === 1) {
+    [dungeon, difficulty] = intersectionKeys[0].split('|');
   } else {
     dungeon = (document.getElementById('supply-slot-dungeon').value || '').trim();
     difficulty = _supplySlotForm.newDifficulty;
-    if (!dungeon) { showToast('새 아이템 던전 이름을 입력해 주세요'); return; }
+    if (!dungeon) { showToast('던전 이름을 입력해 주세요'); return; }
     if (!difficulty) { showToast('난이도를 선택해 주세요'); return; }
   }
 
@@ -7543,13 +7663,18 @@ async function saveSupplySlot() {
   confirmBtn.disabled = true;
 
   try {
-    // 1) 새 아이템들을 도감에 등록
-    const newItems = items
-      .filter(n => !findDictItem(n))
+    // v1.5.3 — 도감 upsert
+    //   각 후보 아이템에 대해 (name, dungeon, difficulty) 행이 없으면 INSERT.
+    //   같은 name의 다른 (던전, 난이도) 매핑은 그대로 보존됨.
+    const dictRowsToUpsert = items
+      .filter(n => {
+        const list = findDictEntries(n);
+        return !list.some(e => e.dungeon === dungeon && e.difficulty === difficulty);
+      })
       .map(name => ({ name, dungeon, difficulty }));
-    if (newItems.length > 0) {
+    if (dictRowsToUpsert.length > 0) {
       const { data: dictData, error: dictErr } = await sb.from('supply_item_dict')
-        .upsert(newItems, { onConflict: 'name' })
+        .upsert(dictRowsToUpsert, { onConflict: 'name,dungeon,difficulty', ignoreDuplicates: false })
         .select();
       if (dictErr) throw dictErr;
       (dictData || []).forEach(d => {
@@ -7616,46 +7741,78 @@ function renderSupplyDictList() {
   const el = document.getElementById('supply-dict-list');
   if (!el) return;
   const q = _supplyDictSearch.trim().toLowerCase();
-  const list = (q
-    ? supplyDict.filter(d =>
-        (d.name || '').toLowerCase().includes(q) ||
-        (d.dungeon || '').toLowerCase().includes(q))
-    : supplyDict
-  ).slice().sort((a, b) =>
-    (a.dungeon || '').localeCompare(b.dungeon || '', 'ko') ||
-    (a.name || '').localeCompare(b.name || '', 'ko')
-  );
 
-  if (list.length === 0) {
+  // v1.5.3 — name으로 그룹핑하여 한 행에 다중 (던전·난이도) 칩 표시.
+  //   검색은 name 또는 매핑 중 하나라도 매칭되면 그룹 전체를 표시.
+  const groups = new Map();
+  for (const d of supplyDict) {
+    const key = d.name || '';
+    if (!groups.has(key)) groups.set(key, { name: key, entries: [] });
+    groups.get(key).entries.push(d);
+  }
+
+  let groupList = [...groups.values()];
+  if (q) {
+    groupList = groupList.filter(g =>
+      (g.name || '').toLowerCase().includes(q) ||
+      g.entries.some(e =>
+        (e.dungeon || '').toLowerCase().includes(q) ||
+        (e.difficulty || '').toLowerCase().includes(q)
+      )
+    );
+  }
+
+  groupList.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ko'));
+  groupList.forEach(g => g.entries.sort((x, y) =>
+    (x.dungeon || '').localeCompare(y.dungeon || '', 'ko') ||
+    (x.difficulty || '').localeCompare(y.difficulty || '', 'ko')
+  ));
+
+  if (groupList.length === 0) {
     el.innerHTML = `<div class="supply-dict-empty">
       ${supplyDict.length === 0 ? '아직 등록된 아이템이 없어요' : '검색 결과 없음'}
     </div>`;
     return;
   }
 
-  el.innerHTML = list.map(d => `
-    <div class="supply-dict-row">
-      <span class="supply-dict-row-name" title="${escapeAttr(d.name)}">${escapeHtml(d.name)}</span>
-      <span class="supply-dict-row-meta">${escapeHtml(d.dungeon)} · ${escapeHtml(d.difficulty)}</span>
-      <button class="supply-dict-row-edit" onclick="editSupplyDictItem(${d.id})" title="수정">✎</button>
-      <button class="supply-dict-row-del"  onclick="deleteSupplyDictItem(${d.id})" title="삭제">−</button>
-    </div>
-  `).join('');
+  el.innerHTML = groupList.map(g => {
+    const chips = g.entries.map(e => `
+      <span class="supply-dict-chip">
+        <span class="supply-dict-chip-meta">${escapeHtml(e.dungeon)} · ${escapeHtml(e.difficulty)}</span>
+        <button class="supply-dict-chip-edit" onclick="editSupplyDictItem(${e.id})" title="수정">✎</button>
+        <button class="supply-dict-chip-del"  onclick="deleteSupplyDictItem(${e.id})" title="삭제">−</button>
+      </span>
+    `).join('');
+    return `
+      <div class="supply-dict-group">
+        <span class="supply-dict-group-name" title="${escapeAttr(g.name)}">${escapeHtml(g.name)}</span>
+        <div class="supply-dict-group-chips">${chips}</div>
+      </div>
+    `;
+  }).join('');
 }
 
 async function editSupplyDictItem(id) {
   if (currentActor === 'guest') return;
   const item = supplyDict.find(d => d.id === id);
   if (!item) return;
-  const newDungeon = prompt('던전 이름', item.dungeon);
+  // v1.5.3 — 한 매핑 행을 (던전, 난이도) 단위로 수정.
+  const newDungeon = prompt(`"${item.name}" — 던전 이름`, item.dungeon);
   if (newDungeon === null) return;
   const trimmed = newDungeon.trim();
   if (!trimmed) { showToast('던전 이름이 비었어요'); return; }
-  const newDiff = prompt('난이도 (탐험 / 정복 / 탐험+정복)', item.difficulty);
+  const newDiff = prompt(`"${item.name}" — 난이도 (탐험 / 정복 / 탐험+정복)`, item.difficulty);
   if (newDiff === null) return;
   const d = (newDiff || '').trim();
   if (!['탐험', '정복', '탐험+정복'].includes(d)) { showToast('난이도는 탐험 / 정복 / 탐험+정복 중 하나'); return; }
 
+  // 중복 매핑 방지 — 동일 (name, dungeon, difficulty) 행이 이미 있으면 중단.
+  const dup = supplyDict.find(x =>
+    x.id !== id && x.name === item.name && x.dungeon === trimmed && x.difficulty === d
+  );
+  if (dup) { showToast('같은 매핑이 이미 도감에 있어요'); return; }
+
+  markSelfChange('supply_item_dict', id);
   const { data, error } = await sb.from('supply_item_dict')
     .update({ dungeon: trimmed, difficulty: d })
     .eq('id', id).select().single();
@@ -7671,7 +7828,14 @@ async function deleteSupplyDictItem(id) {
   if (currentActor === 'guest') return;
   const item = supplyDict.find(d => d.id === id);
   if (!item) return;
-  if (!confirm(`도감에서 "${item.name}"을(를) 삭제할까요?`)) return;
+  // v1.5.3 — 매핑 한 행만 삭제. 같은 name의 다른 던전 매핑은 보존됨.
+  const sameName = supplyDict.filter(x => x.name === item.name);
+  const tail = sameName.length > 1
+    ? `\n(같은 이름의 다른 매핑 ${sameName.length - 1}개는 그대로 유지됩니다.)`
+    : '';
+  if (!confirm(
+    `"${item.name}" — ${item.dungeon} · ${item.difficulty} 매핑을 삭제할까요?${tail}`
+  )) return;
   markSelfChange('supply_item_dict', id);
   const { error } = await sb.from('supply_item_dict').delete().eq('id', id);
   if (error) { console.error(error); showToast('삭제 실패'); return; }
@@ -7927,9 +8091,9 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
       <div class="supply-form-help" id="supply-slot-items-help"></div>
     </div>
 
-    <!-- 새 아이템이 있을 때만 노출 -->
+    <!-- 도감 인식이 불가/모호할 때 노출 (v1.5.3) -->
     <div class="supply-form-row" id="supply-slot-new-row" style="display:none">
-      <span class="supply-form-label">새 아이템 던전</span>
+      <span class="supply-form-label">던전 이름</span>
       <input type="text" id="supply-slot-dungeon" class="supply-form-input"
         placeholder="예) 바크론의 공중섬"
         autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
@@ -7940,7 +8104,7 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
         <button type="button" class="supply-form-pill conq"  data-diff="정복" onclick="supplySlotSetDifficulty('정복')">정복</button>
         <button type="button" class="supply-form-pill all"   data-diff="탐험+정복"   onclick="supplySlotSetDifficulty('탐험+정복')">탐험+정복</button>
       </div>
-      <div class="supply-form-help">한 슬롯의 후보들은 모두 같은 던전·난이도에서 나옵니다.</div>
+      <div class="supply-form-help">이 슬롯의 던전·난이도예요. 후보 아이템들이 이 매핑으로 도감에 추가/유지됩니다.</div>
     </div>
 
     <div class="supply-form-actions">
@@ -7967,7 +8131,8 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
 
     <div class="supply-form-help" style="margin-top:10px;text-align:center">
       슬롯 추가 시 새 아이템을 등록하면 자동으로 여기에 모입니다.<br>
-      잘못 등록한 매핑이 있으면 ✎ 로 수정, − 로 삭제 가능합니다.
+      한 아이템이 여러 던전에서 나오면 매핑이 칩으로 함께 표시돼요.<br>
+      잘못 등록한 매핑은 ✎ 로 수정, − 로 삭제 가능합니다.
     </div>
   </div>
 </div>
