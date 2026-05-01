@@ -633,6 +633,65 @@ body.guest-mode .odd-batch-btn { display: none; }
 .icon-info { background: var(--sage-light); }
 .icon-expedition { background: var(--peach-light); }
 
+/* ── GROWTH PAGE (성장비교) ── */
+.gp-period-tabs { display: flex; gap: 4px; }
+.gp-period-btn {
+  padding: 5px 13px; border-radius: 16px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--text-sub); font-size: 0.78rem; cursor: pointer;
+  font-family: 'Gowun Dodum', sans-serif; transition: all 0.15s;
+}
+.gp-period-btn.active { background: var(--sage); color: white; border-color: var(--sage); }
+
+.gp-rank-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.gp-rank-card {
+  background: var(--surface); border-radius: 14px;
+  border: 1px solid var(--border); padding: 11px 13px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.gp-rank-card.first { border-color: var(--peach); background: #fff9f6; }
+.gp-rank-badge {
+  font-size: 10px; width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--hover); color: var(--text-sub); flex-shrink: 0;
+}
+.gp-rank-stat { font-size: 17px; color: var(--text); font-weight: 500; }
+.gp-rank-stat span { font-size: 11px; color: var(--sage); margin-left: 1px; }
+
+.gp-versus-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.gp-faction-col { display: flex; flex-direction: column; gap: 7px; }
+.gp-faction-header {
+  display: flex; align-items: center; gap: 6px;
+  padding-bottom: 6px; border-bottom: 1.5px solid;
+}
+.gp-faction-dot { width: 8px; height: 8px; border-radius: 50%; }
+.gp-faction-name { font-size: 12px; font-weight: 500; }
+.gp-char-row { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.gp-char-card {
+  background: var(--surface); border-radius: 11px;
+  border: 1px solid var(--border); padding: 8px 9px 6px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.gp-char-name { font-size: 11px; color: var(--text); font-weight: 500; }
+.gp-char-top { display: flex; align-items: center; justify-content: space-between; }
+.gp-tag {
+  font-size: 10px; padding: 1px 5px; border-radius: 8px;
+  background: var(--sage-light); color: #5a7a3a; white-space: nowrap;
+}
+.gp-tag.flat { background: var(--odd-empty); color: var(--text-sub); }
+.gp-chart-wrap { position: relative; width: 100%; height: 38px; cursor: crosshair; }
+.gp-chart-wrap.rank { height: 32px; }
+.gp-no-data {
+  height: 38px; display: flex; align-items: center;
+  justify-content: center; font-size: 10px; color: var(--text-sub);
+}
+.gp-tooltip {
+  position: fixed; background: #3a3530; color: #f4efe6;
+  font-size: 11px; font-family: 'Gowun Dodum', sans-serif;
+  padding: 5px 9px; border-radius: 8px; pointer-events: none;
+  white-space: nowrap; display: none; z-index: 9999; line-height: 1.6;
+}
+
 /* ── GROWTH CHART ── */
 .growth-range-tabs {
   display: flex;
@@ -3193,6 +3252,7 @@ body.guest-mode .dungeon-card { pointer-events: none; }
     <button class="tab-pill" onclick="showPage('detail-page')" id="detail-tab" style="display:none">상세</button>
     <button class="tab-pill" id="tab-supply" onclick="showPage('supply-page')">보급의뢰</button>
     <button class="tab-pill" id="tab-expedition" onclick="showPage('expedition-page')">원정</button>
+    <button class="tab-pill" id="tab-growth" onclick="showPage('growth-page')">성장</button>
     <button class="tab-pill" id="tab-log" onclick="showPage('log-page')">로그</button>
   </div>
   <div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;gap:2px">
@@ -3363,6 +3423,13 @@ body.guest-mode .dungeon-card { pointer-events: none; }
 <!-- ═══════════════════════════════ SUPPLY PAGE (v1.5.1) ═══════════════════════════════ -->
 <div id="supply-page" class="page">
   <div id="supply-content">
+    <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ GROWTH PAGE ═══════════════════════════════ -->
+<div id="growth-page" class="page">
+  <div id="growth-content">
     <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
   </div>
 </div>
@@ -3668,6 +3735,18 @@ function showPage(id) {
       document.getElementById('supply-content').innerHTML =
         `<div class="card" style="color:#b85050;font-size:0.85rem;white-space:pre-wrap">` +
         `보급의뢰 탭 렌더 오류:\n${e.message}\n\n콘솔 로그를 확인해 주세요.` +
+        `</div>`;
+    }
+  }
+  if (id === 'growth-page') {
+    document.getElementById('tab-growth').classList.add('active');
+    try {
+      renderGrowthPage();
+    } catch (e) {
+      console.error('[성장 탭 에러]', e);
+      document.getElementById('growth-content').innerHTML =
+        `<div class="card" style="color:#b85050;font-size:0.85rem;white-space:pre-wrap">` +
+        `성장 탭 렌더 오류:\n${e.message}\n\n콘솔 로그를 확인해 주세요.` +
         `</div>`;
     }
   }
@@ -5733,6 +5812,307 @@ async function confirmLogDelete() {
   closeLogDeleteModal();
   showToast('로그 삭제됨');
   renderLogPage();
+}
+
+// ═══════════════════════════════ GROWTH PAGE ═══════════════════════════════
+
+let _gpRange = 30; // 현재 기간 필터 상태
+
+async function renderGrowthPage() {
+  const el = document.getElementById('growth-content');
+  if (!el) return;
+
+  // 모든 캐릭터의 성장 로그를 한 번에 가져옴
+  const { data: growthRows, error } = await sb
+    .from('char_growth_log')
+    .select('*')
+    .order('log_date', { ascending: true });
+  if (error) { console.error(error); return; }
+
+  _buildGrowthPage(el, growthRows || [], _gpRange);
+}
+
+function _buildGrowthPage(el, allRows, rangeDays) {
+  const today = getTodayKST_Calendar();
+  const parseDate = str => { const [y,m,d] = str.split('-').map(Number); return new Date(y,m-1,d); };
+  const todayDate = parseDate(today);
+
+  // 기간 필터: cutoff 날짜 계산
+  let cutoffStr = null;
+  if (rangeDays !== 'all') {
+    const c = new Date(todayDate);
+    c.setDate(c.getDate() - (rangeDays - 1));
+    cutoffStr = `${c.getFullYear()}-${String(c.getMonth()+1).padStart(2,'0')}-${String(c.getDate()).padStart(2,'0')}`;
+  }
+
+  // 캐릭별 로그 그룹핑
+  const byChar = {};
+  allRows.forEach(r => {
+    if (!byChar[r.character_id]) byChar[r.character_id] = [];
+    byChar[r.character_id].push(r);
+  });
+
+  // 각 캐릭별 상승률 계산 (전투력 기준)
+  function calcGrowth(charId) {
+    const rows = (byChar[charId] || []).filter(r => r.combat_power > 0);
+    if (!rows.length) return { rate: null, start: null, end: null, rows: [] };
+    const filtered = cutoffStr ? rows.filter(r => r.log_date >= cutoffStr) : rows;
+    if (filtered.length < 1) return { rate: null, start: null, end: null, rows: [] };
+    const startCp = filtered[0].combat_power;
+    const endCp = filtered[filtered.length - 1].combat_power;
+    const rate = startCp > 0 ? ((endCp - startCp) / startCp * 100) : 0;
+    return { rate, start: startCp, end: endCp, rows: filtered };
+  }
+
+  // 각 owner별 캐릭 목록 (전투력 내림차순)
+  function ownerChars(owner) {
+    return allChars
+      .filter(c => c.owner === owner)
+      .sort((a, b) => (b.combat_power || 0) - (a.combat_power || 0));
+  }
+
+  // 전체 캐릭 중 상승률 상위 3
+  const ranked = allChars
+    .map(c => ({ char: c, ...calcGrowth(c.id) }))
+    .filter(x => x.rate !== null)
+    .sort((a, b) => b.rate - a.rate)
+    .slice(0, 3);
+
+  // owner별 색상 (CSS 변수 fallback)
+  function ownerColor(owner) {
+    return getComputedStyle(document.documentElement)
+      .getPropertyValue(`--color-owner-${owner}`).trim() || '#9e9589';
+  }
+  // actor 색상 (캐릭 컬러, owner 컬러 fallback)
+  function charColor(char) {
+    // owner 기준으로 컬러 결정
+    return ownerColor(char.owner);
+  }
+
+  // SVG area chart 생성 (미니)
+  function miniAreaSvg(rows, color, vbW, vbH) {
+    const vals = rows.map(r => r.combat_power);
+    if (vals.length < 1) return '';
+    const n = vals.length;
+    const minV = Math.min(...vals);
+    const maxV = Math.max(...vals);
+    const pad = vbH * 0.12;
+    const pts = vals.map((v, i) => {
+      const x = n === 1 ? vbW / 2 : (i / (n - 1)) * vbW;
+      const y = (maxV === minV)
+        ? vbH / 2
+        : vbH - pad - ((v - minV) / (maxV - minV)) * (vbH - pad * 2);
+      return { x, y };
+    });
+    const polyPts = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    const areaPts = [
+      `0,${vbH}`,
+      ...pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`),
+      `${vbW},${vbH}`
+    ].join(' ');
+    const gradId = `gpg_${Math.random().toString(36).slice(2,8)}`;
+    return `<svg width="100%" height="${vbH}" viewBox="0 0 ${vbW} ${vbH}" preserveAspectRatio="none" style="display:block">
+      <defs><linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${color}" stop-opacity="0.28"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity="0.02"/>
+      </linearGradient></defs>
+      <polygon points="${areaPts}" fill="url(#${gradId})"/>
+      <polyline points="${polyPts}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="${pts[pts.length-1].x.toFixed(1)}" cy="${pts[pts.length-1].y.toFixed(1)}" r="2.5" fill="${color}"/>
+    </svg>`;
+  }
+
+  // 순위 카드 HTML
+  function rankCardHtml(item, rank) {
+    const isFirst = rank === 0;
+    const color = charColor(item.char);
+    const rateStr = item.rate >= 0 ? `+${item.rate.toFixed(1)}` : item.rate.toFixed(1);
+    const badgeStyle = isFirst
+      ? `background:${color};color:white`
+      : `background:var(--hover);color:var(--text-sub)`;
+    const cardClass = isFirst ? 'gp-rank-card first' : 'gp-rank-card';
+    const svg = miniAreaSvg(item.rows, color, 120, 32);
+    const chartWrapData = `data-rows='${JSON.stringify(item.rows.map(r=>({d:r.log_date,v:r.combat_power})))}' data-color="${color}"`;
+    return `<div class="${cardClass}">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="gp-rank-badge" style="${badgeStyle}">${rank+1}</div>
+        <div>
+          <div style="font-size:12px;color:var(--text)">${item.char.name || '(이름없음)'}</div>
+          <div style="font-size:10px;color:${color}">${item.char.owner}</div>
+        </div>
+      </div>
+      <div class="gp-chart-wrap rank" ${chartWrapData}>${svg}</div>
+      <div class="gp-rank-stat">${rateStr}<span>%</span></div>
+    </div>`;
+  }
+
+  // 캐릭 미니 카드 HTML
+  function charCardHtml(char) {
+    const { rate, rows } = calcGrowth(char.id);
+    const color = charColor(char);
+    if (!char.name) {
+      return `<div class="gp-char-card" style="opacity:0.4">
+        <div class="gp-char-top"><div class="gp-char-name">—</div></div>
+        <div class="gp-no-data">슬롯 없음</div>
+      </div>`;
+    }
+    if (rate === null) {
+      return `<div class="gp-char-card" style="opacity:0.6">
+        <div class="gp-char-top"><div class="gp-char-name">${char.name}</div></div>
+        <div class="gp-no-data">기록 없음</div>
+      </div>`;
+    }
+    const rateStr = rate >= 0 ? `+${rate.toFixed(1)}%` : `${rate.toFixed(1)}%`;
+    const tagClass = Math.abs(rate) < 0.5 ? 'gp-tag flat' : 'gp-tag';
+    const svg = miniAreaSvg(rows, color, 80, 38);
+    const chartWrapData = `data-rows='${JSON.stringify(rows.map(r=>({d:r.log_date,v:r.combat_power})))}' data-color="${color}"`;
+    return `<div class="gp-char-card">
+      <div class="gp-char-top">
+        <div class="gp-char-name">${char.name}</div>
+        <span class="${tagClass}">${rateStr}</span>
+      </div>
+      <div class="gp-chart-wrap" ${chartWrapData}>${svg}</div>
+    </div>`;
+  }
+
+  // 진영 컬럼 HTML (한 줄에 2개씩, 4줄)
+  function factionColHtml(owner) {
+    const chars = ownerChars(owner);
+    const slots = Array.from({ length: 8 }, (_, i) => chars[i] || null);
+    const color = ownerColor(owner);
+    let rowsHtml = '';
+    for (let i = 0; i < 8; i += 2) {
+      const a = slots[i];
+      const b = slots[i + 1];
+      rowsHtml += `<div class="gp-char-row">
+        ${a ? charCardHtml(a) : `<div class="gp-char-card" style="opacity:0.4"><div class="gp-char-top"><div class="gp-char-name">—</div></div><div class="gp-no-data">슬롯 없음</div></div>`}
+        ${b ? charCardHtml(b) : `<div class="gp-char-card" style="opacity:0.4"><div class="gp-char-top"><div class="gp-char-name">—</div></div><div class="gp-no-data">슬롯 없음</div></div>`}
+      </div>`;
+    }
+    return `<div class="gp-faction-col">
+      <div class="gp-faction-header" style="border-color:${color}">
+        <div class="gp-faction-dot" style="background:${color}"></div>
+        <div class="gp-faction-name" style="color:${color}">${owner}</div>
+      </div>
+      ${rowsHtml}
+    </div>`;
+  }
+
+  // 전체 HTML 조립
+  const periodBtns = ['7일', '30일', '전체'].map(label => {
+    const val = label === '전체' ? 'all' : parseInt(label);
+    const active = val === rangeDays ? ' active' : '';
+    return `<button class="gp-period-btn${active}" onclick="gpSetRange(${val === 'all' ? "'all'" : val})">${label}</button>`;
+  }).join('');
+
+  const rankEmpty = `<div class="card" style="font-size:0.82rem;color:var(--text-sub);text-align:center;padding:20px">
+    기간 내 성장 기록이 없어요
+  </div>`;
+
+  const rankHtml = ranked.length
+    ? `<div class="gp-rank-row">${ranked.map((item, i) => rankCardHtml(item, i)).join('')}</div>`
+    : rankEmpty;
+
+  el.innerHTML = `
+    <div style="padding:14px;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:11px;color:var(--text-sub);letter-spacing:0.04em">성장 현황</div>
+        <div class="gp-period-tabs">${periodBtns}</div>
+      </div>
+
+      <div>
+        <div style="font-size:11px;color:var(--text-sub);letter-spacing:0.04em;margin-bottom:8px">전투력 상승률 상위 3</div>
+        ${rankHtml}
+      </div>
+
+      <div>
+        <div style="font-size:11px;color:var(--text-sub);letter-spacing:0.04em;margin-bottom:8px">진영별 전투력 현황 (내림차순)</div>
+        <div class="gp-versus-grid">
+          ${OWNERS.map(o => factionColHtml(o)).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="gp-tooltip" id="gp-tooltip"></div>
+  `;
+
+  // 툴팁 인터랙션 연결
+  _attachGpTooltips();
+}
+
+function gpSetRange(val) {
+  _gpRange = val;
+  renderGrowthPage();
+}
+
+function _attachGpTooltips() {
+  const tooltip = document.getElementById('gp-tooltip');
+  if (!tooltip) return;
+
+  document.querySelectorAll('.gp-chart-wrap[data-rows]').forEach(wrap => {
+    let rowsData;
+    try { rowsData = JSON.parse(wrap.dataset.rows); } catch(e) { return; }
+    if (!rowsData || rowsData.length === 0) return;
+
+    const color = wrap.dataset.color;
+    const isRank = wrap.classList.contains('rank');
+    const svgEl = wrap.querySelector('svg');
+    const dotEl = wrap.querySelector('circle:last-of-type');
+    const vbW = isRank ? 120 : 80;
+    const vbH = isRank ? 32 : 38;
+    const n = rowsData.length;
+    const vals = rowsData.map(r => r.v);
+    const minV = Math.min(...vals);
+    const maxV = Math.max(...vals);
+    const pad = vbH * 0.12;
+
+    function ptToSvg(i) {
+      const x = n === 1 ? vbW / 2 : (i / (n - 1)) * vbW;
+      const y = (maxV === minV)
+        ? vbH / 2
+        : vbH - pad - ((vals[i] - minV) / (maxV - minV)) * (vbH - pad * 2);
+      return { x, y };
+    }
+
+    // 호버 도트 추가
+    const hoverDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    hoverDot.setAttribute('r', isRank ? '3.5' : '3');
+    hoverDot.setAttribute('fill', color);
+    hoverDot.setAttribute('stroke', 'white');
+    hoverDot.setAttribute('stroke-width', '1.5');
+    hoverDot.style.display = 'none';
+    if (svgEl) svgEl.appendChild(hoverDot);
+
+    wrap.addEventListener('mousemove', e => {
+      if (!svgEl) return;
+      const rect = svgEl.getBoundingClientRect();
+      const relX = e.clientX - rect.left;
+      const ratio = Math.max(0, Math.min(1, relX / rect.width));
+      const idx = Math.round(ratio * (n - 1));
+      const { x, y } = ptToSvg(idx);
+
+      hoverDot.setAttribute('cx', x);
+      hoverDot.setAttribute('cy', y);
+      hoverDot.style.display = 'block';
+
+      const row = rowsData[idx];
+      const diff = row.v - rowsData[0].v;
+      const diffStr = diff >= 0 ? `+${diff.toLocaleString()}` : diff.toLocaleString();
+      const dateLabel = row.d.slice(5).replace('-', '/'); // MM/DD
+      tooltip.innerHTML = `<span style="color:${color};font-weight:500">${dateLabel}</span>&nbsp; ${(row.v / 10).toFixed(1)}k<br><span style="font-size:10px;color:#b8b0a8">시작 대비 ${diffStr}</span>`;
+      tooltip.style.display = 'block';
+
+      const tw = tooltip.offsetWidth;
+      let tx = e.clientX + 12;
+      if (tx + tw > window.innerWidth - 8) tx = e.clientX - tw - 12;
+      tooltip.style.left = tx + 'px';
+      tooltip.style.top = (e.clientY - 40) + 'px';
+    });
+
+    wrap.addEventListener('mouseleave', () => {
+      tooltip.style.display = 'none';
+      hoverDot.style.display = 'none';
+    });
+  });
 }
 
 // 로그 페이지 날짜 상태
