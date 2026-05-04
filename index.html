@@ -669,10 +669,11 @@ body.guest-mode .odd-batch-btn { display: none; }
 .gp-char-row { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
 .gp-char-card {
   background: var(--surface); border-radius: 11px;
-  border: 1px solid var(--border); padding: 8px 9px 6px;
-  display: flex; flex-direction: column; gap: 2px;
+  border: 1px solid var(--border); padding: 9px 10px 9px;
+  display: flex; flex-direction: column; gap: 8px;
 }
 .gp-char-name { font-size: 11px; color: var(--text); font-weight: 500; }
+.gp-char-cp { font-size: 10px; color: var(--text-sub); font-weight: 400; margin-left: 2px; }
 .gp-char-top { display: flex; align-items: center; justify-content: space-between; }
 .gp-tag {
   font-size: 10px; padding: 1px 5px; border-radius: 8px;
@@ -5968,7 +5969,7 @@ function _buildGrowthPage(el, allRows, rangeDays) {
     const chartWrapData = `data-rows='${JSON.stringify(rows.map(r=>({d:r.log_date,v:r.combat_power})))}' data-color="${color}"`;
     return `<div class="gp-char-card">
       <div class="gp-char-top">
-        <div class="gp-char-name">${char.name}</div>
+        <div class="gp-char-name">${char.name}<span class="gp-char-cp">(${formatCp(char.combat_power)})</span></div>
         <span class="${tagClass}">${rateStr}</span>
       </div>
       <div class="gp-chart-wrap" ${chartWrapData}>${svg}</div>
@@ -8825,7 +8826,7 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
   #vsw-overlay .vsw-btn.primary { background: var(--sage); color: white; border-color: var(--sage); }
 </style>
 
-<button id="vsw-badge" onclick="vswOpen()">v1.5</button>
+<button id="vsw-badge" onclick="vswOpen()">v1.5.5</button>
 
 <div id="vsw-overlay" onclick="vswClose()">
   <div class="vsw-card" onclick="event.stopPropagation()">
@@ -8848,7 +8849,7 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
 
 <script>
 (function() {
-  const CURRENT_VERSION = 'v1.5';
+  const CURRENT_VERSION = 'v1.5.5';
   const VERSIONS_URL = '/aion_task/versions.json';
 
   function openModal() {
