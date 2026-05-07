@@ -8962,13 +8962,17 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
 ══════════════════════════════════════════════════════════════ -->
 <template id="calc-window-template">
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-darkreader-mode="off" data-darkreader-scheme="light">
 <head>
 <meta charset="UTF-8">
 <title>츄냥이 계산기</title>
+<!-- 외부 다크모드/색반전 차단 (브라우저, Dark Reader 등) -->
+<meta name="color-scheme" content="light only">
+<meta name="darkreader-lock">
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
 <style>
   :root {
+    color-scheme: light;
     --bg: #f9f6f0;
     --surface: #ffffff;
     --surface2: #faf8f5;
