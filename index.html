@@ -9011,7 +9011,11 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
     display: flex; align-items: center; gap: 6px;
     font-size: 0.85rem; color: var(--text);
     flex-shrink: 0;
+    font-weight: 500;
   }
+  .calc-title .ct-emoji { font-size: 0.95rem; line-height: 1; }
+  .calc-title .ct-name  { color: var(--sage); }
+  .calc-title .ct-accent { color: var(--peach); }
   .calc-tabs {
     display: flex; gap: 3px;
     background: var(--hover);
@@ -9259,7 +9263,7 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
 <body>
 
 <div class="calc-header">
-  <div class="calc-title">츄냥이 계산기</div>
+  <div class="calc-title"><span class="ct-emoji">💟</span><span class="ct-name">츄<span class="ct-accent">냥</span>이 계산기</span></div>
   <div class="calc-tabs" id="calc-tabs">
     <button class="calc-tab active" data-view="basic"   onclick="switchCalcView('basic')">기본</button>
     <button class="calc-tab"        data-view="expr"    onclick="switchCalcView('expr')">수식</button>
@@ -9301,7 +9305,7 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
   <div id="calc-view-expr" style="display:none">
     <div class="calc-display">
       <input type="text" id="calc-expr-input" class="calc-expr-input"
-             placeholder="예: 8*7 + 4*12 + 23*130"
+             placeholder="예: 2*2 + 3*3 + 4*4"
              autocomplete="off" spellcheck="false" oninput="onExprInput()" />
       <div class="calc-result" id="calc-expr-result">0</div>
     </div>
@@ -9335,7 +9339,7 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
   <div id="calc-view-tape" style="display:none">
     <div class="tape-input-row">
       <input type="text" id="tape-input" class="tape-input"
-             placeholder="예: 8*7   또는   23*130"
+             placeholder="예: 2*2   또는   3*3"
              autocomplete="off" spellcheck="false"
              onkeydown="if(event.key==='Enter')tapeAdd()" />
       <button class="tape-add-btn" onclick="tapeAdd()">＋ 추가</button>
