@@ -2128,46 +2128,37 @@ body.guest-mode .page .fetch-pill {
   overflow: hidden;
 }
 
+/* 컬럼 헤더 — 가운데 정렬, owner 색, 큰 폰트 */
 .sanctuary-col-head {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
+  justify-content: center;
+  gap: 4px;
+  padding: 14px 14px;
   border-bottom: 1px solid var(--border);
   background: var(--surface2);
 }
 
 .sanctuary-col-title {
-  font-size: 0.9rem;
-  color: var(--text);
+  font-size: 1.1rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 8px;
+  letter-spacing: 0.02em;
 }
 
-.sanctuary-col-title-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-.sanctuary-col-title-dot.설냥 { background: var(--sage); }
-.sanctuary-col-title-dot.츄츄 { background: var(--peach); }
-
-.sanctuary-col-progress {
-  font-size: 0.76rem;
-  color: var(--text-sub);
-}
-.sanctuary-col-progress strong {
-  color: var(--text);
-  font-weight: 600;
-}
+.sanctuary-col[data-owner="설냥"] .sanctuary-col-title { color: var(--peach); }
+.sanctuary-col[data-owner="츄츄"] .sanctuary-col-title { color: var(--sky); }
 
 .sanctuary-row {
   display: grid;
-  grid-template-columns: 1fr auto auto;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 14px;
+  /* 이름 영역(가변) + 토글 두 칸(고정 폭으로 통일) */
+  grid-template-columns: minmax(0, 1fr) 92px 92px;
+  align-items: stretch;
+  gap: 12px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border);
   transition: background 0.15s;
 }
@@ -2175,32 +2166,49 @@ body.guest-mode .page .fetch-pill {
 .sanctuary-row.resting { opacity: 0.45; }
 .sanctuary-row.all-done { background: var(--sage-light); }
 
+/* 이름 영역: 좌측에 owner 색 액센트 바 + 적절한 패딩으로 시각적 여백 확보 */
 .sanctuary-row-name {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  justify-content: center;
+  gap: 3px;
   min-width: 0;
+  padding-left: 12px;
+  border-left: 3px solid var(--border);
+  border-radius: 2px;
 }
 
+.sanctuary-col[data-owner="설냥"] .sanctuary-row-name { border-left-color: var(--peach); }
+.sanctuary-col[data-owner="츄츄"] .sanctuary-row-name { border-left-color: var(--sky); }
+
 .sanctuary-row-name-main {
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: 0.01em;
 }
 
 .sanctuary-row-name-meta {
   font-size: 0.72rem;
   color: var(--text-sub);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* 토글 버튼: 너비 100%로 그리드 칸을 꽉 채워 모든 행이 일관된 폭을 갖도록 통일 */
 .sanctuary-toggle {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 70px;
-  padding: 6px 12px;
+  gap: 1px;
+  width: 100%;
+  height: 100%;
+  min-height: 40px;
+  padding: 6px 8px;
   border-radius: var(--radius-xs);
   border: 1px solid var(--border);
   background: var(--undone);
@@ -2212,19 +2220,30 @@ body.guest-mode .page .fetch-pill {
   user-select: none;
 }
 
-.sanctuary-toggle:hover:not(.locked):not(:disabled) {
-  background: var(--hover);
+/* hover — 미완 상태: 연한 sage 톤으로 살짝 강조 */
+.sanctuary-toggle:hover:not(.locked):not(:disabled):not(.done) {
+  background: var(--sage-light);
+  border-color: var(--sage-light);
+  color: var(--text);
+}
+
+/* hover — 완료 상태: 동일 sage 유지하되 약간 어둡게 (살짝 inset shadow) */
+.sanctuary-toggle.done:hover:not(:disabled) {
+  background: var(--sage);
+  border-color: var(--sage);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.18);
 }
 
 .sanctuary-toggle .toggle-label {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+  display: block;
+  line-height: 1.2;
 }
 
+/* 잠금 표시(2700↑/3500↑)는 버튼 안에서 sub 라벨로 두 줄 배치 → 버튼 폭이 늘어나지 않음 */
 .sanctuary-toggle .toggle-tag {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   color: var(--text-sub);
+  line-height: 1.1;
 }
 
 .sanctuary-toggle.done {
@@ -2236,7 +2255,7 @@ body.guest-mode .page .fetch-pill {
 
 .sanctuary-toggle.locked {
   cursor: not-allowed;
-  opacity: 0.45;
+  opacity: 0.55;
   background: var(--undone);
   color: var(--text-sub);
 }
@@ -7164,9 +7183,12 @@ function renderSanctuaryPage() {
           (!ludraLocked && ludraDone ? 1 : 0) + (!erosionLocked && erosionDone ? 1 : 0);
         const allDone = !isResting && eligibleCount > 0 && eligibleCount === clearedCount;
 
+        // 모든 버튼이 동일한 폭/높이를 갖도록 두 줄 마크업으로 통일.
+        // 잠금 버튼만 2번째 줄에 템레벨 요구치 표시. 해금 버튼은 빈 줄로 자리만 유지.
         const ludraBtn = ludraLocked
           ? `<button class="sanctuary-toggle locked" disabled title="템 2700 이상 필요">
-              <span class="toggle-label">루드라<span class="toggle-tag">2700↑</span></span>
+              <span class="toggle-label">루드라</span>
+              <span class="toggle-tag">2700↑</span>
              </button>`
           : `<button class="sanctuary-toggle ${ludraDone?'done':''}"
               ${isResting?'disabled':''}
@@ -7177,7 +7199,8 @@ function renderSanctuaryPage() {
 
         const erosionBtn = erosionLocked
           ? `<button class="sanctuary-toggle locked" disabled title="템 3500 이상 필요">
-              <span class="toggle-label">침식<span class="toggle-tag">3500↑</span></span>
+              <span class="toggle-label">침식</span>
+              <span class="toggle-tag">3500↑</span>
              </button>`
           : `<button class="sanctuary-toggle ${erosionDone?'done':''}"
               ${isResting?'disabled':''}
@@ -7202,15 +7225,9 @@ function renderSanctuaryPage() {
 
     const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
-    return `<div class="sanctuary-col">
+    return `<div class="sanctuary-col" data-owner="${owner}">
       <div class="sanctuary-col-head">
-        <div class="sanctuary-col-title">
-          <span class="sanctuary-col-title-dot ${owner}"></span>
-          <span>${owner}</span>
-        </div>
-        <div class="sanctuary-col-progress">
-          <strong>${done}/${total}</strong> · ${pct}%
-        </div>
+        <div class="sanctuary-col-title">${owner}</div>
       </div>
       ${rows}
     </div>`;
