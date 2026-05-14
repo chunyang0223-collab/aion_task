@@ -2181,6 +2181,13 @@ body.guest-mode .page .fetch-pill {
 .sanctuary-col[data-owner="설냥"] .sanctuary-row-name { border-left-color: var(--peach); }
 .sanctuary-col[data-owner="츄츄"] .sanctuary-row-name { border-left-color: var(--sky); }
 
+/* 두 항목 모두 자격 미달(잠금)인 캐릭은 owner 색 대신 회색 액센트 — 비활성 상태 구분 */
+.sanctuary-row.all-locked .sanctuary-row-name { border-left-color: var(--border); }
+.sanctuary-col[data-owner="설냥"] .sanctuary-row.all-locked .sanctuary-row-name,
+.sanctuary-col[data-owner="츄츄"] .sanctuary-row.all-locked .sanctuary-row-name {
+  border-left-color: var(--border);
+}
+
 .sanctuary-row-name-main {
   font-size: 0.9rem;
   color: var(--text);
@@ -7211,8 +7218,10 @@ function renderSanctuaryPage() {
 
         const charClass = (ch.class || '').toString();
         const restingTag = isResting ? ' · 휴식' : '';
+        // 두 항목 모두 자격 미달이면 좌측 액센트 바를 회색으로 (all-locked 클래스)
+        const allLocked = ludraLocked && erosionLocked && !isResting;
 
-        rows += `<div class="sanctuary-row ${isResting?'resting':''} ${allDone?'all-done':''}">
+        rows += `<div class="sanctuary-row ${isResting?'resting':''} ${allDone?'all-done':''} ${allLocked?'all-locked':''}">
           <div class="sanctuary-row-name">
             <div class="sanctuary-row-name-main">${escapeHtml(ch.name || '—')}</div>
             <div class="sanctuary-row-name-meta">${escapeHtml(charClass)} · 템 ${ilvl}${restingTag}</div>
