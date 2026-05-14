@@ -2166,7 +2166,7 @@ body.guest-mode .page .fetch-pill {
 .sanctuary-row.resting { opacity: 0.45; }
 .sanctuary-row.all-done { background: var(--sage-light); }
 
-/* 이름 영역: 좌측에 owner 색 액센트 바 + 적절한 패딩으로 시각적 여백 확보 */
+/* 이름 영역: 좌측에 owner 색 액센트 바 + 적절한 패딩으로 시각적 여백 확보. 클릭 시 상세뷰 진입 */
 .sanctuary-row-name {
   display: flex;
   flex-direction: column;
@@ -2176,15 +2176,25 @@ body.guest-mode .page .fetch-pill {
   padding-left: 12px;
   border-left: 3px solid var(--border);
   border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.15s, border-left-width 0.15s;
+}
+.sanctuary-row-name:hover {
+  background: var(--hover);
+}
+.sanctuary-row-name:hover .sanctuary-row-name-main {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: 3px;
 }
 
 .sanctuary-col[data-owner="설냥"] .sanctuary-row-name { border-left-color: var(--peach); }
 .sanctuary-col[data-owner="츄츄"] .sanctuary-row-name { border-left-color: var(--sky); }
 
-/* 두 항목 모두 자격 미달(잠금)인 캐릭은 owner 색 대신 회색 액센트 — 비활성 상태 구분 */
-.sanctuary-row.all-locked .sanctuary-row-name { border-left-color: var(--border); }
-.sanctuary-col[data-owner="설냥"] .sanctuary-row.all-locked .sanctuary-row-name,
-.sanctuary-col[data-owner="츄츄"] .sanctuary-row.all-locked .sanctuary-row-name {
+/* 휴식 캐릭은 owner 색 대신 회색 액센트 — 비활성 상태 구분 */
+.sanctuary-col[data-owner="설냥"] .sanctuary-row.resting .sanctuary-row-name,
+.sanctuary-col[data-owner="츄츄"] .sanctuary-row.resting .sanctuary-row-name {
   border-left-color: var(--border);
 }
 
@@ -7155,8 +7165,10 @@ function renderSanctuaryPage() {
   // 오너별 카드 빌더
   const buildOwnerCard = (owner) => {
     // OWNERS 정의된 슬롯 순서대로
+    // 두 항목 모두 자격 미달(템 2700 미만)인 캐릭은 목록에서 제외
     const ownerChars = allChars
       .filter(c => c.owner === owner)
+      .filter(c => (c.item_level || 0) >= 2700)
       .slice()
       .sort((a, b) => (a.slot || 0) - (b.slot || 0));
 
@@ -7172,7 +7184,7 @@ function renderSanctuaryPage() {
 
     let rows = '';
     if (ownerChars.length === 0) {
-      rows = `<div class="sanctuary-empty">등록된 캐릭터가 없습니다</div>`;
+      rows = `<div class="sanctuary-empty">자격 캐릭터 없음 (템 2700 이상)</div>`;
     } else {
       ownerChars.forEach(ch => {
         const ilvl = ch.item_level || 0;
@@ -7218,11 +7230,9 @@ function renderSanctuaryPage() {
 
         const charClass = (ch.class || '').toString();
         const restingTag = isResting ? ' · 휴식' : '';
-        // 두 항목 모두 자격 미달이면 좌측 액센트 바를 회색으로 (all-locked 클래스)
-        const allLocked = ludraLocked && erosionLocked && !isResting;
 
-        rows += `<div class="sanctuary-row ${isResting?'resting':''} ${allDone?'all-done':''} ${allLocked?'all-locked':''}">
-          <div class="sanctuary-row-name">
+        rows += `<div class="sanctuary-row ${isResting?'resting':''} ${allDone?'all-done':''}">
+          <div class="sanctuary-row-name" onclick="openDetail('${ch.id}')" title="상세 보기">
             <div class="sanctuary-row-name-main">${escapeHtml(ch.name || '—')}</div>
             <div class="sanctuary-row-name-meta">${escapeHtml(charClass)} · 템 ${ilvl}${restingTag}</div>
           </div>
