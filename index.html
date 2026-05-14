@@ -2054,6 +2054,200 @@ body.guest-mode .page .fetch-pill {
   .exp-recommend-solo { max-width: 100%; }
 }
 
+/* ══════════════════════ SANCTUARY PAGE (v1.5.7) ══════════════════════ */
+/* 성역 페이지 — 좌측 설냥, 우측 츄츄 캐릭별 루드라/침식 토글 */
+
+.sanctuary-page-wrap {
+  padding: 14px 16px 80px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.sanctuary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.sanctuary-header-title {
+  font-size: 0.95rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sanctuary-header-meta {
+  font-size: 0.74rem;
+  color: var(--text-sub);
+}
+
+.sanctuary-summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.sanctuary-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-sub);
+}
+
+.sanctuary-summary-pct {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.sanctuary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 720px) {
+  .sanctuary-grid { grid-template-columns: 1fr; }
+}
+
+.sanctuary-col {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.sanctuary-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+
+.sanctuary-col-title {
+  font-size: 0.9rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sanctuary-col-title-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.sanctuary-col-title-dot.설냥 { background: var(--sage); }
+.sanctuary-col-title-dot.츄츄 { background: var(--peach); }
+
+.sanctuary-col-progress {
+  font-size: 0.76rem;
+  color: var(--text-sub);
+}
+.sanctuary-col-progress strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.sanctuary-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.sanctuary-row:last-child { border-bottom: none; }
+.sanctuary-row.resting { opacity: 0.45; }
+.sanctuary-row.all-done { background: var(--sage-light); }
+
+.sanctuary-row-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sanctuary-row-name-main {
+  font-size: 0.88rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sanctuary-row-name-meta {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+}
+
+.sanctuary-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 70px;
+  padding: 6px 12px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  background: var(--undone);
+  color: var(--text-sub);
+  font-size: 0.78rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  user-select: none;
+}
+
+.sanctuary-toggle:hover:not(.locked):not(:disabled) {
+  background: var(--hover);
+}
+
+.sanctuary-toggle .toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sanctuary-toggle .toggle-tag {
+  font-size: 0.68rem;
+  color: var(--text-sub);
+}
+
+.sanctuary-toggle.done {
+  background: var(--sage);
+  border-color: var(--sage);
+  color: #ffffff;
+}
+.sanctuary-toggle.done .toggle-tag { color: rgba(255,255,255,0.85); }
+
+.sanctuary-toggle.locked {
+  cursor: not-allowed;
+  opacity: 0.45;
+  background: var(--undone);
+  color: var(--text-sub);
+}
+
+.sanctuary-empty {
+  padding: 26px 14px;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-sub);
+}
+
 /* ══════════════════════ SUPPLY BOARD (v1.5.1) ══════════════════════ */
 /* 보급의뢰 보드 — 슬롯 카드 그리드, 도감 모달, 진행도 칩 */
 
@@ -3283,8 +3477,9 @@ body.guest-mode .dungeon-card { pointer-events: none; }
   <div class="tab-pills">
     <button class="tab-pill active" id="tab-overview" onclick="showPage('overview')">전체</button>
     <button class="tab-pill" onclick="showPage('detail-page')" id="detail-tab" style="display:none">상세</button>
-    <button class="tab-pill" id="tab-supply" onclick="showPage('supply-page')">보급의뢰</button>
+    <button class="tab-pill" id="tab-sanctuary" onclick="showPage('sanctuary-page')">성역</button>
     <button class="tab-pill" id="tab-expedition" onclick="showPage('expedition-page')">원정</button>
+    <button class="tab-pill" id="tab-supply" onclick="showPage('supply-page')">보급</button>
     <button class="tab-pill" id="tab-growth" onclick="showPage('growth-page')">성장</button>
     <button class="tab-pill" id="tab-log" onclick="showPage('log-page')">로그</button>
   </div>
@@ -3444,6 +3639,13 @@ body.guest-mode .dungeon-card { pointer-events: none; }
 <!-- ═══════════════════════════════ DETAIL PAGE ═══════════════════════════════ -->
 <div id="detail-page" class="page">
   <div id="detail-content"></div>
+</div>
+
+<!-- ═══════════════════════════════ SANCTUARY PAGE (v1.5.7) ═══════════════════════════════ -->
+<div id="sanctuary-page" class="page">
+  <div id="sanctuary-content">
+    <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════ EXPEDITION PAGE ═══════════════════════════════ -->
@@ -3747,6 +3949,18 @@ function showPage(id) {
     if (_overviewDirty) { renderOverview(); _overviewDirty = false; }
   }
   if (id === 'detail-page') document.getElementById('detail-tab').classList.add('active');
+  if (id === 'sanctuary-page') {
+    document.getElementById('tab-sanctuary').classList.add('active');
+    try {
+      renderSanctuaryPage();
+    } catch (e) {
+      console.error('[성역 탭 에러]', e);
+      document.getElementById('sanctuary-content').innerHTML =
+        `<div class="card" style="color:#b85050;font-size:0.85rem;white-space:pre-wrap">` +
+        `성역 탭 렌더 오류:\n${e.message}\n\n콘솔 로그를 확인해 주세요.` +
+        `</div>`;
+    }
+  }
   if (id === 'expedition-page') {
     document.getElementById('tab-expedition').classList.add('active');
     try {
@@ -5136,6 +5350,10 @@ async function toggleWeekly(charId, field, value, week) {
   if (char) {
     renderDetail(char);
     lazyRenderOverview();
+    // v1.5.7: 성역 페이지가 활성 상태면 토글 결과를 즉시 반영
+    if (document.getElementById('sanctuary-page')?.classList.contains('active')) {
+      try { renderSanctuaryPage(); } catch (e) { console.error('[성역 재렌더 에러]', e); }
+    }
     const actionMap = { ludra_done:'성역-루드라 완료', erosion_done:'성역-침식 완료' };
     if (actionMap[field]) {
       if (value) writeLog(char.owner, char.name, actionMap[field], char.id, field);
@@ -5557,6 +5775,9 @@ function scheduleLocalRerender() {
     _rerenderTimer = null;
     if (document.getElementById('overview').classList.contains('active')) {
       renderOverview();
+    } else if (document.getElementById('sanctuary-page')?.classList.contains('active')) {
+      // v1.5.7: 성역 페이지 실시간 갱신 (다른 사용자 토글 반영)
+      renderSanctuaryPage();
     } else if (document.getElementById('expedition-page').classList.contains('active')) {
       renderExpeditionPage();
     } else if (document.getElementById('supply-page').classList.contains('active')) {
@@ -5637,6 +5858,9 @@ async function reloadTable(table) {
   // re-render current view
   if (document.getElementById('overview').classList.contains('active')) {
     renderOverview();
+  } else if (document.getElementById('sanctuary-page')?.classList.contains('active')) {
+    // v1.5.7: 데이터 reload 후 성역 페이지 갱신
+    renderSanctuaryPage();
   } else if (document.getElementById('expedition-page').classList.contains('active')) {
     renderExpeditionPage();
   } else if (document.getElementById('supply-page').classList.contains('active')) {
@@ -6886,6 +7110,155 @@ function expToggleResults() {
   const chevron = document.querySelector('.exp-result-chevron');
   if (wrap) wrap.classList.toggle('collapsed', !_expResultExpanded);
   if (chevron) chevron.classList.toggle('collapsed', !_expResultExpanded);
+}
+
+// ══════════════════════ SANCTUARY PAGE RENDER (v1.5.7) ══════════════════════
+// 성역 페이지 — 좌측 설냥, 우측 츄츄. 캐릭별 루드라(2700+)/침식(3500+) 토글.
+// 토글은 toggleWeekly() 를 호출하여 상세뷰/미니닷/오버뷰와 동일하게 연동된다.
+function renderSanctuaryPage() {
+  const el = document.getElementById('sanctuary-content');
+  if (!el) return;
+  if (typeof allChars === 'undefined' || !Array.isArray(allChars)) {
+    el.innerHTML = `<div class="loading"><div class="spinner"></div> 불러오는 중...</div>`;
+    el.dataset.renderKey = '';
+    return;
+  }
+
+  const week = getWeekStart();
+
+  // 오너별 카드 빌더
+  const buildOwnerCard = (owner) => {
+    // OWNERS 정의된 슬롯 순서대로
+    const ownerChars = allChars
+      .filter(c => c.owner === owner)
+      .slice()
+      .sort((a, b) => (a.slot || 0) - (b.slot || 0));
+
+    // 진행도 집계 (자격 충족 + 휴식 제외)
+    let total = 0, done = 0;
+    ownerChars.forEach(ch => {
+      if (ch.resting) return;
+      const ilvl = ch.item_level || 0;
+      const wt = weeklyTasks[ch.id] || {};
+      if (ilvl >= 2700) { total++; if (wt.ludra_done) done++; }
+      if (ilvl >= 3500) { total++; if (wt.erosion_done) done++; }
+    });
+
+    let rows = '';
+    if (ownerChars.length === 0) {
+      rows = `<div class="sanctuary-empty">등록된 캐릭터가 없습니다</div>`;
+    } else {
+      ownerChars.forEach(ch => {
+        const ilvl = ch.item_level || 0;
+        const wt = weeklyTasks[ch.id] || {};
+        const ludraLocked = ilvl < 2700;
+        const erosionLocked = ilvl < 3500;
+        const ludraDone = !!wt.ludra_done;
+        const erosionDone = !!wt.erosion_done;
+        const isResting = !!ch.resting;
+
+        // "전부 완료" 표시: 자격 있는 항목을 모두 클리어한 경우
+        const eligibleCount =
+          (ludraLocked ? 0 : 1) + (erosionLocked ? 0 : 1);
+        const clearedCount =
+          (!ludraLocked && ludraDone ? 1 : 0) + (!erosionLocked && erosionDone ? 1 : 0);
+        const allDone = !isResting && eligibleCount > 0 && eligibleCount === clearedCount;
+
+        const ludraBtn = ludraLocked
+          ? `<button class="sanctuary-toggle locked" disabled title="템 2700 이상 필요">
+              <span class="toggle-label">루드라<span class="toggle-tag">2700↑</span></span>
+             </button>`
+          : `<button class="sanctuary-toggle ${ludraDone?'done':''}"
+              ${isResting?'disabled':''}
+              onclick="toggleWeekly('${ch.id}','ludra_done',${!ludraDone},'${week}')"
+              title="성역 - 루드라">
+              <span class="toggle-label">루드라</span>
+             </button>`;
+
+        const erosionBtn = erosionLocked
+          ? `<button class="sanctuary-toggle locked" disabled title="템 3500 이상 필요">
+              <span class="toggle-label">침식<span class="toggle-tag">3500↑</span></span>
+             </button>`
+          : `<button class="sanctuary-toggle ${erosionDone?'done':''}"
+              ${isResting?'disabled':''}
+              onclick="toggleWeekly('${ch.id}','erosion_done',${!erosionDone},'${week}')"
+              title="성역 - 침식">
+              <span class="toggle-label">침식</span>
+             </button>`;
+
+        const charClass = (ch.class || '').toString();
+        const restingTag = isResting ? ' · 휴식' : '';
+
+        rows += `<div class="sanctuary-row ${isResting?'resting':''} ${allDone?'all-done':''}">
+          <div class="sanctuary-row-name">
+            <div class="sanctuary-row-name-main">${escapeHtml(ch.name || '—')}</div>
+            <div class="sanctuary-row-name-meta">${escapeHtml(charClass)} · 템 ${ilvl}${restingTag}</div>
+          </div>
+          ${ludraBtn}
+          ${erosionBtn}
+        </div>`;
+      });
+    }
+
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+    return `<div class="sanctuary-col">
+      <div class="sanctuary-col-head">
+        <div class="sanctuary-col-title">
+          <span class="sanctuary-col-title-dot ${owner}"></span>
+          <span>${owner}</span>
+        </div>
+        <div class="sanctuary-col-progress">
+          <strong>${done}/${total}</strong> · ${pct}%
+        </div>
+      </div>
+      ${rows}
+    </div>`;
+  };
+
+  // 전체 진행도 (요약 헤더용)
+  let totalAll = 0, doneAll = 0;
+  allChars.forEach(ch => {
+    if (ch.resting) return;
+    const ilvl = ch.item_level || 0;
+    const wt = weeklyTasks[ch.id] || {};
+    if (ilvl >= 2700) { totalAll++; if (wt.ludra_done) doneAll++; }
+    if (ilvl >= 3500) { totalAll++; if (wt.erosion_done) doneAll++; }
+  });
+  const pctAll = totalAll > 0 ? Math.round((doneAll / totalAll) * 100) : 0;
+
+  // OWNERS 순서대로 좌(설냥) → 우(츄츄). OWNERS 변수가 있으면 그걸 사용, 없으면 fallback.
+  const ownerOrder = (typeof OWNERS !== 'undefined' && Array.isArray(OWNERS)) ? OWNERS : ['설냥', '츄츄'];
+
+  let html = `<div class="sanctuary-page-wrap">
+    <div class="sanctuary-header">
+      <div>
+        <div class="sanctuary-header-title">🏛 성역 점검</div>
+        <div class="sanctuary-header-meta">루드라 (템 2700↑) · 침식 (템 3500↑) · 수요일 05:00 리셋</div>
+      </div>
+      <div class="sanctuary-summary">
+        <div class="sanctuary-summary-item">
+          전체 <span class="sanctuary-summary-pct">${doneAll}/${totalAll} · ${pctAll}%</span>
+        </div>
+      </div>
+    </div>
+    <div class="sanctuary-grid">
+      ${ownerOrder.map(o => buildOwnerCard(o)).join('')}
+    </div>
+  </div>`;
+
+  // 동일 키일 경우 재렌더 스킵 (깜빡임 방지)
+  const renderKey = JSON.stringify({
+    week,
+    chars: allChars.map(c => [c.id, c.name, c.item_level, c.resting, c.slot, c.class, c.owner]),
+    weekly: allChars.map(c => {
+      const wt = weeklyTasks[c.id] || {};
+      return [c.id, wt.ludra_done?1:0, wt.erosion_done?1:0];
+    })
+  });
+  if (el.dataset.renderKey === renderKey) return;
+  el.dataset.renderKey = renderKey;
+  el.innerHTML = html;
 }
 
 // RENDER
