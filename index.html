@@ -882,6 +882,26 @@ body.guest-mode .odd-batch-btn { display: none; }
 #acc-modal .num-val-input { flex: 1; min-width: 0; width: auto; font-size: 0.78rem; }
 #acc-modal .num-input-wrap { width: 100%; justify-content: center; }
 
+/* 일일던전 드롭다운 헤더 — hover 시 살짝 강조 (레이아웃 유지) */
+.dungeon-toggle-row {
+  border-radius: var(--radius-xs);
+  padding: 4px 8px;
+  margin: -4px -8px 4px -8px;
+  transition: background 0.15s;
+}
+.dungeon-toggle-row:hover { background: var(--hover); }
+.dungeon-toggle-row:hover .dungeon-toggle-label { color: var(--text); }
+.dungeon-toggle-row:hover .dungeon-chevron {
+  color: var(--text);
+  font-size: 0.86rem;
+}
+.dungeon-chevron {
+  display: inline-block;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  transition: transform 0.2s, color 0.15s, font-size 0.15s;
+}
+
 /* ── CP INPUT ── */
 .cp-input-wrap {
   display: flex;
@@ -5679,11 +5699,11 @@ function openAccountModal(owner) {
         ${skWarn ? `<div style="margin-top:6px;font-size:0.72rem;color:#b85050">⚠ 14장 초과! 충전이 낭비돼요</div>` : ''}
       </div>
       <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
-        <div onclick="toggleDungeonDropdown('${owner}')"
-             style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;margin-bottom:8px">
-          <div style="font-size:0.75rem;color:var(--text-sub)">일일던전 <span style="font-size:0.7rem">(계정 공유 · 주간 14회)</span></div>
-          <span id="dungeon-chevron-${owner}"
-                style="font-size:0.7rem;color:var(--text-sub);transition:transform 0.2s;display:inline-block;${_dungeonDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
+        <div class="dungeon-toggle-row" onclick="toggleDungeonDropdown('${owner}')"
+             style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
+          <div class="dungeon-toggle-label" style="font-size:0.75rem;color:var(--text-sub);transition:color 0.15s">일일던전 <span style="font-size:0.7rem">(계정 공유 · 주간 14회)</span></div>
+          <span id="dungeon-chevron-${owner}" class="dungeon-chevron"
+                style="${_dungeonDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1.35fr 1fr 1.35fr;align-items:center;gap:6px">
           <span style="font-size:0.72rem;color:var(--text-sub);text-align:center">남은판</span>
