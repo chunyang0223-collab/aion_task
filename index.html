@@ -4397,6 +4397,9 @@ function renderOverview() {
   html += `<div class="account-cards">`;
   for (const owner of OWNERS) {
     const acc = accountData[owner] || {};
+    const ownerTicketSum = allChars
+      .filter(c => c.owner === owner)
+      .reduce((s, c) => s + (c.dungeon_tickets || 0), 0);
     html += `<div class="account-card" style="cursor:pointer" onclick="openAccountModal('${owner}')">
       <div class="account-card-title">${owner} 계정 <span style="float:right;font-size:0.7rem;color:var(--text-sub)">✎</span></div>
       <div class="stat-row" style="padding:3px 0;border:none">
@@ -4405,7 +4408,7 @@ function renderOverview() {
       </div>
       <div class="stat-row" style="padding:3px 0;border:none">
         <span class="stat-label" style="font-size:0.78rem">일일던전</span>
-        <span style="font-size:0.78rem;color:var(--text)">${acc.dungeon_remaining||0} <span style="color:var(--text-sub)">+${acc.dungeon_charged||0}</span>회</span>
+        <span style="font-size:0.78rem;color:var(--text)">${acc.dungeon_remaining||0} <span style="color:var(--text-sub)">+${ownerTicketSum} 충전권</span></span>
       </div>
       <div class="account-bool-row">
         <span class="toggle-btn ${acc.shop_purchased?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAccount('${owner}','shop_purchased',${!acc.shop_purchased})">상점</span>
@@ -4841,7 +4844,7 @@ function renderDetail(char) {
   html += `<div class="stat-row">
     <span class="stat-label">일일던전 충전권<span class="stat-sublabel">캐릭별</span></span>
     <div class="stat-inputs">
-      ${numInput('dungeon_tickets', char.dungeon_tickets||0, char.id, 0, 99)}
+      ${numInput('dungeon_tickets', char.dungeon_tickets||0, char.id, 0, 999)}
     </div>
   </div>`;
 
@@ -5579,11 +5582,89 @@ function commitAccModal(owner, field, val) {
   });
 }
 
+// ── 일일던전 드롭다운 (계정 모달 안) ──
+let _dungeonDropdownExpanded = false;
+
+function toggleDungeonDropdown(owner) {
+  _dungeonDropdownExpanded = !_dungeonDropdownExpanded;
+  const drop = document.getElementById(`dungeon-dropdown-${owner}`);
+  const chev = document.getElementById(`dungeon-chevron-${owner}`);
+  if (drop) drop.style.display = _dungeonDropdownExpanded ? 'flex' : 'none';
+  if (chev) chev.style.transform = _dungeonDropdownExpanded ? 'rotate(180deg)' : '';
+}
+
+// 모달 내 캐릭별 충전권 입력
+function accModalCharTicketInput(charId, val, owner) {
+  const id = `amct-${owner}-${charId}`;
+  return `<div class="num-input-wrap">
+    <button class="num-btn" onclick="stepAccModalCharTicket('${owner}','${charId}','${id}',-1)">−</button>
+    <input class="num-val-input" id="${id}" name="${id}" type="number" value="${val}" min="0" max="999"
+      autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+      onfocus="this.select()"
+      oninput="liveAccModalCharTicket('${owner}','${charId}','${id}')">
+    <button class="num-btn" onclick="stepAccModalCharTicket('${owner}','${charId}','${id}',1)">+</button>
+  </div>`;
+}
+
+function stepAccModalCharTicket(owner, charId, inputId, delta) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  const newVal = Math.min(999, Math.max(0, (parseInt(el.value)||0) + delta));
+  el.value = newVal;
+  commitAccModalCharTicket(owner, charId, newVal);
+}
+
+function liveAccModalCharTicket(owner, charId, inputId) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  let val = parseInt(el.value);
+  if (isNaN(val)) return;
+  val = Math.min(999, Math.max(0, val));
+  commitAccModalCharTicket(owner, charId, val);
+}
+
+function commitAccModalCharTicket(owner, charId, val) {
+  const char = allChars.find(c => c.id === charId);
+  if (!char) return;
+  char.dungeon_tickets = val;
+
+  // 모달 상단 합계 즉시 갱신
+  const sum = allChars
+    .filter(c => c.owner === owner)
+    .reduce((s, c) => s + (c.dungeon_tickets || 0), 0);
+  const sumEl = document.getElementById(`dungeon-ticket-sum-${owner}`);
+  if (sumEl) sumEl.textContent = sum;
+
+  // 캐릭 상세뷰가 같은 캐릭터를 보고 있으면 입력값 동기화
+  if (currentCharId === charId) {
+    const detailInput = document.getElementById(`nv-${charId}-dungeon_tickets`);
+    if (detailInput && parseInt(detailInput.value) !== val) detailInput.value = val;
+  }
+
+  // 카드(오버뷰) 충전권 합계도 다시 그림
+  lazyRenderOverview();
+
+  // DB 저장 (debounce)
+  debounce(`char-ticket-${charId}`, async () => {
+    if (currentActor === 'guest') return;
+    markSelfChange('characters', charId);
+    const { error } = await sb.from('characters').update({ dungeon_tickets: val }).eq('id', charId);
+    if (error) { showToast('저장 실패'); return; }
+  });
+}
+
 function openAccountModal(owner) {
   const acc = accountData[owner] || {};
   document.getElementById('acc-modal-title').textContent = `${owner} 계정 수정`;
 
   const skWarn = (acc.shugo_key_base||0) > 12;
+
+  // 캐릭별 일일던전 충전권 (슬롯 순서로 정렬)
+  const ownerChars = allChars
+    .filter(c => c.owner === owner)
+    .slice()
+    .sort((a, b) => (a.slot || 99) - (b.slot || 99));
+  const ticketSum = ownerChars.reduce((s, c) => s + (c.dungeon_tickets || 0), 0);
 
   document.getElementById('acc-modal-body').innerHTML = `
     <div style="display:flex;flex-direction:column;gap:12px">
@@ -5598,12 +5679,29 @@ function openAccountModal(owner) {
         ${skWarn ? `<div style="margin-top:6px;font-size:0.72rem;color:#b85050">⚠ 14장 초과! 충전이 낭비돼요</div>` : ''}
       </div>
       <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
-        <div style="font-size:0.75rem;color:var(--text-sub);margin-bottom:8px">일일던전 <span style="font-size:0.7rem">(계정 공유 · 주간 14회)</span></div>
+        <div onclick="toggleDungeonDropdown('${owner}')"
+             style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;margin-bottom:8px">
+          <div style="font-size:0.75rem;color:var(--text-sub)">일일던전 <span style="font-size:0.7rem">(계정 공유 · 주간 14회)</span></div>
+          <span id="dungeon-chevron-${owner}"
+                style="font-size:0.7rem;color:var(--text-sub);transition:transform 0.2s;display:inline-block;${_dungeonDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1.35fr 1fr 1.35fr;align-items:center;gap:6px">
           <span style="font-size:0.72rem;color:var(--text-sub);text-align:center">남은판</span>
           ${accModalNumInput('dungeon_remaining', acc.dungeon_remaining||0, owner, 0, 14)}
-          <span style="font-size:0.72rem;color:var(--text-sub);text-align:center">충전</span>
-          ${accModalNumInput('dungeon_charged', acc.dungeon_charged||0, owner, 0, 99)}
+          <span style="font-size:0.72rem;color:var(--text-sub);text-align:center">충전권</span>
+          <div id="dungeon-ticket-sum-${owner}"
+               style="text-align:center;font-size:0.85rem;color:var(--text);font-weight:500">${ticketSum}</div>
+        </div>
+        <div id="dungeon-dropdown-${owner}"
+             style="display:${_dungeonDropdownExpanded?'flex':'none'};flex-direction:column;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+          ${ownerChars.length === 0
+            ? `<div style="text-align:center;font-size:0.75rem;color:var(--text-sub);padding:8px">등록된 캐릭터가 없어요</div>`
+            : ownerChars.map(c => `
+              <div style="display:grid;grid-template-columns:1fr 1.35fr;align-items:center;gap:6px">
+                <span style="font-size:0.78rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(c.name || '(이름없음)')}</span>
+                ${accModalCharTicketInput(c.id, c.dungeon_tickets||0, owner)}
+              </div>
+            `).join('')}
         </div>
       </div>
       <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
