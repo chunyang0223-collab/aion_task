@@ -1207,6 +1207,99 @@ body.guest-mode .odd-batch-btn { display: none; }
   padding-left: 2px;
 }
 
+/* ── 리셋 정보 접기 (v1.5.9) ── */
+.reset-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 11px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.7rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.reset-trigger:hover {
+  background: var(--hover);
+  color: var(--text);
+  border-color: var(--text-sub);
+}
+.reset-trigger .chev {
+  font-size: 0.6rem;
+  line-height: 1;
+  color: var(--text-sub);
+  transition: transform 0.2s ease;
+}
+.reset-trigger[aria-expanded="true"] .chev {
+  transform: rotate(180deg);
+}
+
+.reset-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  padding: 12px 14px;
+  min-width: 240px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+  z-index: 110;
+}
+.reset-popover.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.reset-popover-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.reset-popover-row + .reset-popover-row {
+  border-top: 1px dashed var(--border);
+  margin-top: 4px;
+  padding-top: 8px;
+}
+.reset-popover-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  flex-shrink: 0;
+}
+.reset-popover-tile.daily {
+  background: var(--sky-light);
+  color: #3d6a82;
+}
+.reset-popover-tile.weekly {
+  background: var(--lavender-light);
+  color: #5b4e85;
+}
+.reset-popover-label {
+  font-size: 0.7rem;
+  color: var(--text-sub);
+}
+.reset-popover-value {
+  font-size: 0.76rem;
+  color: var(--text);
+  margin-left: auto;
+  font-feature-settings: 'tnum';
+  white-space: nowrap;
+}
+
 /* add char form */
 .add-char-form {
   display: none;
@@ -3646,9 +3739,12 @@ body.guest-mode .dungeon-card { pointer-events: none; }
     <button class="tab-pill" id="tab-growth" onclick="showPage('growth-page')">성장</button>
     <button class="tab-pill" id="tab-log" onclick="showPage('log-page')">로그</button>
   </div>
-  <div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;gap:2px">
+  <div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;gap:2px;position:relative">
     <div id="actor-indicator" style="display:flex;align-items:center;gap:6px">
       <span id="actor-label" style="font-size:0.75rem;color:var(--text-sub)"></span>
+      <button id="reset-trigger" class="reset-trigger" aria-expanded="false" aria-controls="reset-popover" onclick="toggleResetInfo(event)" title="리셋 시각">
+        리셋 정보 <span class="chev">▾</span>
+      </button>
       <button id="logout-btn" onclick="logout()" style="
         display:none;padding:3px 10px;border-radius:20px;border:1px solid var(--border);
         background:transparent;color:var(--text-sub);font-size:0.72rem;
@@ -3657,7 +3753,18 @@ body.guest-mode .dungeon-card { pointer-events: none; }
       " onmouseover="this.style.background='var(--hover)';this.style.color='var(--text)'"
          onmouseout="this.style.background='transparent';this.style.color='var(--text-sub)'">로그아웃</button>
     </div>
-    <div id="reset-info" style="text-align:right;line-height:1.5"></div>
+    <div id="reset-popover" class="reset-popover" role="region" aria-label="리셋 시각">
+      <div class="reset-popover-row">
+        <span class="reset-popover-tile daily">일</span>
+        <span class="reset-popover-label">마지막 일일 리셋</span>
+        <span class="reset-popover-value" id="reset-daily-value">—</span>
+      </div>
+      <div class="reset-popover-row">
+        <span class="reset-popover-tile weekly">주</span>
+        <span class="reset-popover-label">마지막 주간 리셋</span>
+        <span class="reset-popover-value" id="reset-weekly-value">—</span>
+      </div>
+    </div>
   </div>
 </div>
 <!-- 상세뷰 전용 서브바 -->
@@ -4058,8 +4165,9 @@ function formatResetTime(isoStr) {
 }
 
 async function renderResetInfo() {
-  const el = document.getElementById('reset-info');
-  if (!el) return;
+  const dailyEl = document.getElementById('reset-daily-value');
+  const weeklyEl = document.getElementById('reset-weekly-value');
+  if (!dailyEl || !weeklyEl) return;
 
   const { data } = await sb.from('reset_log')
     .select('reset_type, executed_at')
@@ -4069,14 +4177,42 @@ async function renderResetInfo() {
   const daily = (data||[]).find(r => r.reset_type === 'daily');
   const weekly = (data||[]).find(r => r.reset_type === 'weekly');
 
-  const dailyStr = daily ? formatResetTime(daily.executed_at) : '—';
-  const weeklyStr = weekly ? formatResetTime(weekly.executed_at) : '—';
-
-  el.innerHTML = `
-    <div style="font-size:0.65rem;color:var(--text-sub)">마지막 일일 리셋 : ${dailyStr}</div>
-    <div style="font-size:0.65rem;color:var(--text-sub)">마지막 주간 리셋 : ${weeklyStr}</div>
-  `;
+  dailyEl.textContent = daily ? formatResetTime(daily.executed_at) : '—';
+  weeklyEl.textContent = weekly ? formatResetTime(weekly.executed_at) : '—';
 }
+
+/* ── 리셋 정보 팝오버 토글 (v1.5.9) ── */
+function toggleResetInfo(e) {
+  if (e) e.stopPropagation();
+  const trig = document.getElementById('reset-trigger');
+  const pop = document.getElementById('reset-popover');
+  if (!trig || !pop) return;
+  const isOpen = pop.classList.contains('open');
+  if (isOpen) {
+    pop.classList.remove('open');
+    trig.setAttribute('aria-expanded', 'false');
+  } else {
+    pop.classList.add('open');
+    trig.setAttribute('aria-expanded', 'true');
+  }
+}
+function closeResetInfo() {
+  const trig = document.getElementById('reset-trigger');
+  const pop = document.getElementById('reset-popover');
+  if (pop) pop.classList.remove('open');
+  if (trig) trig.setAttribute('aria-expanded', 'false');
+}
+document.addEventListener('click', (e) => {
+  const pop = document.getElementById('reset-popover');
+  const trig = document.getElementById('reset-trigger');
+  if (!pop || !trig) return;
+  if (!pop.classList.contains('open')) return;
+  if (pop.contains(e.target) || trig.contains(e.target)) return;
+  closeResetInfo();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeResetInfo();
+});
 
 function showToast(msg) {
   const t = document.getElementById('toast');
