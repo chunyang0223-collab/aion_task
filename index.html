@@ -1041,6 +1041,7 @@ body.guest-mode .odd-batch-btn { display: none; }
   background: var(--sage);
   border-radius: 7px;
   pointer-events: none;
+  transition: width 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .tm-tick {
   position: absolute;
@@ -1062,11 +1063,14 @@ body.guest-mode .odd-batch-btn { display: none; }
   box-shadow: var(--shadow-sm);
   transform: translate(-50%, -50%);
   pointer-events: none;
-  transition: box-shadow 0.15s;
+  transition: left 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.15s;
 }
 .tm-slider.sm .tm-knob { width: 13px; height: 13px; }
 .tm-slider:hover .tm-knob,
 .tm-slider.dragging .tm-knob { box-shadow: var(--shadow); }
+/* 드래그 중에는 손가락을 1:1로 따라가도록 transition 제거 (놓는 순간 정수로 부드럽게 스냅) */
+.tm-slider.dragging .tm-fill,
+.tm-slider.dragging .tm-knob { transition: none; }
 .tm-num { font-size: 0.95rem; color: var(--text); white-space: nowrap; }
 .tm-num .tm-unit { font-size: 0.7rem; color: var(--text-sub); }
 .tm-num.tm-num-sm { font-size: 0.72rem; color: var(--text-sub); min-width: 26px; text-align: right; }
@@ -5893,7 +5897,7 @@ async function setAccountTransmutVal(owner, val) {
   if (Math.min(16, acc.transmutation_account_count || 0) === val) return;  // 변화 없으면 통과
   markSelfChange('account_data', owner);
   const { error } = await sb.from('account_data').update({ transmutation_account_count: val }).eq('owner', owner);
-  if (error) { showToast('저장 실패'); return; }
+  if (error) { showToast('저장 실패: ' + (error.message || error.code || '')); console.error('[물질변환/계정]', error); return; }
   acc.transmutation_account_count = val;
   openAccountModal(owner);
   renderOverview();
@@ -5905,7 +5909,7 @@ async function setCharTransmutVal(owner, charId, val) {
   if (Math.min(4, char.transmutation_count || 0) === val) return;
   markSelfChange('characters', charId);
   const { error } = await sb.from('characters').update({ transmutation_count: val }).eq('id', charId);
-  if (error) { showToast('저장 실패'); return; }
+  if (error) { showToast('저장 실패: ' + (error.message || error.code || '')); console.error('[물질변환/캐릭]', error); return; }
   char.transmutation_count = val;
   openAccountModal(owner);
   renderOverview();
@@ -5913,14 +5917,26 @@ async function setCharTransmutVal(owner, charId, val) {
 
 // 클릭/드래그 인터랙션 — 드래그 중엔 DOM만 갱신, 손 뗄 때 1회 커밋 (1회만 바인딩)
 let _tmDrag = null;
-function _tmValFromEvent(sliderEl, clientX, max) {
+function _tmRatioFromEvent(sliderEl, clientX) {
   const track = sliderEl.querySelector('.tm-track');
   const r = track.getBoundingClientRect();
   let ratio = (clientX - r.left) / r.width;
-  ratio = Math.max(0, Math.min(1, ratio));
-  return Math.round(ratio * max);
+  return Math.max(0, Math.min(1, ratio));
 }
-function _tmLiveUpdate(sliderEl, val, max) {
+// 드래그 중: 막대/손잡이는 손가락을 그대로(연속) 따라가고, 숫자는 가장 가까운 정수로 표시
+function _tmLiveDrag(sliderEl, ratio, max) {
+  const pct = ratio * 100;
+  const fill = sliderEl.querySelector('.tm-fill');
+  const knob = sliderEl.querySelector('.tm-knob');
+  if (fill) fill.style.width = pct + '%';
+  if (knob) knob.style.left = pct + '%';
+  const val = Math.round(ratio * max);
+  const numWrap = sliderEl.nextElementSibling;
+  if (numWrap) { const n = numWrap.querySelector('.tm-n'); if (n) n.textContent = val; }
+  return val;
+}
+// 손을 뗄 때: 정수 위치로 스냅 (dragging 해제 → transition 작동 → 부드럽게 정착)
+function _tmSnap(sliderEl, val, max) {
   const pct = val / max * 100;
   const fill = sliderEl.querySelector('.tm-fill');
   const knob = sliderEl.querySelector('.tm-knob');
@@ -5937,21 +5953,22 @@ function initTmSliders() {
     if (!sl || currentActor === 'guest') return;
     e.preventDefault();
     const max = +sl.dataset.max;
+    if (sl.setPointerCapture && e.pointerId != null) { try { sl.setPointerCapture(e.pointerId); } catch (_) {} }
     _tmDrag = { el: sl, max, val: -1 };
     sl.classList.add('dragging');
-    const v = _tmValFromEvent(sl, e.clientX, max);
-    _tmLiveUpdate(sl, v, max);
-    _tmDrag.val = v;
+    const ratio = _tmRatioFromEvent(sl, e.clientX);
+    _tmDrag.val = _tmLiveDrag(sl, ratio, max);
   });
   document.addEventListener('pointermove', e => {
     if (!_tmDrag) return;
-    const v = _tmValFromEvent(_tmDrag.el, e.clientX, _tmDrag.max);
-    if (v !== _tmDrag.val) { _tmLiveUpdate(_tmDrag.el, v, _tmDrag.max); _tmDrag.val = v; }
+    const ratio = _tmRatioFromEvent(_tmDrag.el, e.clientX);
+    _tmDrag.val = _tmLiveDrag(_tmDrag.el, ratio, _tmDrag.max);
   });
   const finish = () => {
     if (!_tmDrag) return;
-    const sl = _tmDrag.el, val = _tmDrag.val;
+    const sl = _tmDrag.el, val = _tmDrag.val, max = _tmDrag.max;
     sl.classList.remove('dragging');
+    _tmSnap(sl, val, max);          // 연속 위치 → 정수 위치로 부드럽게 스냅
     const owner = sl.dataset.owner, tm = sl.dataset.tm, charId = sl.dataset.char;
     _tmDrag = null;
     if (tm === 'acc') setAccountTransmutVal(owner, val);
@@ -5976,7 +5993,7 @@ async function toggleAllTransmutation(owner, value) {
     const { error } = await sb.from('characters')
       .update({ transmutation_count: target })
       .in('id', ids);
-    if (error) { showToast('저장 실패'); return; }
+    if (error) { showToast('저장 실패(캐릭): ' + (error.message || error.code || '')); console.error('[물질변환/전체-캐릭]', error); return; }
     ownerChars.forEach(c => { c.transmutation_count = target; });
   }
 
@@ -5984,7 +6001,7 @@ async function toggleAllTransmutation(owner, value) {
   const { error: accErr } = await sb.from('account_data')
     .update({ transmutation_account_count: accTarget })
     .eq('owner', owner);
-  if (accErr) { showToast('저장 실패'); return; }
+  if (accErr) { showToast('저장 실패(계정): ' + (accErr.message || accErr.code || '')); console.error('[물질변환/전체-계정]', accErr); return; }
   if (accountData[owner]) accountData[owner].transmutation_account_count = accTarget;
   renderOverview();
 }
