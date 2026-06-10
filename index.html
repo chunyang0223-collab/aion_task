@@ -1015,6 +1015,20 @@ body.guest-mode .odd-batch-btn { display: none; }
   color: white;
 }
 
+/* ── 물질변환 pip (v1.6.1) — 계정 모달용 소형 ── */
+.tm-pip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+}
+.tm-pip-row .pip {
+  width: 17px;
+  height: 17px;
+  font-size: 0.55rem;
+}
+.tm-pip-row.tm-acc { max-width: 172px; } /* 8개씩 두 줄로 줄바꿈 */
+
 /* ── NIGHTMARE / KEY WARN ── */
 .warn-chip {
   padding: 2px 8px;
@@ -4556,6 +4570,13 @@ function renderOverview() {
     const ownerTicketSum = allChars
       .filter(c => c.owner === owner)
       .reduce((s, c) => s + (c.dungeon_tickets || 0), 0);
+    // 물질변환 (v1.6.1): 캐릭별 주 4회 + 계정 통합 16회
+    const tmChars = allChars.filter(c => c.owner === owner);
+    const tmCharSum = tmChars.reduce((s, c) => s + Math.min(4, c.transmutation_count || 0), 0);
+    const tmAccCnt = Math.min(16, acc.transmutation_account_count || 0);
+    const tmAllDone = tmChars.length > 0
+      && tmChars.every(c => (c.transmutation_count || 0) >= 4)
+      && tmAccCnt >= 16;
     html += `<div class="account-card" style="cursor:pointer" onclick="openAccountModal('${owner}')">
       <div class="account-card-title">${owner} 계정 <span style="float:right;font-size:0.7rem;color:var(--text-sub)">✎</span></div>
       <div class="stat-row" style="padding:3px 0;border:none">
@@ -4568,7 +4589,7 @@ function renderOverview() {
       </div>
       <div class="account-bool-row">
         <span class="toggle-btn ${acc.shop_purchased?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAccount('${owner}','shop_purchased',${!acc.shop_purchased})">상점</span>
-        <span class="toggle-btn ${acc.transmutation_done?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAccount('${owner}','transmutation_done',${!acc.transmutation_done})">물질변환</span>
+        <span class="toggle-btn ${tmAllDone?'done':''}" style="font-size:0.72rem;padding:3px 8px" title="물질변환 캐릭 ${tmCharSum}/${tmChars.length*4} · 계정 ${tmAccCnt}/16 (주간)" onclick="event.stopPropagation();toggleAllTransmutation('${owner}',${!tmAllDone})">물질변환</span>
         <span class="toggle-btn ${(acc.order_lower&&acc.order_middle&&acc.order_town)?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAllOrders('${owner}',${!(acc.order_lower&&acc.order_middle&&acc.order_town)})">지령서</span>
         <!-- 사명 (일일리셋, 계정 단위) — 위 3개(주간리셋)와 색상 구분 위해 done-sky -->
         <span class="toggle-btn ${acc.daily_mission?'done-sky':''}" style="font-size:0.72rem;padding:3px 8px;margin-left:auto" onclick="event.stopPropagation();toggleAccount('${owner}','daily_mission',${!acc.daily_mission})">사명</span>
@@ -5749,6 +5770,84 @@ function toggleDungeonDropdown(owner) {
   if (chev) chev.style.transform = _dungeonDropdownExpanded ? 'rotate(180deg)' : '';
 }
 
+// ── 지령서 드롭다운 (계정 모달 안, v1.6.1) ──
+let _orderDropdownExpanded = false;
+
+function toggleOrderDropdown(owner) {
+  _orderDropdownExpanded = !_orderDropdownExpanded;
+  const drop = document.getElementById(`order-dropdown-${owner}`);
+  const chev = document.getElementById(`order-chevron-${owner}`);
+  if (drop) drop.style.display = _orderDropdownExpanded ? 'flex' : 'none';
+  if (chev) chev.style.transform = _orderDropdownExpanded ? 'rotate(180deg)' : '';
+}
+
+// ── 물질변환 드롭다운 (계정 모달 안, v1.6.1) ──
+//    주간 리셋 · 캐릭별 4회 · 계정 합계 16회. 진실의 원천은 characters.transmutation_count.
+let _transmutationDropdownExpanded = false;
+
+function toggleTransmutationDropdown(owner) {
+  _transmutationDropdownExpanded = !_transmutationDropdownExpanded;
+  const drop = document.getElementById(`transmutation-dropdown-${owner}`);
+  const chev = document.getElementById(`transmutation-chevron-${owner}`);
+  if (drop) drop.style.display = _transmutationDropdownExpanded ? 'flex' : 'none';
+  if (chev) chev.style.transform = _transmutationDropdownExpanded ? 'rotate(180deg)' : '';
+}
+
+// 캐릭별 물질변환 pip 클릭 (0~4) — 각성 pip과 동일한 UX
+async function setCharTransmutPip(owner, charId, cur, pip) {
+  if (currentActor === 'guest') return;
+
+  const newVal = cur === pip ? pip - 1 : pip;
+  markSelfChange('characters', charId);
+  const { error } = await sb.from('characters').update({ transmutation_count: newVal }).eq('id', charId);
+  if (error) { showToast('저장 실패'); return; }
+  const char = allChars.find(c => c.id === charId);
+  if (char) char.transmutation_count = newVal;
+  openAccountModal(owner);  // 모달 pip 즉시 갱신 (드롭다운 펼침 상태 유지)
+  renderOverview();         // 카드 겉 버튼 done 연동
+}
+
+// 계정 통합 물질변환 pip 클릭 (0~16)
+async function setAccountTransmutPip(owner, cur, pip) {
+  if (currentActor === 'guest') return;
+
+  const newVal = cur === pip ? pip - 1 : pip;
+  markSelfChange('account_data', owner);
+  const { error } = await sb.from('account_data').update({ transmutation_account_count: newVal }).eq('owner', owner);
+  if (error) { showToast('저장 실패'); return; }
+  const acc = accountData[owner];
+  if (acc) acc.transmutation_account_count = newVal;
+  openAccountModal(owner);
+  renderOverview();
+}
+
+// 카드 겉 버튼: 전체 완료/해제 ↔ 모달 내부(캐릭별 4 + 계정 통합 16) 연동
+async function toggleAllTransmutation(owner, value) {
+  if (currentActor === 'guest') return;
+
+  const ownerChars = allChars.filter(c => c.owner === owner);
+  const target = value ? 4 : 0;
+  const accTarget = value ? 16 : 0;
+
+  if (ownerChars.length > 0) {
+    const ids = ownerChars.map(c => c.id);
+    ids.forEach(id => markSelfChange('characters', id));
+    const { error } = await sb.from('characters')
+      .update({ transmutation_count: target })
+      .in('id', ids);
+    if (error) { showToast('저장 실패'); return; }
+    ownerChars.forEach(c => { c.transmutation_count = target; });
+  }
+
+  markSelfChange('account_data', owner);
+  const { error: accErr } = await sb.from('account_data')
+    .update({ transmutation_account_count: accTarget })
+    .eq('owner', owner);
+  if (accErr) { showToast('저장 실패'); return; }
+  if (accountData[owner]) accountData[owner].transmutation_account_count = accTarget;
+  renderOverview();
+}
+
 // 모달 내 캐릭별 충전권 입력
 function accModalCharTicketInput(charId, val, owner) {
   const id = `amct-${owner}-${charId}`;
@@ -5822,6 +5921,9 @@ function openAccountModal(owner) {
     .sort((a, b) => (a.slot || 99) - (b.slot || 99));
   const ticketSum = ownerChars.reduce((s, c) => s + (c.dungeon_tickets || 0), 0);
 
+  // 물질변환 계정 통합 카운트 (v1.6.1)
+  const tmAccCnt = Math.min(16, acc.transmutation_account_count || 0);
+
   document.getElementById('acc-modal-body').innerHTML = `
     <div style="display:flex;flex-direction:column;gap:12px">
       <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
@@ -5861,8 +5963,46 @@ function openAccountModal(owner) {
         </div>
       </div>
       <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
-        <div style="font-size:0.75rem;color:var(--text-sub);margin-bottom:8px">지령서 <span style="font-size:0.7rem">(주간 리셋)</span></div>
-        <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="dungeon-toggle-row" onclick="toggleTransmutationDropdown('${owner}')"
+             style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
+          <div class="dungeon-toggle-label" style="font-size:0.75rem;color:var(--text-sub);transition:color 0.15s">물질변환 <span style="font-size:0.7rem">(주간 · 캐릭별 4회 + 계정 16회)</span></div>
+          <span id="transmutation-chevron-${owner}" class="dungeon-chevron"
+                style="${_transmutationDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
+        </div>
+        <div id="transmutation-dropdown-${owner}"
+             style="display:${_transmutationDropdownExpanded?'flex':'none'};flex-direction:column;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+            <span style="font-size:0.78rem;color:var(--text);white-space:nowrap;padding-top:2px">계정 통합 <span style="font-size:0.68rem;color:var(--text-sub)">${tmAccCnt}/16</span></span>
+            <div class="pip-row tm-pip-row tm-acc">
+              ${Array.from({length:16},(_,k)=>k+1).map(i => `<div class="pip ${tmAccCnt>=i?'done':''}"
+                onclick="setAccountTransmutPip('${owner}',${tmAccCnt},${i})">✓</div>`).join('')}
+            </div>
+          </div>
+          <div style="border-top:1px dashed var(--border)"></div>
+          ${ownerChars.length === 0
+            ? `<div style="text-align:center;font-size:0.75rem;color:var(--text-sub);padding:8px">등록된 캐릭터가 없어요</div>`
+            : ownerChars.map(c => {
+              const cnt = Math.min(4, c.transmutation_count||0);
+              return `
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                <span style="font-size:0.78rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(c.name || '(이름없음)')}</span>
+                <div class="pip-row tm-pip-row">
+                  ${[1,2,3,4].map(i => `<div class="pip ${cnt>=i?'done':''}"
+                    onclick="setCharTransmutPip('${owner}','${c.id}',${cnt},${i})">✓</div>`).join('')}
+                </div>
+              </div>`;
+            }).join('')}
+        </div>
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
+        <div class="dungeon-toggle-row" onclick="toggleOrderDropdown('${owner}')"
+             style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
+          <div class="dungeon-toggle-label" style="font-size:0.75rem;color:var(--text-sub);transition:color 0.15s">지령서 <span style="font-size:0.7rem">(주간 리셋)</span></div>
+          <span id="order-chevron-${owner}" class="dungeon-chevron"
+                style="${_orderDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
+        </div>
+        <div id="order-dropdown-${owner}"
+             style="display:${_orderDropdownExpanded?'flex':'none'};flex-direction:column;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
           ${[['order_lower','하층'],['order_middle','중층'],['order_town','마을']].map(([key,label]) => `
           <div style="display:flex;align-items:center;justify-content:space-between">
             <span style="font-size:0.8rem;color:var(--text)">${label} 지령서</span>
