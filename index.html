@@ -1015,19 +1015,65 @@ body.guest-mode .odd-batch-btn { display: none; }
   color: white;
 }
 
-/* ── 물질변환 pip (v1.6.1) — 계정 모달용 소형 ── */
-.tm-pip-row {
+/* ── 물질변환 슬라이더 (v1.6.2) — 손잡이 슬라이더, 클릭/드래그로 채움 ── */
+.tm-slider {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  justify-content: flex-end;
+  align-items: center;
+  flex: 1;
+  height: 18px;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
-.tm-pip-row .pip {
-  width: 17px;
-  height: 17px;
-  font-size: 0.55rem;
+.tm-slider.sm { flex: none; width: 84px; height: 14px; }
+.tm-track {
+  position: relative;
+  flex: 1;
+  height: 7px;
+  border-radius: 7px;
+  background: #ece4d7;
 }
-.tm-pip-row.tm-acc { max-width: 172px; } /* 8개씩 두 줄로 줄바꿈 */
+.tm-slider.sm .tm-track { height: 6px; }
+.tm-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: var(--sage);
+  border-radius: 7px;
+  pointer-events: none;
+}
+.tm-tick {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: #d6c9b6;
+  pointer-events: none;
+}
+.tm-slider.sm .tm-tick { width: 3px; height: 3px; }
+.tm-knob {
+  position: absolute;
+  top: 50%;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--sage);
+  box-shadow: var(--shadow-sm);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: box-shadow 0.15s;
+}
+.tm-slider.sm .tm-knob { width: 13px; height: 13px; }
+.tm-slider:hover .tm-knob,
+.tm-slider.dragging .tm-knob { box-shadow: var(--shadow); }
+.tm-num { font-size: 0.95rem; color: var(--text); white-space: nowrap; }
+.tm-num .tm-unit { font-size: 0.7rem; color: var(--text-sub); }
+.tm-num.tm-num-sm { font-size: 0.72rem; color: var(--text-sub); min-width: 26px; text-align: right; }
+.tm-num.tm-num-sm .tm-unit { font-size: 0.66rem; }
+/* 손님 모드에서는 조작 불가 */
+body.guest-mode .page .tm-slider { pointer-events: none; cursor: default; }
+body.guest-mode .page .tm-knob { display: none; }
 
 /* ── NIGHTMARE / KEY WARN ── */
 .warn-chip {
@@ -5821,6 +5867,101 @@ async function setAccountTransmutPip(owner, cur, pip) {
   renderOverview();
 }
 
+// ── 물질변환 슬라이더 (v1.6.2) — 손잡이 슬라이더 HTML ──
+// target: 'acc'(0~16) | 'char'(0~4). 채움 막대를 클릭/드래그해서 한 번에 채움.
+function tmSliderHtml(owner, val, max, target, charId) {
+  const pct = val / max * 100;
+  let ticks = '';
+  for (let i = 1; i < max; i++) ticks += `<div class="tm-tick" style="left:${i/max*100}%"></div>`;
+  const ds = target === 'acc'
+    ? `data-tm="acc" data-owner="${owner}" data-max="${max}"`
+    : `data-tm="char" data-owner="${owner}" data-char="${charId}" data-max="${max}"`;
+  return `<div class="tm-slider${target==='char'?' sm':''}" ${ds}>
+    <div class="tm-track">
+      <div class="tm-fill" style="width:${pct}%"></div>
+      ${ticks}
+      <div class="tm-knob" style="left:${pct}%"></div>
+    </div>
+  </div>`;
+}
+
+// 절대값 저장 — 드래그가 끝날 때(pointerup) 딱 1회만 DB 커밋
+async function setAccountTransmutVal(owner, val) {
+  if (currentActor === 'guest') return;
+  val = Math.max(0, Math.min(16, val));
+  const acc = accountData[owner]; if (!acc) return;
+  if (Math.min(16, acc.transmutation_account_count || 0) === val) return;  // 변화 없으면 통과
+  markSelfChange('account_data', owner);
+  const { error } = await sb.from('account_data').update({ transmutation_account_count: val }).eq('owner', owner);
+  if (error) { showToast('저장 실패'); return; }
+  acc.transmutation_account_count = val;
+  openAccountModal(owner);
+  renderOverview();
+}
+async function setCharTransmutVal(owner, charId, val) {
+  if (currentActor === 'guest') return;
+  val = Math.max(0, Math.min(4, val));
+  const char = allChars.find(c => c.id === charId); if (!char) return;
+  if (Math.min(4, char.transmutation_count || 0) === val) return;
+  markSelfChange('characters', charId);
+  const { error } = await sb.from('characters').update({ transmutation_count: val }).eq('id', charId);
+  if (error) { showToast('저장 실패'); return; }
+  char.transmutation_count = val;
+  openAccountModal(owner);
+  renderOverview();
+}
+
+// 클릭/드래그 인터랙션 — 드래그 중엔 DOM만 갱신, 손 뗄 때 1회 커밋 (1회만 바인딩)
+let _tmDrag = null;
+function _tmValFromEvent(sliderEl, clientX, max) {
+  const track = sliderEl.querySelector('.tm-track');
+  const r = track.getBoundingClientRect();
+  let ratio = (clientX - r.left) / r.width;
+  ratio = Math.max(0, Math.min(1, ratio));
+  return Math.round(ratio * max);
+}
+function _tmLiveUpdate(sliderEl, val, max) {
+  const pct = val / max * 100;
+  const fill = sliderEl.querySelector('.tm-fill');
+  const knob = sliderEl.querySelector('.tm-knob');
+  if (fill) fill.style.width = pct + '%';
+  if (knob) knob.style.left = pct + '%';
+  const numWrap = sliderEl.nextElementSibling;
+  if (numWrap) { const n = numWrap.querySelector('.tm-n'); if (n) n.textContent = val; }
+}
+function initTmSliders() {
+  if (window.__tmSliderInit) return;
+  window.__tmSliderInit = true;
+  document.addEventListener('pointerdown', e => {
+    const sl = e.target.closest('.tm-slider');
+    if (!sl || currentActor === 'guest') return;
+    e.preventDefault();
+    const max = +sl.dataset.max;
+    _tmDrag = { el: sl, max, val: -1 };
+    sl.classList.add('dragging');
+    const v = _tmValFromEvent(sl, e.clientX, max);
+    _tmLiveUpdate(sl, v, max);
+    _tmDrag.val = v;
+  });
+  document.addEventListener('pointermove', e => {
+    if (!_tmDrag) return;
+    const v = _tmValFromEvent(_tmDrag.el, e.clientX, _tmDrag.max);
+    if (v !== _tmDrag.val) { _tmLiveUpdate(_tmDrag.el, v, _tmDrag.max); _tmDrag.val = v; }
+  });
+  const finish = () => {
+    if (!_tmDrag) return;
+    const sl = _tmDrag.el, val = _tmDrag.val;
+    sl.classList.remove('dragging');
+    const owner = sl.dataset.owner, tm = sl.dataset.tm, charId = sl.dataset.char;
+    _tmDrag = null;
+    if (tm === 'acc') setAccountTransmutVal(owner, val);
+    else setCharTransmutVal(owner, charId, val);
+  };
+  document.addEventListener('pointerup', finish);
+  document.addEventListener('pointercancel', finish);
+}
+initTmSliders();
+
 // 카드 겉 버튼: 전체 완료/해제 ↔ 모달 내부(캐릭별 4 + 계정 통합 16) 연동
 async function toggleAllTransmutation(owner, value) {
   if (currentActor === 'guest') return;
@@ -5970,13 +6111,11 @@ function openAccountModal(owner) {
                 style="${_transmutationDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
         </div>
         <div id="transmutation-dropdown-${owner}"
-             style="display:${_transmutationDropdownExpanded?'flex':'none'};flex-direction:column;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
-            <span style="font-size:0.78rem;color:var(--text);white-space:nowrap;padding-top:2px">계정 통합 <span style="font-size:0.68rem;color:var(--text-sub)">${tmAccCnt}/16</span></span>
-            <div class="pip-row tm-pip-row tm-acc">
-              ${Array.from({length:16},(_,k)=>k+1).map(i => `<div class="pip ${tmAccCnt>=i?'done':''}"
-                onclick="setAccountTransmutPip('${owner}',${tmAccCnt},${i})">✓</div>`).join('')}
-            </div>
+             style="display:${_transmutationDropdownExpanded?'flex':'none'};flex-direction:column;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="font-size:0.78rem;color:var(--text);white-space:nowrap">계정 통합</span>
+            ${tmSliderHtml(owner, tmAccCnt, 16, 'acc')}
+            <span class="tm-num"><span class="tm-n">${tmAccCnt}</span><span class="tm-unit"> / 16</span></span>
           </div>
           <div style="border-top:1px dashed var(--border)"></div>
           ${ownerChars.length === 0
@@ -5984,12 +6123,10 @@ function openAccountModal(owner) {
             : ownerChars.map(c => {
               const cnt = Math.min(4, c.transmutation_count||0);
               return `
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-                <span style="font-size:0.78rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(c.name || '(이름없음)')}</span>
-                <div class="pip-row tm-pip-row">
-                  ${[1,2,3,4].map(i => `<div class="pip ${cnt>=i?'done':''}"
-                    onclick="setCharTransmutPip('${owner}','${c.id}',${cnt},${i})">✓</div>`).join('')}
-                </div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="flex:1;font-size:0.78rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(c.name || '(이름없음)')}</span>
+                ${tmSliderHtml(owner, cnt, 4, 'char', c.id)}
+                <span class="tm-num tm-num-sm"><span class="tm-n">${cnt}</span><span class="tm-unit"> / 4</span></span>
               </div>`;
             }).join('')}
         </div>
