@@ -281,6 +281,7 @@ body.guest-mode .odd-batch-btn { display: none; }
 .char-mini-name {
   font-size: 0.85rem;
   color: var(--text);
+  font-weight: 700;
   margin-bottom: 4px;
   white-space: nowrap;
   overflow: hidden;
@@ -297,10 +298,10 @@ body.guest-mode .odd-batch-btn { display: none; }
 .char-mini-body { display: flex; align-items: stretch; gap: 8px; }
 .char-mini-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
-/* 오드 손해 방지 타이머 */
-.mini-timer { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; margin-top: auto; }
-.mini-timer-label { font-size: 0.58rem; color: var(--text-sub); letter-spacing: 0.01em; }
-.mini-timer-val { font-size: 0.74rem; color: var(--text); white-space: nowrap; }
+/* 오드 손해 방지 타이머 — 한 줄(라벨 + 여백 + 값) */
+.mini-timer { display: flex; flex-direction: row; align-items: baseline; gap: 10px; min-width: 0; margin-top: auto; white-space: nowrap; }
+.mini-timer-label { font-size: 0.56rem; color: var(--text-sub); letter-spacing: 0.01em; flex: none; }
+.mini-timer-val { font-size: 0.62rem; color: var(--text); }
 .mini-timer.warn .mini-timer-label { color: #b85050; opacity: 0.85; }
 .mini-timer.warn .mini-timer-val { color: #b85050; }
 .mini-timer.muted .mini-timer-val { color: var(--text-sub); }
@@ -324,6 +325,8 @@ body.guest-mode .odd-batch-btn { display: none; }
 .mini-dot.done-cor-츄츄 { background: #7a9abf; }  /* 회랑 - 츄츄 파랑 */
 .mini-dot.partial { background: #d66a4a; }        /* 악몽 주의 - 빨강 */
 .mini-dot.locked { background: var(--border); opacity: 0.4; }
+/* 성역 못 들어감(템레벨 부족) = 동그라미 대신 일자 바 */
+.mini-dot-bar { width: 9px; height: 3px; border-radius: 2px; background: var(--border); flex: none; }
 
 .char-mini-add {
   display: flex;
@@ -4616,7 +4619,7 @@ function renderOverview() {
           ${restBadge}
           <div class="char-mini-body">
             <div class="char-mini-main">
-              <div class="char-mini-name">${char.name || '(이름없음)'} <span style="color:var(--text-sub);font-size:0.72rem">(${char.item_level||0} / ${formatCp(char.combat_power||0)})</span></div>
+              <div class="char-mini-name">${char.name || '(이름없음)'} <span style="color:var(--text-sub);font-size:0.72rem;font-weight:400">(${char.item_level||0} / ${formatCp(char.combat_power||0)})</span></div>
               <div class="char-mini-ilvl">${char.odd_energy_base||0} / 840 <span style="color:var(--text-sub)">+${char.odd_energy_charged||0}</span></div>
               ${timerHtml}
             </div>
@@ -4688,7 +4691,7 @@ function buildMiniDots(char, dt, wt) {
   //   자격 미달은 잠금(연회색) dot으로 위치 고정 — 라벨 없음
   const sanctDot = (avail, done, name, req) => avail
     ? `<div class="mini-dot ${done?'done-weekly':''}" title="성역 - ${name}${done?' (완료)':''}"></div>`
-    : `<div class="mini-dot locked" title="성역 - ${name} (템 ${req}↑ 필요)"></div>`;
+    : `<div class="mini-dot-bar" title="성역 - ${name} (템 ${req}↑ 필요)"></div>`;
   const sanct = [
     sanctDot(ilvl >= 2700, wt.ludra_done,   '루드라', 2700),
     sanctDot(ilvl >= 3500, wt.erosion_done, '침식',   3500),
