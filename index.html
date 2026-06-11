@@ -293,13 +293,22 @@ body.guest-mode .odd-batch-btn { display: none; }
   margin-bottom: 6px;
 }
 
-.mini-progress-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.mini-dots-daily { display: flex; gap: 3px; }
-.mini-dots-weekly { display: flex; gap: 3px; }
+/* card body: 왼쪽 정보+타이머 / 오른쪽 세로 미니닷 (v1.6.4) */
+.char-mini-body { display: flex; align-items: stretch; gap: 8px; }
+.char-mini-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+/* 오드 손해 방지 타이머 */
+.mini-timer { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; margin-top: auto; }
+.mini-timer-label { font-size: 0.58rem; color: var(--text-sub); letter-spacing: 0.01em; }
+.mini-timer-val { font-size: 0.74rem; color: var(--text); white-space: nowrap; }
+.mini-timer.warn .mini-timer-label { color: #b85050; opacity: 0.85; }
+.mini-timer.warn .mini-timer-val { color: #b85050; }
+.mini-timer.muted .mini-timer-val { color: var(--text-sub); }
+
+/* 세로 미니닷 스택: 성역(상단 3개) / 각성 / 악몽 */
+.mini-dots-stack { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; flex: none; min-height: 52px; }
+.dot-row { display: flex; align-items: center; gap: 4px; }
+.dot-row .dot-label { font-size: 0.56rem; color: var(--text-sub); line-height: 1; white-space: nowrap; flex: none; }
 
 .mini-dot {
   width: 7px;
@@ -2313,6 +2322,10 @@ body.guest-mode .page .fetch-pill {
   background: var(--peach);
 }
 
+.sanctuary-criteria-item.muspell .sanctuary-criteria-dot {
+  background: var(--sky);
+}
+
 .sanctuary-criteria-name {
   color: var(--text);
 }
@@ -2417,8 +2430,8 @@ body.guest-mode .page .fetch-pill {
 /* ── 캐릭 행 ── */
 .sanctuary-row {
   display: grid;
-  /* 이름 영역(가변) + 토글 두 칸 */
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  /* 이름 영역(가변) + 토글 세 칸 (루드라·침식·무스펠) */
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
@@ -4587,10 +4600,10 @@ function renderOverview() {
         const dt = dailyTasks[char.id] || {};
         const wt = weeklyTasks[char.id] || {};
         const isResting = !!char.resting;
-        const dots = isResting ? '' : buildMiniDots(char, dt, wt);
+        const stackHtml = isResting ? '' : buildMiniDots(char, dt, wt);
+        const timerHtml = isResting ? '' : buildOddTimer(char);
         const pct = isResting ? 0 : calcCompletionPct(char, dt, wt);
         const barHtml = isResting ? '' : `<div class="char-mini-bar" style="width:${pct}%"></div>`;
-        const progressRowHtml = isResting ? '' : `<div class="mini-progress-row">${dots}</div>`;
         const restBadge = isResting ? `<div class="char-mini-resting-badge">휴식</div>` : '';
         html += `<div class="char-mini ${isResting ? 'resting' : ''}"
           draggable="true"
@@ -4601,9 +4614,14 @@ function renderOverview() {
           ondragend="dragEnd(event)"
           onclick="openDetail('${char.id}')">
           ${restBadge}
-          <div class="char-mini-name">${char.name || '(이름없음)'} <span style="color:var(--text-sub);font-size:0.72rem">(${char.item_level||0} / ${formatCp(char.combat_power||0)})</span></div>
-          <div class="char-mini-ilvl">${char.odd_energy_base||0} / 840 <span style="color:var(--text-sub)">+${char.odd_energy_charged||0}</span></div>
-          ${progressRowHtml}
+          <div class="char-mini-body">
+            <div class="char-mini-main">
+              <div class="char-mini-name">${char.name || '(이름없음)'} <span style="color:var(--text-sub);font-size:0.72rem">(${char.item_level||0} / ${formatCp(char.combat_power||0)})</span></div>
+              <div class="char-mini-ilvl">${char.odd_energy_base||0} / 840 <span style="color:var(--text-sub)">+${char.odd_energy_charged||0}</span></div>
+              ${timerHtml}
+            </div>
+            ${stackHtml}
+          </div>
           ${barHtml}
         </div>`;
       }
@@ -4665,41 +4683,39 @@ function buildMiniDots(char, dt, wt) {
   const ilvl = char.item_level || 0;
   const nm = char.nightmare_base || 0;
   const aw = char.awakening_done || 0;
-  const acc = accountData[char.owner] || {};
 
-  // 일일 (왼쪽): 보급, 악몽
-  // 사명은 v1.4.9.1부터 계정 단위 → per-char 미니닷에서 제외
-  const daily = [
-    `<div class="mini-dot ${dt.supply_done?'done':''}" title="보급${dt.supply_done?' (완료)':''}"></div>`,
-    `<div class="mini-dot ${nm<=12?'done':'partial'}" title="악몽 ${nm}장${nm>12?' (주의)':''}"></div>`,
+  // 성역 (상단, 가로 3개): 루드라(2700+) · 침식(3500+) · 무스펠(4300+)
+  //   자격 미달은 잠금(연회색) dot으로 위치 고정 — 라벨 없음
+  const sanctDot = (avail, done, name, req) => avail
+    ? `<div class="mini-dot ${done?'done-weekly':''}" title="성역 - ${name}${done?' (완료)':''}"></div>`
+    : `<div class="mini-dot locked" title="성역 - ${name} (템 ${req}↑ 필요)"></div>`;
+  const sanct = [
+    sanctDot(ilvl >= 2700, wt.ludra_done,   '루드라', 2700),
+    sanctDot(ilvl >= 3500, wt.erosion_done, '침식',   3500),
+    sanctDot(ilvl >= 4300, wt.muspell_done, '무스펠', 4300),
   ].join('');
 
-  // 주간 (오른쪽): 각성(3/3 완료), 루드라(템2700+), 침식(템3500+)
-  const weeklyDots = [];
-  // 각성 - 3회 다 완료해야 완료
-  weeklyDots.push(`<div class="mini-dot ${aw>=3?'done-weekly':''}" title="각성 ${aw}/3"></div>`);
-  // 루드라 - 템 2700+만 해당, 미달은 dot 자체 생략
-  if (ilvl >= 2700) {
-    weeklyDots.push(`<div class="mini-dot ${wt.ludra_done?'done-weekly':''}" title="성역 - 루드라${wt.ludra_done?' (완료)':''}"></div>`);
-  }
-  // 침식 - 템 3500+만 해당
-  if (ilvl >= 3500) {
-    weeklyDots.push(`<div class="mini-dot ${wt.erosion_done?'done-weekly':''}" title="성역 - 침식${wt.erosion_done?' (완료)':''}"></div>`);
-  }
-  const weekly = weeklyDots.join('');
+  // 각성 (중단): 3/3 완료 / 악몽 (하단): 기본 12 이하 양호, 초과 시 주의(빨강)
+  const awakeDot = `<div class="mini-dot ${aw>=3?'done-weekly':''}" title="각성 ${aw}/3"></div>`;
+  const nmDot = `<div class="mini-dot ${nm<=12?'done':'partial'}" title="악몽 ${nm}장${nm>12?' (주의)':''}"></div>`;
 
-  return `<div class="mini-dots-daily">${daily}</div><div class="mini-dots-weekly">${weekly}</div>`;
+  return `<div class="mini-dots-stack">
+    <div class="dot-row">${sanct}</div>
+    <div class="dot-row"><span class="dot-label">각성</span>${awakeDot}</div>
+    <div class="dot-row"><span class="dot-label">악몽</span>${nmDot}</div>
+  </div>`;
 }
 
 function calcCompletionPct(char, dt, wt) {
   let done = 0, total = 0;
   const ilvl = char.item_level || 0;
+  // 보급(보급의뢰)은 v1.6.4부터 사용 안 함 → 진행률에서 제외
   // 사명은 v1.4.9.1부터 계정 단위 → per-char 진행률에서 제외
-  total += 1; if (dt.supply_done) done++;
-  total += 1; if ((char.nightmare_base||0) <= 12) done++;
-  total += 1; if ((char.awakening_done||0) >= 3) done++;
-  if (ilvl >= 2700) { total++; if (wt.ludra_done) done++; }
-  if (ilvl >= 3500) { total++; if (wt.erosion_done) done++; }
+  total += 1; if ((char.nightmare_base||0) <= 12) done++;   // 악몽
+  total += 1; if ((char.awakening_done||0) >= 3) done++;     // 각성
+  if (ilvl >= 2700) { total++; if (wt.ludra_done) done++; }   // 성역-루드라
+  if (ilvl >= 3500) { total++; if (wt.erosion_done) done++; } // 성역-침식
+  if (ilvl >= 4300) { total++; if (wt.muspell_done) done++; } // 성역-무스펠
 
   return total > 0 ? Math.round(done/total*100) : 0;
 }
@@ -5078,6 +5094,7 @@ function renderDetail(char) {
   // 성역
   const ludraLocked = ilvl < 2700;
   const erosionLocked = ilvl < 3500;
+  const muspellLocked = ilvl < 4300;
   html += `<div class="stat-row ${ludraLocked?'locked-row':''}">
     <span class="stat-label">성역 - 루드라 ${ludraLocked?`<span class="lock-badge">2700↑</span>`:''}</span>
     <button class="toggle-btn ${wt.ludra_done?'done':''}"
@@ -5087,6 +5104,11 @@ function renderDetail(char) {
     <span class="stat-label">성역 - 침식 ${erosionLocked?`<span class="lock-badge">3500↑</span>`:''}</span>
     <button class="toggle-btn ${wt.erosion_done?'done':''}"
       onclick="toggleWeekly('${char.id}','erosion_done',${!wt.erosion_done},'${week}')">${wt.erosion_done?'완료':'미완'}</button>
+  </div>`;
+  html += `<div class="stat-row ${muspellLocked?'locked-row':''}">
+    <span class="stat-label">성역 - 무스펠 ${muspellLocked?`<span class="lock-badge">4300↑</span>`:''}</span>
+    <button class="toggle-btn ${wt.muspell_done?'done':''}"
+      onclick="toggleWeekly('${char.id}','muspell_done',${!wt.muspell_done},'${week}')">${wt.muspell_done?'완료':'미완'}</button>
   </div>`;
 
   html += `</div>`;
@@ -5727,7 +5749,7 @@ async function toggleWeekly(charId, field, value, week) {
     if (document.getElementById('sanctuary-page')?.classList.contains('active')) {
       try { renderSanctuaryPage(); } catch (e) { console.error('[성역 재렌더 에러]', e); }
     }
-    const actionMap = { ludra_done:'성역-루드라 완료', erosion_done:'성역-침식 완료' };
+    const actionMap = { ludra_done:'성역-루드라 완료', erosion_done:'성역-침식 완료', muspell_done:'성역-무스펠 완료' };
     if (actionMap[field]) {
       if (value) writeLog(char.owner, char.name, actionMap[field], char.id, field);
       else deleteLog(char.id, field);
@@ -7251,6 +7273,54 @@ function getNextChargeMs() {
   return (minutesLeft * 60 - s) * 1000 - ms;
 }
 
+// ══ 오드 손해 방지 타이머 (v1.6.4) ══
+//  예상 기본 오드(E)가 840을 넘겨 손해 보기 직전(= 다음 충전 틱이 낭비되는 시점)까지 남은 시간.
+//  한 틱 +15 · KST 02·05·08·11·14·17·20·23시(3시간마다) 충전.
+//  여유 틱 수 = floor((840 - E)/15), 그 다음 틱(=+1)이 처음으로 낭비됨.
+function _fmtOddDur(ms) {
+  if (ms <= 0) return '지금';
+  let totalMin = Math.floor(ms / 60000);
+  const d = Math.floor(totalMin / (60 * 24)); totalMin -= d * 60 * 24;
+  const h = Math.floor(totalMin / 60); const m = totalMin % 60;
+  const parts = [];
+  if (d) parts.push(d + '일');
+  if (h) parts.push(h + '시간');
+  if (m || parts.length === 0) parts.push(m + '분');
+  return parts.slice(0, 2).join(' ');  // 최대 2단위만 (분 단위까지)
+}
+function computeOddTimer(char) {
+  const E = (typeof expCurrentOdd === 'function') ? expCurrentOdd(char) : (char.odd_energy_base || 0);
+  const room = 840 - E;                              // 남은 여유
+  const ticksUntilWaste = Math.floor(room / 15) + 1; // 처음으로 낭비되는 틱 (1 이상)
+  const ms = getNextChargeMs() + (ticksUntilWaste - 1) * 10800000; // 그 틱까지 남은 시간
+  const val = _fmtOddDur(ms);
+  const warn = ms < 6 * 3600000;                     // 6시간 미만이면 경고(빨강)
+  return { cls: warn ? 'warn' : '', label: warn ? '곧 손해!' : '오드 여유', val };
+}
+function buildOddTimer(char) {
+  const t = computeOddTimer(char);
+  return `<div class="mini-timer ${t.cls}" data-char-id="${char.id}">
+    <span class="mini-timer-label">${t.label}</span>
+    <span class="mini-timer-val">${t.val}</span>
+  </div>`;
+}
+// 미니카드 타이머를 1분마다 제자리 갱신 (전체 재렌더 없이)
+let _oddCardTimerLoop = null;
+function updateOddCardTimers() {
+  if (typeof allChars === 'undefined' || !Array.isArray(allChars)) return;
+  document.querySelectorAll('.mini-timer[data-char-id]').forEach(el => {
+    const c = allChars.find(x => x.id === el.dataset.charId);
+    if (!c) return;
+    const t = computeOddTimer(c);
+    el.className = 'mini-timer' + (t.cls ? ' ' + t.cls : '');
+    const lab = el.querySelector('.mini-timer-label');
+    const val = el.querySelector('.mini-timer-val');
+    if (lab) lab.textContent = t.label;
+    if (val) val.textContent = t.val;
+  });
+}
+if (!_oddCardTimerLoop) _oddCardTimerLoop = setInterval(updateOddCardTimers, 60000);
+
 function startOddTimer(charId) {
   if (_oddTimers[charId]) clearTimeout(_oddTimers[charId]);
   updateOddEstimateUI(charId);
@@ -7834,6 +7904,7 @@ function renderSanctuaryPage() {
       const wt = weeklyTasks[ch.id] || {};
       if (ilvl >= 2700) { total++; if (wt.ludra_done) done++; }
       if (ilvl >= 3500) { total++; if (wt.erosion_done) done++; }
+      if (ilvl >= 4300) { total++; if (wt.muspell_done) done++; }
     });
 
     let rows = '';
@@ -7845,15 +7916,17 @@ function renderSanctuaryPage() {
         const wt = weeklyTasks[ch.id] || {};
         const ludraLocked = ilvl < 2700;
         const erosionLocked = ilvl < 3500;
+        const muspellLocked = ilvl < 4300;
         const ludraDone = !!wt.ludra_done;
         const erosionDone = !!wt.erosion_done;
+        const muspellDone = !!wt.muspell_done;
         const isResting = !!ch.resting;
 
         // "전부 완료" — 자격 있는 항목을 모두 클리어한 경우
         const eligibleCount =
-          (ludraLocked ? 0 : 1) + (erosionLocked ? 0 : 1);
+          (ludraLocked ? 0 : 1) + (erosionLocked ? 0 : 1) + (muspellLocked ? 0 : 1);
         const clearedCount =
-          (!ludraLocked && ludraDone ? 1 : 0) + (!erosionLocked && erosionDone ? 1 : 0);
+          (!ludraLocked && ludraDone ? 1 : 0) + (!erosionLocked && erosionDone ? 1 : 0) + (!muspellLocked && muspellDone ? 1 : 0);
         const allDone = !isResting && eligibleCount > 0 && eligibleCount === clearedCount;
 
         // 자격 충족: pill 토글 / 미달: dashed lock 칩 (동일 폭 유지)
@@ -7870,6 +7943,13 @@ function renderSanctuaryPage() {
               ${isResting?'disabled':''}
               onclick="toggleWeekly('${ch.id}','erosion_done',${!erosionDone},'${week}')"
               title="성역 - 침식${erosionDone?' (완료)':''}">침식</button>`;
+
+        const muspellCell = muspellLocked
+          ? `<span class="sanctuary-lock" title="템 4300 이상 필요">4300↑</span>`
+          : `<button class="sanctuary-toggle ${muspellDone?'done':''}"
+              ${isResting?'disabled':''}
+              onclick="toggleWeekly('${ch.id}','muspell_done',${!muspellDone},'${week}')"
+              title="성역 - 무스펠${muspellDone?' (완료)':''}">무스펠</button>`;
 
         const charClass = (ch.class || '').toString();
         const metaParts = [];
@@ -7891,6 +7971,7 @@ function renderSanctuaryPage() {
           </div>
           ${ludraCell}
           ${erosionCell}
+          ${muspellCell}
         </div>`;
       });
     }
@@ -7915,6 +7996,7 @@ function renderSanctuaryPage() {
     const wt = weeklyTasks[ch.id] || {};
     if (ilvl >= 2700) { totalAll++; if (wt.ludra_done) doneAll++; }
     if (ilvl >= 3500) { totalAll++; if (wt.erosion_done) doneAll++; }
+    if (ilvl >= 4300) { totalAll++; if (wt.muspell_done) doneAll++; }
   });
   const pctAll = totalAll > 0 ? Math.round((doneAll / totalAll) * 100) : 0;
 
@@ -7940,6 +8022,11 @@ function renderSanctuaryPage() {
             <span class="sanctuary-criteria-name">침식</span>
             <span>템 3500↑</span>
           </span>
+          <span class="sanctuary-criteria-item muspell">
+            <span class="sanctuary-criteria-dot"></span>
+            <span class="sanctuary-criteria-name">무스펠</span>
+            <span>템 4300↑</span>
+          </span>
         </div>
         <div class="sanctuary-header-progress">
           <div class="sanctuary-progress-bar">
@@ -7960,7 +8047,7 @@ function renderSanctuaryPage() {
     chars: allChars.map(c => [c.id, c.name, c.item_level, c.resting, c.slot, c.class, c.owner]),
     weekly: allChars.map(c => {
       const wt = weeklyTasks[c.id] || {};
-      return [c.id, wt.ludra_done?1:0, wt.erosion_done?1:0];
+      return [c.id, wt.ludra_done?1:0, wt.erosion_done?1:0, wt.muspell_done?1:0];
     })
   });
   if (el.dataset.renderKey === renderKey) return;
