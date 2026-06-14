@@ -305,6 +305,90 @@ body.guest-mode .odd-batch-btn { display: none; }
 .mini-timer.warn .mini-timer-label { color: #b85050; opacity: 0.85; }
 .mini-timer.warn .mini-timer-val { color: #b85050; }
 .mini-timer.muted .mini-timer-val { color: var(--text-sub); }
+.mini-timer.full .mini-timer-label { color: var(--odd-full); }
+
+/* ── 오드 owner 칩 (오드 일괄 적용 버튼 왼쪽) v1.6.5 ── */
+.odd-owner-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.odd-owner-chip .ooc-full { color: var(--odd-full); }
+.odd-owner-chip .ooc-time { color: var(--text-sub); }
+.odd-owner-chip .ooc-time.warn { color: #b85050; }
+.odd-owner-chip .ooc-sep { color: var(--border); }
+
+/* ── 성장 목표 예측기 (성장 그래프 카드) v1.6.6 ── */
+.growth-eta {
+  margin: 2px 2px 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  font-size: 0.76rem;
+  color: var(--text);
+}
+.growth-eta .gp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.gp-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.gp-toggle button {
+  border: none;
+  background: transparent;
+  padding: 4px 13px;
+  font-size: 0.74rem;
+  color: var(--text-sub);
+  cursor: pointer;
+  font-family: 'Gowun Dodum', sans-serif;
+  transition: all 0.15s;
+}
+.gp-toggle button.active { background: var(--sage); color: #fff; }
+.gp-input-wrap { display: inline-flex; align-items: center; gap: 6px; }
+.gp-input-label { font-size: 0.74rem; color: var(--text-sub); }
+.growth-eta #gp-target {
+  width: 92px;
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  outline: none;
+  text-align: right;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.growth-eta #gp-target:focus { border-color: var(--sage); }
+.gp-unit { font-size: 0.74rem; color: var(--text-sub); min-width: 7px; }
+.gp-result {
+  margin-top: 9px;
+  font-size: 0.78rem;
+  color: var(--text);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  line-height: 1.4;
+}
+.gp-result.muted { color: var(--text-sub); }
+.gp-eta-target { color: #3d5c2a; }
+.gp-eta-date { color: var(--text); }
+.gp-eta-sub { color: var(--text-sub); font-size: 0.72rem; margin-left: auto; }
+.gp-gate { color: var(--text-sub); font-size: 0.7rem; }
 
 /* 세로 미니닷 스택: 성역(상단 3개) / 각성 / 악몽 */
 .mini-dots-stack { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; flex: none; min-height: 52px; }
@@ -4586,6 +4670,7 @@ function renderOverview() {
           <span class="owner-memo-text">${escapeHtml(memoPreview)}</span>
         </button>
         <span class="owner-divider"></span>
+        ${buildOddOwnerChip(owner)}
         <button class="odd-batch-btn" onclick="openOddBatchModal('${owner}')">오드 일괄 적용</button>
       </div>
       <div class="chars-grid">`;
@@ -5161,6 +5246,7 @@ function renderDetail(char) {
         <label><input type="checkbox" id="gl-ilvl" checked> <span class="growth-dot" style="background:#7aa3c8"></span> 템레벨</label>
         <label><input type="checkbox" id="gl-cp" checked> <span class="growth-dot" style="background:#c47a8a"></span> 전투력</label>
       </div>
+      <div id="growth-eta" class="growth-eta" style="display:none"></div>
       <div id="growth-chart-wrap">
         <div id="growth-chart-empty" style="display:none;text-align:center;padding:28px 10px;color:var(--text-sub);font-size:0.8rem">
           아직 기록이 없어요. 템레벨이나 전투력을 수정하면 오늘부터 쌓여요.
@@ -5325,6 +5411,182 @@ async function setupGrowthChart(charId) {
   if (error) { console.error(error); return; }
   _growthState.data = data || [];
   renderGrowthChart();
+  renderGrowthEta(charId);
+}
+
+// ── 성장 목표 예측기 (v1.6.6) ──
+//   템레벨/전투력 중 선택 + 목표 숫자 직접 입력 → 예상 도달 날짜 계산.
+//   최근 30일(부족하면 전체) 최소제곱 기울기 기반. "최근 속도 기준 추정".
+//   템레벨 기본 목표는 다음 성역 해금선(2700/3500/4300)이 자동으로 채워짐.
+//   전투력 저장값은 표시값×10 (formatCp: stored/10 + 'k') — 입력/계산 단위 변환 처리.
+const SANCTUARY_GATES = [
+  { ilvl: 2700, name: '루드라' },
+  { ilvl: 3500, name: '침식' },
+  { ilvl: 4300, name: '무스펠' },
+];
+function _parseLogDate(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+function _fmtEtaDuration(days) {
+  if (days <= 13) return `약 ${days}일`;
+  if (days <= 60) return `약 ${Math.round(days / 7)}주`;
+  return `약 ${Math.round(days / 30)}개월`;
+}
+
+// 예측기 상태 (캐릭별로 metric/target 유지)
+let _gpEta = { charId: null, metric: 'ilvl', target: '' };
+function _gpField() { return _gpEta.metric === 'cp' ? 'combat_power' : 'item_level'; }
+
+// 최근 구간 최소제곱 기울기 (해당 metric의 저장단위/일). ok=false면 데이터 부족
+function _gpSlope(rows, field) {
+  const pts = (rows || [])
+    .filter(r => (r[field] || 0) > 0)
+    .map(r => ({ date: r.log_date, v: r[field] }));
+  if (pts.length === 0) return { ok: false, n: 0, lastVal: 0 };
+  const lastVal = pts[pts.length - 1].v;
+  const nowMs = Date.now();
+  const recent = pts.filter(p => (nowMs - _parseLogDate(p.date).getTime()) <= 30 * 86400000);
+  const use = recent.length >= 2 ? recent : pts;
+  if (use.length < 2) return { ok: false, n: use.length, lastVal };
+  const x0 = _parseLogDate(use[0].date).getTime();
+  const xs = use.map(p => (_parseLogDate(p.date).getTime() - x0) / 86400000);
+  const ys = use.map(p => p.v);
+  const n = xs.length;
+  const sx = xs.reduce((a, b) => a + b, 0);
+  const sy = ys.reduce((a, b) => a + b, 0);
+  const sxx = xs.reduce((a, b) => a + b * b, 0);
+  const sxy = xs.reduce((a, b, i) => a + b * ys[i], 0);
+  const denom = n * sxx - sx * sx;
+  const slope = denom !== 0 ? (n * sxy - sx * sy) / denom : 0;
+  return { ok: true, slope, n, lastVal };
+}
+
+// 현재값 (라이브 값과 마지막 로그 중 큰 값, 저장단위)
+function _gpCurrent(char) {
+  if (!char) return 0;
+  const field = _gpField();
+  const live = field === 'combat_power' ? (char.combat_power || 0) : (char.item_level || 0);
+  const sl = _gpSlope(_growthState.data, field);
+  return Math.max(live, sl.lastVal || 0);
+}
+// 입력(표시단위 문자열) → 저장단위 (없으면 null)
+function _gpParseTarget(str) {
+  if (str == null) return null;
+  const t = String(str).replace(',', '.').trim();
+  if (t === '') return null;
+  const num = parseFloat(t);
+  if (isNaN(num) || num < 0) return null;
+  return _gpEta.metric === 'cp' ? Math.round(num * 10) : Math.round(num);
+}
+// 저장단위 → 표시 문자열
+function _gpFmt(stored) {
+  return _gpEta.metric === 'cp' ? formatCp(stored) : String(stored);
+}
+// 기울기(저장단위/일) → 표시 문자열
+function _gpFmtSlope(slope) {
+  if (_gpEta.metric === 'cp') {
+    const v = slope / 10;
+    return `+${v >= 10 ? Math.round(v) : v.toFixed(1)}k/일`;
+  }
+  return slope >= 10 ? `+${Math.round(slope)}/일` : `+${slope.toFixed(1)}/일`;
+}
+// metric별 기본 목표값(표시단위 문자열): 템레벨=다음 해금선, 전투력=빈칸
+function _gpDefaultTarget(char) {
+  if (_gpEta.metric !== 'ilvl') return '';
+  const cur = _gpCurrent(char);
+  const gate = SANCTUARY_GATES.find(g => cur < g.ilvl);
+  return gate ? String(gate.ilvl) : '';
+}
+
+function renderGrowthEta(charId) {
+  const el = document.getElementById('growth-eta');
+  if (!el) return;
+  // 성장 기록이 아예 없으면 예측기 숨김 (차트 빈 상태 안내가 대신함)
+  if (!_growthState.data || _growthState.data.length === 0) {
+    el.style.display = 'none';
+    el.innerHTML = '';
+    return;
+  }
+  const char = allChars.find(c => c.id === charId);
+  // 캐릭이 바뀌면 상태 초기화 (템레벨 + 해금선 기본값)
+  if (_gpEta.charId !== charId) {
+    _gpEta.charId = charId;
+    _gpEta.metric = 'ilvl';
+    _gpEta.target = _gpDefaultTarget(char);
+  }
+
+  el.style.display = 'block';
+  el.className = 'growth-eta predictor';
+  el.innerHTML = `
+    <div class="gp-row">
+      <div class="gp-toggle">
+        <button class="${_gpEta.metric === 'ilvl' ? 'active' : ''}" onclick="setEtaMetric('ilvl')">템레벨</button>
+        <button class="${_gpEta.metric === 'cp' ? 'active' : ''}" onclick="setEtaMetric('cp')">전투력</button>
+      </div>
+      <div class="gp-input-wrap">
+        <span class="gp-input-label">목표</span>
+        <input id="gp-target" type="text" inputmode="decimal" autocomplete="off"
+          data-lpignore="true" data-1p-ignore="true"
+          value="${escapeAttr(_gpEta.target)}"
+          placeholder="${_gpEta.metric === 'cp' ? '예: 1300' : '예: 4300'}"
+          oninput="updateEtaResult()">
+        <span class="gp-unit">${_gpEta.metric === 'cp' ? 'k' : ''}</span>
+      </div>
+    </div>
+    <div id="gp-result" class="gp-result"></div>`;
+  updateEtaResult();
+}
+
+function setEtaMetric(metric) {
+  _gpEta.metric = metric;
+  const char = allChars.find(c => c.id === _gpEta.charId);
+  _gpEta.target = _gpDefaultTarget(char);  // metric 전환 시 기본값으로
+  renderGrowthEta(_gpEta.charId);
+}
+
+function updateEtaResult() {
+  const resEl = document.getElementById('gp-result');
+  const inp = document.getElementById('gp-target');
+  if (!resEl || !inp) return;
+  _gpEta.target = inp.value;  // 입력 유지 (재렌더 대비)
+  const char = allChars.find(c => c.id === _gpEta.charId);
+  const metricName = _gpEta.metric === 'cp' ? '전투력' : '템레벨';
+  const target = _gpParseTarget(inp.value);
+
+  if (target === null) {
+    resEl.className = 'gp-result muted';
+    resEl.textContent = `목표 ${metricName}을(를) 입력하면 예상 날짜를 계산해요`;
+    return;
+  }
+  const cur = _gpCurrent(char);
+  if (target <= cur) {
+    resEl.className = 'gp-result muted';
+    resEl.textContent = `이미 도달했어요 · 현재 ${_gpFmt(cur)}`;
+    return;
+  }
+  const sl = _gpSlope(_growthState.data, _gpField());
+  if (!sl.ok) {
+    resEl.className = 'gp-result muted';
+    resEl.textContent = `기록이 더 쌓이면 예상 날짜를 계산할 수 있어요`;
+    return;
+  }
+  if (sl.slope <= 0.0001) {
+    resEl.className = 'gp-result muted';
+    resEl.textContent = `최근 ${metricName} 성장이 멈춰서 예측을 잠시 보류할게요`;
+    return;
+  }
+  const days = Math.max(1, Math.ceil((target - cur) / sl.slope));
+  const d = new Date(); d.setDate(d.getDate() + days);
+  const dateStr = `${d.getMonth() + 1}월 ${d.getDate()}일`;
+  // 템레벨이고 목표가 해금선과 정확히 일치하면 라벨 표기
+  let gateNote = '';
+  if (_gpEta.metric === 'ilvl') {
+    const g = SANCTUARY_GATES.find(g => g.ilvl === target);
+    if (g) gateNote = ` <span class="gp-gate">(${g.name} 해금선)</span>`;
+  }
+  resEl.className = 'gp-result';
+  resEl.innerHTML =
+    `<span class="gp-eta-target">${_gpFmt(target)}${gateNote}</span>` +
+    `<span class="gp-eta-date">예상 ${dateStr}</span>` +
+    `<span class="gp-eta-sub">${_fmtEtaDuration(days)} · 최근 ${_gpFmtSlope(sl.slope)}</span>`;
 }
 
 function renderGrowthChart() {
@@ -7293,16 +7555,22 @@ function _fmtOddDur(ms) {
 }
 function computeOddTimer(char) {
   const E = (typeof expCurrentOdd === 'function') ? expCurrentOdd(char) : (char.odd_energy_base || 0);
+  // E ≥ 840: 이미 가득 차서 매 틱 낭비 중 → 카운트다운 없이 "가득 참" 상태
+  //   (얼마나 넘쳤는지는 840 clamp 때문에 구조적으로 알 수 없음)
+  if (E >= 840) {
+    return { full: true, ms: 0, cls: 'full', label: '가득 참', val: '' };
+  }
   const room = 840 - E;                              // 남은 여유
   const ticksUntilWaste = Math.floor(room / 15) + 1; // 처음으로 낭비되는 틱 (1 이상)
   const ms = getNextChargeMs() + (ticksUntilWaste - 1) * 10800000; // 그 틱까지 남은 시간
   const val = _fmtOddDur(ms);
   const warn = ms < 6 * 3600000;                     // 6시간 미만이면 경고(빨강)
-  return { cls: warn ? 'warn' : '', label: warn ? '곧 손해!' : '오드 여유', val };
+  return { full: false, ms, cls: warn ? 'warn' : '', label: warn ? '곧 손해!' : '오드 여유', val };
 }
 function buildOddTimer(char) {
   const t = computeOddTimer(char);
-  return `<div class="mini-timer ${t.cls}" data-char-id="${char.id}">
+  const cls = t.full ? 'full' : t.cls;
+  return `<div class="mini-timer ${cls}" data-char-id="${char.id}">
     <span class="mini-timer-label">${t.label}</span>
     <span class="mini-timer-val">${t.val}</span>
   </div>`;
@@ -7315,14 +7583,54 @@ function updateOddCardTimers() {
     const c = allChars.find(x => x.id === el.dataset.charId);
     if (!c) return;
     const t = computeOddTimer(c);
-    el.className = 'mini-timer' + (t.cls ? ' ' + t.cls : '');
+    el.className = 'mini-timer' + (t.full ? ' full' : (t.cls ? ' ' + t.cls : ''));
     const lab = el.querySelector('.mini-timer-label');
     const val = el.querySelector('.mini-timer-val');
     if (lab) lab.textContent = t.label;
     if (val) val.textContent = t.val;
   });
+  updateOddOwnerChips();   // owner 칩(오드 일괄 적용 버튼 왼쪽)도 같이 갱신
 }
 if (!_oddCardTimerLoop) _oddCardTimerLoop = setInterval(updateOddCardTimers, 60000);
+
+// ── 오드 owner 칩 (v1.6.5) ──
+//   소유자별(휴식 제외)로 "가득 찬 캐릭 수(①②③…)" + "안 찬 것 중 최단 타이머"를 함께 표시.
+//   케이스: 가득+타이머 → "가득 참 ① · 2시간 30분" / 전부 가득 → "가득 참 ①" /
+//           가득 없음 → "2시간 30분"(6h 미만 빨강) / 캐릭 없음·전부 휴식 → 숨김
+const _CIRCLED_NUM = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
+function _circledNum(n) { return _CIRCLED_NUM[n - 1] || `(${n})`; }
+function _oddOwnerChipInner(owner) {
+  const chars = allChars.filter(c => c.owner === owner && !c.resting);
+  if (chars.length === 0) return '';
+  let full = 0, minMs = Infinity;
+  chars.forEach(c => {
+    const E = (typeof expCurrentOdd === 'function') ? expCurrentOdd(c) : (c.odd_energy_base || 0);
+    if (E >= 840) { full++; }
+    else { const t = computeOddTimer(c); if (t.ms < minMs) minMs = t.ms; }
+  });
+  const parts = [];
+  if (full > 0) parts.push(`<span class="ooc-full">가득 참 ${_circledNum(full)}</span>`);
+  if (minMs !== Infinity) {
+    const warn = minMs < 6 * 3600000;
+    parts.push(`<span class="ooc-time${warn ? ' warn' : ''}">${_fmtOddDur(minMs)}</span>`);
+  }
+  if (parts.length === 0) return '';
+  return parts.join('<span class="ooc-sep">·</span>');
+}
+function buildOddOwnerChip(owner) {
+  const inner = _oddOwnerChipInner(owner);
+  if (!inner) return '';
+  return `<span class="odd-owner-chip" data-owner="${owner}">${inner}</span>`;
+}
+function updateOddOwnerChips() {
+  if (typeof allChars === 'undefined' || !Array.isArray(allChars)) return;
+  document.querySelectorAll('.odd-owner-chip[data-owner]').forEach(el => {
+    const inner = _oddOwnerChipInner(el.dataset.owner);
+    if (!inner) { el.style.display = 'none'; return; }
+    el.style.display = '';
+    el.innerHTML = inner;
+  });
+}
 
 function startOddTimer(charId) {
   if (_oddTimers[charId]) clearTimeout(_oddTimers[charId]);
