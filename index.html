@@ -4733,6 +4733,12 @@ function renderOverview() {
     const tmAllDone = tmChars.length > 0
       && tmChars.every(c => (c.transmutation_count || 0) >= 4)
       && tmAccCnt >= 16;
+    // 상점(오드구매) (v1.6.7): 물질변환과 동일 구조 — 캐릭별 주 4회 + 계정 통합 16회
+    const shopCharSum = tmChars.reduce((s, c) => s + Math.min(4, c.shop_purchase_count || 0), 0);
+    const shopAccCnt = Math.min(16, acc.shop_purchase_account_count || 0);
+    const shopAllDone = tmChars.length > 0
+      && tmChars.every(c => (c.shop_purchase_count || 0) >= 4)
+      && shopAccCnt >= 16;
     html += `<div class="account-card" style="cursor:pointer" onclick="openAccountModal('${owner}')">
       <div class="account-card-title">${owner} 계정 <span style="float:right;font-size:0.7rem;color:var(--text-sub)">✎</span></div>
       <div class="stat-row" style="padding:3px 0;border:none">
@@ -4744,7 +4750,7 @@ function renderOverview() {
         <span style="font-size:0.78rem;color:var(--text)">${acc.dungeon_remaining||0} <span style="color:var(--text-sub)">+${ownerTicketSum} 충전권</span></span>
       </div>
       <div class="account-bool-row">
-        <span class="toggle-btn ${acc.shop_purchased?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAccount('${owner}','shop_purchased',${!acc.shop_purchased})">상점</span>
+        <span class="toggle-btn ${shopAllDone?'done':''}" style="font-size:0.72rem;padding:3px 8px" title="상점(오드구매) 캐릭 ${shopCharSum}/${tmChars.length*4} · 계정 ${shopAccCnt}/16 (주간)" onclick="event.stopPropagation();toggleAllShopPurchase('${owner}',${!shopAllDone})">상점</span>
         <span class="toggle-btn ${tmAllDone?'done':''}" style="font-size:0.72rem;padding:3px 8px" title="물질변환 캐릭 ${tmCharSum}/${tmChars.length*4} · 계정 ${tmAccCnt}/16 (주간)" onclick="event.stopPropagation();toggleAllTransmutation('${owner}',${!tmAllDone})">물질변환</span>
         <span class="toggle-btn ${(acc.order_lower&&acc.order_middle&&acc.order_town)?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAllOrders('${owner}',${!(acc.order_lower&&acc.order_middle&&acc.order_town)})">지령서</span>
         <!-- 사명 (일일리셋, 계정 단위) — 위 3개(주간리셋)와 색상 구분 위해 done-sky -->
@@ -6130,6 +6136,18 @@ function toggleTransmutationDropdown(owner) {
   if (chev) chev.style.transform = _transmutationDropdownExpanded ? 'rotate(180deg)' : '';
 }
 
+// ── 상점(오드구매) 드롭다운 (계정 모달 안, v1.6.7) ──
+//    주간 리셋 · 캐릭별 4회 · 계정 합계 16회. 물질변환과 동일 구조.
+let _shopDropdownExpanded = false;
+
+function toggleShopDropdown(owner) {
+  _shopDropdownExpanded = !_shopDropdownExpanded;
+  const drop = document.getElementById(`shop-dropdown-${owner}`);
+  const chev = document.getElementById(`shop-chevron-${owner}`);
+  if (drop) drop.style.display = _shopDropdownExpanded ? 'flex' : 'none';
+  if (chev) chev.style.transform = _shopDropdownExpanded ? 'rotate(180deg)' : '';
+}
+
 // 캐릭별 물질변환 pip 클릭 (0~4) — 각성 pip과 동일한 UX
 async function setCharTransmutPip(owner, charId, cur, pip) {
   if (currentActor === 'guest') return;
@@ -6160,13 +6178,13 @@ async function setAccountTransmutPip(owner, cur, pip) {
 
 // ── 물질변환 슬라이더 (v1.6.2) — 손잡이 슬라이더 HTML ──
 // target: 'acc'(0~16) | 'char'(0~4). 채움 막대를 클릭/드래그해서 한 번에 채움.
-function tmSliderHtml(owner, val, max, target, charId) {
+function tmSliderHtml(owner, val, max, target, charId, kind = 'tm') {
   const pct = val / max * 100;
   let ticks = '';
   for (let i = 1; i < max; i++) ticks += `<div class="tm-tick" style="left:${i/max*100}%"></div>`;
   const ds = target === 'acc'
-    ? `data-tm="acc" data-owner="${owner}" data-max="${max}"`
-    : `data-tm="char" data-owner="${owner}" data-char="${charId}" data-max="${max}"`;
+    ? `data-tm="acc" data-owner="${owner}" data-max="${max}" data-kind="${kind}"`
+    : `data-tm="char" data-owner="${owner}" data-char="${charId}" data-max="${max}" data-kind="${kind}"`;
   return `<div class="tm-slider${target==='char'?' sm':''}" ${ds}>
     <div class="tm-track">
       <div class="tm-fill" style="width:${pct}%"></div>
@@ -6202,7 +6220,31 @@ async function setCharTransmutVal(owner, charId, val) {
   renderOverview();
 }
 
-// 클릭/드래그 인터랙션 — 드래그 중엔 DOM만 갱신, 손 뗄 때 1회 커밋 (1회만 바인딩)
+// ── 상점(오드구매) 절대값 저장 (v1.6.7) — 물질변환과 동일 구조: 계정 0~16 / 캐릭 0~4 ──
+async function setAccountShopVal(owner, val) {
+  if (currentActor === 'guest') return;
+  val = Math.max(0, Math.min(16, val));
+  const acc = accountData[owner]; if (!acc) return;
+  if (Math.min(16, acc.shop_purchase_account_count || 0) === val) return;
+  markSelfChange('account_data', owner);
+  const { error } = await sb.from('account_data').update({ shop_purchase_account_count: val }).eq('owner', owner);
+  if (error) { showToast('저장 실패: ' + (error.message || error.code || '')); console.error('[오드구매/계정]', error); return; }
+  acc.shop_purchase_account_count = val;
+  openAccountModal(owner);
+  renderOverview();
+}
+async function setCharShopVal(owner, charId, val) {
+  if (currentActor === 'guest') return;
+  val = Math.max(0, Math.min(4, val));
+  const char = allChars.find(c => c.id === charId); if (!char) return;
+  if (Math.min(4, char.shop_purchase_count || 0) === val) return;
+  markSelfChange('characters', charId);
+  const { error } = await sb.from('characters').update({ shop_purchase_count: val }).eq('id', charId);
+  if (error) { showToast('저장 실패: ' + (error.message || error.code || '')); console.error('[오드구매/캐릭]', error); return; }
+  char.shop_purchase_count = val;
+  openAccountModal(owner);
+  renderOverview();
+}
 let _tmDrag = null;
 function _tmRatioFromEvent(sliderEl, clientX) {
   const track = sliderEl.querySelector('.tm-track');
@@ -6256,10 +6298,15 @@ function initTmSliders() {
     const sl = _tmDrag.el, val = _tmDrag.val, max = _tmDrag.max;
     sl.classList.remove('dragging');
     _tmSnap(sl, val, max);          // 연속 위치 → 정수 위치로 부드럽게 스냅
-    const owner = sl.dataset.owner, tm = sl.dataset.tm, charId = sl.dataset.char;
+    const owner = sl.dataset.owner, tm = sl.dataset.tm, charId = sl.dataset.char, kind = sl.dataset.kind || 'tm';
     _tmDrag = null;
-    if (tm === 'acc') setAccountTransmutVal(owner, val);
-    else setCharTransmutVal(owner, charId, val);
+    if (kind === 'shop') {
+      if (tm === 'acc') setAccountShopVal(owner, val);
+      else setCharShopVal(owner, charId, val);
+    } else {
+      if (tm === 'acc') setAccountTransmutVal(owner, val);
+      else setCharTransmutVal(owner, charId, val);
+    }
   };
   document.addEventListener('pointerup', finish);
   document.addEventListener('pointercancel', finish);
@@ -6290,6 +6337,33 @@ async function toggleAllTransmutation(owner, value) {
     .eq('owner', owner);
   if (accErr) { showToast('저장 실패(계정): ' + (accErr.message || accErr.code || '')); console.error('[물질변환/전체-계정]', accErr); return; }
   if (accountData[owner]) accountData[owner].transmutation_account_count = accTarget;
+  renderOverview();
+}
+
+// 카드 겉 "상점" 버튼: 전체 완료/해제 ↔ 모달 내부(캐릭별 4 + 계정 통합 16) 연동 (v1.6.7)
+async function toggleAllShopPurchase(owner, value) {
+  if (currentActor === 'guest') return;
+
+  const ownerChars = allChars.filter(c => c.owner === owner);
+  const target = value ? 4 : 0;
+  const accTarget = value ? 16 : 0;
+
+  if (ownerChars.length > 0) {
+    const ids = ownerChars.map(c => c.id);
+    ids.forEach(id => markSelfChange('characters', id));
+    const { error } = await sb.from('characters')
+      .update({ shop_purchase_count: target })
+      .in('id', ids);
+    if (error) { showToast('저장 실패(캐릭): ' + (error.message || error.code || '')); console.error('[오드구매/전체-캐릭]', error); return; }
+    ownerChars.forEach(c => { c.shop_purchase_count = target; });
+  }
+
+  markSelfChange('account_data', owner);
+  const { error: accErr } = await sb.from('account_data')
+    .update({ shop_purchase_account_count: accTarget })
+    .eq('owner', owner);
+  if (accErr) { showToast('저장 실패(계정): ' + (accErr.message || accErr.code || '')); console.error('[오드구매/전체-계정]', accErr); return; }
+  if (accountData[owner]) accountData[owner].shop_purchase_account_count = accTarget;
   renderOverview();
 }
 
@@ -6369,6 +6443,9 @@ function openAccountModal(owner) {
   // 물질변환 계정 통합 카운트 (v1.6.1)
   const tmAccCnt = Math.min(16, acc.transmutation_account_count || 0);
 
+  // 상점(오드구매) 계정 통합 카운트 (v1.6.7)
+  const shopAccCnt = Math.min(16, acc.shop_purchase_account_count || 0);
+
   document.getElementById('acc-modal-body').innerHTML = `
     <div style="display:flex;flex-direction:column;gap:12px">
       <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
@@ -6430,6 +6507,34 @@ function openAccountModal(owner) {
               <div style="display:flex;align-items:center;gap:10px">
                 <span style="flex:1;font-size:0.78rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(c.name || '(이름없음)')}</span>
                 ${tmSliderHtml(owner, cnt, 4, 'char', c.id)}
+                <span class="tm-num tm-num-sm"><span class="tm-n">${cnt}</span><span class="tm-unit"> / 4</span></span>
+              </div>`;
+            }).join('')}
+        </div>
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
+        <div class="dungeon-toggle-row" onclick="toggleShopDropdown('${owner}')"
+             style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
+          <div class="dungeon-toggle-label" style="font-size:0.75rem;color:var(--text-sub);transition:color 0.15s">상점(오드구매) <span style="font-size:0.7rem">(주간 · 캐릭별 4회 + 계정 16회)</span></div>
+          <span id="shop-chevron-${owner}" class="dungeon-chevron"
+                style="${_shopDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
+        </div>
+        <div id="shop-dropdown-${owner}"
+             style="display:${_shopDropdownExpanded?'flex':'none'};flex-direction:column;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="font-size:0.78rem;color:var(--text);white-space:nowrap">계정 통합</span>
+            ${tmSliderHtml(owner, shopAccCnt, 16, 'acc', null, 'shop')}
+            <span class="tm-num"><span class="tm-n">${shopAccCnt}</span><span class="tm-unit"> / 16</span></span>
+          </div>
+          <div style="border-top:1px dashed var(--border)"></div>
+          ${ownerChars.length === 0
+            ? `<div style="text-align:center;font-size:0.75rem;color:var(--text-sub);padding:8px">등록된 캐릭터가 없어요</div>`
+            : ownerChars.map(c => {
+              const cnt = Math.min(4, c.shop_purchase_count||0);
+              return `
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="flex:1;font-size:0.78rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(c.name || '(이름없음)')}</span>
+                ${tmSliderHtml(owner, cnt, 4, 'char', c.id, 'shop')}
                 <span class="tm-num tm-num-sm"><span class="tm-n">${cnt}</span><span class="tm-unit"> / 4</span></span>
               </div>`;
             }).join('')}
