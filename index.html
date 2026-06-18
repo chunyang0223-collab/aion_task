@@ -8,19 +8,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&family=Pixelify+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  /* 스킨 전환: 기본(원본) ↔ GSC. localStorage에 기억. 기본값은 GSC ON. */
+  /* 스킨 전환: 기본(원본) ↔ GLC. localStorage에 기억. 기본값은 GLC ON. */
   (function(){
-    try{ if (localStorage.getItem('chunyang-skin') !== 'off') document.documentElement.classList.add('skin-gsc'); }catch(e){}
+    try{ if (localStorage.getItem('chunyang-skin') !== 'off') document.documentElement.classList.add('skin-glc'); }catch(e){}
   })();
   function toggleSkin(){
-    var on = document.documentElement.classList.toggle('skin-gsc');
+    var on = document.documentElement.classList.toggle('skin-glc');
     try{ localStorage.setItem('chunyang-skin', on ? 'on' : 'off'); }catch(e){}
     var b = document.getElementById('skin-toggle-btn');
-    if (b){ b.classList.toggle('on', on); b.title = on ? 'GSC 스킨 (눌러서 기본으로)' : '기본 스킨 (눌러서 GSC로)'; }
+    if (b){ b.classList.toggle('on', on); b.title = on ? 'GLC 스킨 (눌러서 기본으로)' : '기본 스킨 (눌러서 GLC로)'; }
   }
   window.addEventListener('DOMContentLoaded', function(){
     var b = document.getElementById('skin-toggle-btn');
-    if (b){ var on = document.documentElement.classList.contains('skin-gsc'); b.classList.toggle('on', on); b.title = on ? 'GSC 스킨 (눌러서 기본으로)' : '기본 스킨 (눌러서 GSC로)'; }
+    if (b){ var on = document.documentElement.classList.contains('skin-glc'); b.classList.toggle('on', on); b.title = on ? 'GLC 스킨 (눌러서 기본으로)' : '기본 스킨 (눌러서 GLC로)'; }
   });
 </script>
 <style>
@@ -49,7 +49,7 @@
   --radius-sm: 10px;
   --radius-xs: 7px;
 
-  /* ── Fonts (used by GSC skin) ── */
+  /* ── Fonts (used by GLC skin) ── */
   --font-display: 'Black Han Sans', 'Gowun Dodum', sans-serif;
   --font-head: 'Jua', 'Gowun Dodum', sans-serif;
   --font-pixel: 'Pixelify Sans', monospace;
@@ -66,8 +66,8 @@
   --shadow-inset: inset 0 1px 2px rgba(160,150,140,0.05);
 }
 
-/* ══ GSC (glcpatti) skin — token overrides, active when <html class="skin-gsc"> ══ */
-html.skin-gsc {
+/* ══ GLC (glcpatti) skin — token overrides, active when <html class="skin-glc"> ══ */
+html.skin-glc {
   --bg: #F5F4F1;          /* cream paper */
   --surface: #FFFFFF;     /* card paper */
   --surface2: #F0EBE2;    /* warm inset */
@@ -101,26 +101,26 @@ html.skin-gsc {
   --shadow-inset: inset 0 1px 2px rgba(89,60,60,0.06);
 }
 
-/* ══════════ GSC skin — typographic overrides ══════════ */
-html.skin-gsc .topbar-title {
+/* ══════════ GLC skin — typographic overrides ══════════ */
+html.skin-glc .topbar-title {
   font-family: var(--font-display);
   letter-spacing: 0.01em;
 }
-html.skin-gsc .card-title,
-html.skin-gsc .section-title,
-html.skin-gsc .account-card-title,
-html.skin-gsc .exp-card-title,
-html.skin-gsc .sanctuary-header-title {
+html.skin-glc .card-title,
+html.skin-glc .section-title,
+html.skin-glc .account-card-title,
+html.skin-glc .exp-card-title,
+html.skin-glc .sanctuary-header-title {
   font-family: var(--font-head);
   font-weight: 400;
   letter-spacing: 0.01em;
 }
-html.skin-gsc .card-title,
-html.skin-gsc .section-title,
-html.skin-gsc .account-card-title { color: var(--text); }
-html.skin-gsc .card { border-width: 1.5px; }
+html.skin-glc .card-title,
+html.skin-glc .section-title,
+html.skin-glc .account-card-title { color: var(--text); }
+html.skin-glc .card { border-width: 1.5px; }
 /* detail view: keep first card's rounded top clear of the sticky subbar */
-html.skin-gsc #detail-content { padding-top: 10px; }
+html.skin-glc #detail-content { padding-top: 10px; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -3963,13 +3963,13 @@ body.guest-mode .dungeon-card { pointer-events: none; }
   .char-grid { grid-template-columns: 1fr 1fr; }
 }
 
-/* ════════════════ GSC structural skin — placed last so it wins ════════════════ */
+/* ════════════════ GLC structural skin — placed last so it wins ════════════════ */
 
 /* — App title: fat bubble logo — */
-html.skin-gsc .topbar-title { font-size: 1.18rem; }
+html.skin-glc .topbar-title { font-size: 1.18rem; }
 
-/* — Nav: GSC pill tabs, espresso-ink active fill — */
-html.skin-gsc .tab-pill {
+/* — Nav: GLC pill tabs, espresso-ink active fill — */
+html.skin-glc .tab-pill {
   border: 2px solid var(--text);
   border-radius: 999px;
   padding: 6px 15px;
@@ -3979,32 +3979,32 @@ html.skin-gsc .tab-pill {
   background: var(--surface);
   transition: background .15s, color .15s, transform .12s var(--ease-bounce, ease);
 }
-html.skin-gsc .tab-pill:hover { background: var(--hover); color: var(--text); }
-html.skin-gsc .tab-pill:active { transform: scale(.94); }
-html.skin-gsc .tab-pills .tab-pill.active,
-html.skin-gsc .tab-pills .tab-pill.active:hover {
+html.skin-glc .tab-pill:hover { background: var(--hover); color: var(--text); }
+html.skin-glc .tab-pill:active { transform: scale(.94); }
+html.skin-glc .tab-pills .tab-pill.active,
+html.skin-glc .tab-pills .tab-pill.active:hover {
   background: var(--text);
   color: #F6F2E6;
   border-color: var(--text);
 }
 
 /* — Cards: one crisp espresso outline, flat & chunky — */
-html.skin-gsc .card {
+html.skin-glc .card {
   border: 1.5px solid var(--text);
   border-radius: 24px;
   box-shadow: none;
 }
 /* clickable cards get a hard retro "sticker" lift on hover */
-html.skin-gsc .account-card, html.skin-gsc .supply-card, html.skin-gsc .gp-rank-card, html.skin-gsc .exp-recommend-card { transition: transform .14s ease, box-shadow .14s ease; }
-html.skin-gsc .account-card:hover, html.skin-gsc .supply-card:hover {
+html.skin-glc .account-card, html.skin-glc .supply-card, html.skin-glc .gp-rank-card, html.skin-glc .exp-recommend-card { transition: transform .14s ease, box-shadow .14s ease; }
+html.skin-glc .account-card:hover, html.skin-glc .supply-card:hover {
   transform: translate(-2px, -2px);
   box-shadow: 3px 3px 0 var(--text);
 }
 
 /* — Card titles as real bubble headlines + circular ink icon badges — */
-html.skin-gsc .card-title { font-size: 0.92rem; gap: 8px; margin-bottom: 14px; white-space: nowrap; }
-html.skin-gsc .section-title { font-size: 0.95rem; }
-html.skin-gsc .card-title-icon {
+html.skin-glc .card-title { font-size: 0.92rem; gap: 8px; margin-bottom: 14px; white-space: nowrap; }
+html.skin-glc .section-title { font-size: 0.95rem; }
+html.skin-glc .card-title-icon {
   width: 26px; height: 26px;
   border-radius: 999px;
   border: 1.5px solid var(--text);
@@ -4012,54 +4012,54 @@ html.skin-gsc .card-title-icon {
 }
 
 /* — Segmented toggle pills → pill shape, espresso active — */
-html.skin-gsc .gp-period-btn, html.skin-gsc .growth-range-btn {
+html.skin-glc .gp-period-btn, html.skin-glc .growth-range-btn {
   border: 1.5px solid var(--text);
   border-radius: 999px;
   color: var(--text);
   white-space: nowrap;
 }
-html.skin-gsc .gp-period-btn.active, html.skin-gsc .growth-range-btn.active {
+html.skin-glc .gp-period-btn.active, html.skin-glc .growth-range-btn.active {
   background: var(--text); color: #F6F2E6; border-color: var(--text);
 }
 
-/* — Tags & status badges → GSC pills — */
-html.skin-gsc .gp-tag, html.skin-gsc .gp-tag.flat,
-html.skin-gsc .badge-설냥, html.skin-gsc .badge-츄츄,
-html.skin-gsc .exp-count-badge-ok, html.skin-gsc .exp-count-badge-excl,
-html.skin-gsc .supply-card-type, html.skin-gsc .supply-card-diff,
-html.skin-gsc .exp-result-rank-1, html.skin-gsc .exp-result-rank-2, html.skin-gsc .exp-result-rank-3 {
+/* — Tags & status badges → GLC pills — */
+html.skin-glc .gp-tag, html.skin-glc .gp-tag.flat,
+html.skin-glc .badge-설냥, html.skin-glc .badge-츄츄,
+html.skin-glc .exp-count-badge-ok, html.skin-glc .exp-count-badge-excl,
+html.skin-glc .supply-card-type, html.skin-glc .supply-card-diff,
+html.skin-glc .exp-result-rank-1, html.skin-glc .exp-result-rank-2, html.skin-glc .exp-result-rank-3 {
   border-radius: 999px;
 }
 
-/* ════ GSC casual energy — springy press + sticker-y hovers (varied per element) ════ */
-html.skin-gsc button:active { transform: scale(.95); }
+/* ════ GLC casual energy — springy press + sticker-y hovers (varied per element) ════ */
+html.skin-glc button:active { transform: scale(.95); }
 
 /* clickable character tiles — playful sticker lift + tiny tilt */
-html.skin-gsc .char-mini:not(.empty) { transition: transform .16s var(--ease-bounce, ease), box-shadow .16s ease; }
-html.skin-gsc .char-mini:not(.empty):hover {
+html.skin-glc .char-mini:not(.empty) { transition: transform .16s var(--ease-bounce, ease), box-shadow .16s ease; }
+html.skin-glc .char-mini:not(.empty):hover {
   transform: translate(-2px, -3px) rotate(-1deg);
   box-shadow: 3px 4px 0 var(--text);
 }
 
 /* checklist, quest & dungeon cards — straight sticker lift */
-html.skin-gsc .char-card, html.skin-gsc .quest-card, html.skin-gsc .dungeon-card { transition: transform .15s var(--ease-bounce, ease), box-shadow .15s ease; }
-html.skin-gsc .char-card:hover, html.skin-gsc .quest-card:hover, html.skin-gsc .dungeon-card:hover {
+html.skin-glc .char-card, html.skin-glc .quest-card, html.skin-glc .dungeon-card { transition: transform .15s var(--ease-bounce, ease), box-shadow .15s ease; }
+html.skin-glc .char-card:hover, html.skin-glc .quest-card:hover, html.skin-glc .dungeon-card:hover {
   transform: translate(-2px, -2px);
   box-shadow: 3px 3px 0 var(--text);
 }
 
 /* rank & recommend cards — softer pop */
-html.skin-gsc .gp-rank-card, html.skin-gsc .exp-recommend-card { transition: transform .15s var(--ease-bounce, ease), box-shadow .15s ease; }
-html.skin-gsc .gp-rank-card:hover, html.skin-gsc .exp-recommend-card:hover {
+html.skin-glc .gp-rank-card, html.skin-glc .exp-recommend-card { transition: transform .15s var(--ease-bounce, ease), box-shadow .15s ease; }
+html.skin-glc .gp-rank-card:hover, html.skin-glc .exp-recommend-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 10px 22px rgba(89,60,60,.13);
 }
 
 /* wide rows — gentle warm-tint nudge */
-html.skin-gsc .abyss-matrix-row, html.skin-gsc .sanctuary-row { transition: background .15s, transform .14s var(--ease-bounce, ease); }
-html.skin-gsc .abyss-matrix-row:hover, html.skin-gsc .sanctuary-row:hover { background: var(--hover); transform: translateX(2px); }
+html.skin-glc .abyss-matrix-row, html.skin-glc .sanctuary-row { transition: background .15s, transform .14s var(--ease-bounce, ease); }
+html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { background: var(--hover); transform: translateX(2px); }
 
-/* skin toggle button — active (GSC on) state, shown in both skins */
+/* skin toggle button — active (GLC on) state, shown in both skins */
 .skin-toggle-btn.on { background: var(--sage); color: #fff; border-color: var(--sage); }
 </style>
 </head>
@@ -10795,9 +10795,9 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&family=Pixelify+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script>
   /* calc popup follows the main app's skin (shared localStorage, same origin) */
-  try{ if (localStorage.getItem('chunyang-skin') !== 'off') document.documentElement.classList.add('skin-gsc'); }catch(e){}
+  try{ if (localStorage.getItem('chunyang-skin') !== 'off') document.documentElement.classList.add('skin-glc'); }catch(e){}
   window.addEventListener('storage', function(e){
-    if (e.key === 'chunyang-skin') document.documentElement.classList.toggle('skin-gsc', e.newValue !== 'off');
+    if (e.key === 'chunyang-skin') document.documentElement.classList.toggle('skin-glc', e.newValue !== 'off');
   });
 </script>
 <style>
@@ -10827,8 +10827,8 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
     --font-head: 'Jua', 'Gowun Dodum', sans-serif;
     --font-pixel: 'Pixelify Sans', monospace;
   }
-  /* GSC skin for the calc popup */
-  html.skin-gsc {
+  /* GLC skin for the calc popup */
+  html.skin-glc {
     --bg: #F5F4F1;
     --surface: #FFFFFF;
     --surface2: #F0EBE2;
@@ -10849,7 +10849,7 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
     --radius-sm: 14px;
     --radius-xs: 9px;
   }
-  html.skin-gsc .calc-title { font-family: var(--font-head); letter-spacing: 0.01em; }
+  html.skin-glc .calc-title { font-family: var(--font-head); letter-spacing: 0.01em; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
     height: 100%;
