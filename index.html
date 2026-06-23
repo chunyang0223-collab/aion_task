@@ -64,6 +64,7 @@
   --color-owner-설냥: #5a8a42;  /* fallback — DB 로딩 후 덮어씀 */
   --color-owner-츄츄: #b06040;  /* fallback — DB 로딩 후 덮어씀 */
   --shadow-inset: inset 0 1px 2px rgba(160,150,140,0.05);
+  --fav-bg: #f9eccf;   /* 즐겨찾기 캐릭 카드 배경 (기본 스킨) — 버터 */
 }
 
 /* ══ GLC (glcpatti) skin — token overrides, active when <html class="skin-glc"> ══ */
@@ -99,6 +100,7 @@ html.skin-glc {
   --color-owner-설냥: #5AAE6A;
   --color-owner-츄츄: #E0772F;
   --shadow-inset: inset 0 1px 2px rgba(89,60,60,0.06);
+  --fav-bg: #FBD9EC;   /* 즐겨찾기 캐릭 카드 배경 (GLC 스킨) — 핑크 */
 }
 
 /* ══════════ GLC skin — typographic overrides ══════════ */
@@ -365,6 +367,23 @@ body.guest-mode .odd-batch-btn { display: none; }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ── 즐겨찾기 하트 ── */
+.char-fav-heart {
+  display: inline-block;
+  cursor: pointer;
+  font-size: 0.78rem;
+  line-height: 1;
+  margin-right: 3px;
+  -webkit-user-select: none; user-select: none;
+  transition: transform 0.12s ease;
+}
+.char-fav-heart:hover { transform: scale(1.25); }
+.char-fav-heart:active { transform: scale(0.85); }
+.char-mini.fav {
+  background: var(--fav-bg);
+  border-color: color-mix(in srgb, var(--fav-bg) 65%, var(--text-sub));
 }
 
 .char-mini-ilvl {
@@ -4872,7 +4891,7 @@ function renderOverview() {
         const pct = isResting ? 0 : calcCompletionPct(char, dt, wt);
         const barHtml = isResting ? '' : `<div class="char-mini-bar" style="width:${pct}%"></div>`;
         const restBadge = isResting ? `<div class="char-mini-resting-badge">휴식</div>` : '';
-        html += `<div class="char-mini ${isResting ? 'resting' : ''}"
+        html += `<div class="char-mini ${isResting ? 'resting' : ''} ${isFav(char.id) ? 'fav' : ''}"
           draggable="true"
           data-char-id="${char.id}" data-owner="${owner}" data-slot="${slot}"
           ondragstart="dragStart(event, '${char.id}', '${owner}', ${slot})"
@@ -4883,7 +4902,7 @@ function renderOverview() {
           ${restBadge}
           <div class="char-mini-body">
             <div class="char-mini-main">
-              <div class="char-mini-name">${char.name || '(이름없음)'} <span style="color:var(--text-sub);font-size:0.72rem;font-weight:400">(${char.item_level||0} / ${formatCp(char.combat_power||0)})</span></div>
+              <div class="char-mini-name"><span class="char-fav-heart" onclick="toggleFav(event,'${char.id}')" title="즐겨찾기">${isFav(char.id) ? '🧡' : '🤍'}</span>${char.name || '(이름없음)'} <span style="color:var(--text-sub);font-size:0.72rem;font-weight:400">(${char.item_level||0} / ${formatCp(char.combat_power||0)})</span></div>
               <div class="char-mini-ilvl">${char.odd_energy_base||0} / 840 <span style="color:var(--text-sub)">+${char.odd_energy_charged||0}</span></div>
               ${timerHtml}
             </div>
@@ -9537,6 +9556,23 @@ function renderSupplyQuestPanel(slots) {
 
   html += `</div></div></div>`;
   return html;
+}
+
+// ── 캐릭터 즐겨찾기 (메인 캐릭카드 하트) ───────────────────────────
+const FAV_KEY = 'chunyang-fav-chars';
+let _favChars = new Set();
+try { _favChars = new Set(JSON.parse(localStorage.getItem(FAV_KEY) || '[]')); } catch (e) {}
+function isFav(id) { return _favChars.has(String(id)); }
+function toggleFav(ev, id) {
+  ev.stopPropagation();
+  id = String(id);
+  if (_favChars.has(id)) _favChars.delete(id); else _favChars.add(id);
+  try { localStorage.setItem(FAV_KEY, JSON.stringify([..._favChars])); } catch (e) {}
+  const on = _favChars.has(id);
+  const heart = ev.currentTarget;
+  const card = heart.closest('.char-mini');
+  if (card) card.classList.toggle('fav', on);
+  heart.textContent = on ? '🧡' : '🤍';
 }
 
 // ── 캐릭별 체크 영역 ───────────────────────────────────────────────
