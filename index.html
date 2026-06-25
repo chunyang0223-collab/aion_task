@@ -1076,6 +1076,106 @@ body.guest-mode .odd-batch-btn { display: none; }
 #acc-modal .num-val-input { flex: 1; min-width: 0; width: auto; font-size: 0.78rem; }
 #acc-modal .num-input-wrap { width: 100%; justify-content: center; }
 
+/* ── 계정 모달 v2 — 정돈된 레이아웃 ── */
+#acc-modal .am-body { display: flex; flex-direction: column; gap: 10px; }
+#acc-modal .am-sec { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 13px 14px; }
+#acc-modal .am-sec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#acc-modal .am-sec-toggle { cursor: pointer; user-select: none; }
+#acc-modal .am-sec-title { font-size: 0.83rem; color: var(--text); }
+#acc-modal .am-sec-title small { font-size: 0.67rem; color: var(--text-sub); margin-left: 5px; }
+#acc-modal .am-sec-toggle:hover .am-sec-title { color: var(--sage); }
+#acc-modal .am-chev { font-size: 0.62rem; color: var(--text-sub); transition: transform 0.2s ease; flex: none; }
+#acc-modal .am-body-inner { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+#acc-modal .am-warn { margin-top: 8px; font-size: 0.7rem; color: #b85050; }
+
+/* 스탯 스트립 */
+#acc-modal .am-stats { display: grid; gap: 10px; margin-top: 12px; }
+#acc-modal .am-stat { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+#acc-modal .am-stat-label { font-size: 0.7rem; color: var(--text-sub); }
+#acc-modal .am-stat-ctrl { display: flex; align-items: center; gap: 5px; height: 26px; }
+#acc-modal .am-stat-val { font-size: 1.05rem; color: var(--text); font-feature-settings: 'tnum'; height: 26px; display: flex; align-items: center; }
+
+/* 컴팩트 스테퍼 */
+#acc-modal .am-step { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: var(--radius-xs); overflow: hidden; background: var(--surface); }
+#acc-modal .am-step-btn { width: 22px; height: 26px; border: none; background: transparent; color: var(--text-sub); font-size: 0.95rem; line-height: 1; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; transition: background 0.12s, color 0.12s; }
+#acc-modal .am-step-btn:hover { background: var(--hover); color: var(--text); }
+#acc-modal .am-step-input { width: 30px; height: 26px; border: none; border-left: 1px solid var(--border); border-right: 1px solid var(--border); background: transparent; text-align: center; font-family: inherit; font-size: 0.82rem; color: var(--text); padding: 0; -moz-appearance: textfield; }
+#acc-modal .am-step-input::-webkit-outer-spin-button, #acc-modal .am-step-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+#acc-modal .am-step-input:focus { outline: none; background: var(--hover); }
+#acc-modal .am-unit { font-size: 0.7rem; color: var(--text-sub); white-space: nowrap; }
+
+/* 캐릭 행 (공통) */
+#acc-modal .am-rows { display: flex; flex-direction: column; gap: 8px; }
+#acc-modal .am-row, #acc-modal .am-colhead-row { display: grid; align-items: center; gap: 10px; }
+#acc-modal .am-row-name { font-size: 0.78rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+#acc-modal .am-colhead { font-size: 0.66rem; color: var(--text-sub); text-align: center; }
+#acc-modal .am-acc-row { background: var(--surface); border-radius: var(--radius-xs); padding: 7px 9px; }
+#acc-modal .am-subdiv { border-top: 1px dashed var(--border); margin: 9px 0; }
+
+/* 일일던전 2-스테퍼 행 */
+#acc-modal .am-dk { grid-template-columns: minmax(0,1fr) 86px 86px; }
+#acc-modal .am-dk .am-step { margin: 0 auto; }
+
+/* 슬라이더 행 (물질변환 / 상점) */
+#acc-modal .am-sl { grid-template-columns: minmax(0,1fr) 1fr 38px; }
+#acc-modal .am-sl .tm-slider { width: auto; height: 16px; flex: 1 1 auto; }
+#acc-modal .am-sl .tm-track { height: 6px; }
+#acc-modal .am-sl .tm-knob { width: 13px; height: 13px; }
+#acc-modal .am-sl .tm-num-sm { min-width: 0; text-align: right; }
+
+/* 지령서 토글 행 */
+#acc-modal .am-ord { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#acc-modal .am-ord-label { font-size: 0.8rem; color: var(--text); }
+
+/* 공통: 이름 + 점 */
+#acc-modal .am-nmwrap { display: flex; align-items: center; gap: 8px; min-width: 0; }
+#acc-modal .am-odot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
+/* 일일던전 A — 줄무늬 테이블 */
+#acc-modal .am-dk-tbl { border: 1px solid var(--border); border-radius: var(--radius-xs); overflow: hidden; }
+#acc-modal .am-dk-head { display: grid; grid-template-columns: minmax(0,1fr) 84px 84px; gap: 8px; padding: 6px 10px; background: var(--surface); border-bottom: 1px solid var(--border); }
+#acc-modal .am-dk-head span { font-size: 0.66rem; color: var(--text-sub); text-align: center; }
+#acc-modal .am-dk-head span:first-child { text-align: left; }
+#acc-modal .am-dk-row { display: grid; grid-template-columns: minmax(0,1fr) 84px 84px; gap: 8px; align-items: center; padding: 6px 10px; }
+#acc-modal .am-dk-body .am-dk-row:nth-child(odd) { background: var(--surface2); }
+#acc-modal .am-dk-body .am-dk-row:nth-child(even) { background: var(--surface); }
+#acc-modal .am-dk-row .am-step { margin: 0 auto; }
+
+/* 물질변환 / 상점 D — 컬러 네임셀 장부 */
+#acc-modal .am-ledger { border: 1px solid var(--border); border-radius: var(--radius-xs); overflow: hidden; }
+#acc-modal .am-ledger-head { display: grid; background: var(--surface); }
+#acc-modal .am-ledger-head span { padding: 6px 10px; font-size: 0.66rem; color: var(--text-sub); text-align: center; }
+#acc-modal .am-ledger-head span:first-child { text-align: left; }
+#acc-modal .am-ledger-row { display: grid; align-items: stretch; border-top: 1px solid var(--border); }
+#acc-modal .am-ledger-row .am-nmcell { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--surface2); min-width: 0; }
+#acc-modal .am-ledger-row .am-cc { display: flex; align-items: center; justify-content: center; padding: 6px 9px; background: var(--surface); border-left: 1px solid var(--border); }
+
+/* 모달 내 슬라이더 정규화 (A/D 공통) */
+#acc-modal .tm-slider { width: auto; height: 16px; flex: 1 1 auto; }
+#acc-modal .tm-track { height: 6px; }
+#acc-modal .tm-knob { width: 13px; height: 13px; }
+#acc-modal .tm-num-sm { min-width: 0; text-align: right; }
+
+/* 슈고열쇠 — 게이지 (기본 14 / 충전 30) */
+#acc-modal .am-sk { display: flex; flex-direction: column; gap: 13px; margin-top: 13px; }
+#acc-modal .am-sk-row { display: flex; flex-direction: column; gap: 8px; }
+#acc-modal .am-sk-top { display: flex; align-items: center; gap: 8px; }
+#acc-modal .am-sk-label { font-size: 0.8rem; color: var(--text); display: flex; align-items: center; gap: 7px; }
+#acc-modal .am-sk-label i { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+#acc-modal .am-sk-count { font-size: 0.74rem; color: var(--text-sub); font-feature-settings: 'tnum'; white-space: nowrap; }
+#acc-modal .am-sk-count b { color: var(--text); font-weight: 400; font-size: 0.95rem; }
+#acc-modal .am-sk-top .am-step { margin-left: auto; }
+#acc-modal .am-sk-bar { height: 9px; border-radius: 999px; background: #ece4d7; overflow: hidden; }
+#acc-modal .am-sk-fill { height: 100%; border-radius: 999px; transition: width 0.25s ease; }
+#acc-modal .am-sk-fill.base { background: var(--sage); }
+#acc-modal .am-sk-fill.charge { background: var(--sky); }
+/* 슈고 슬라이더 행 (드래그/클릭 + −/+ 둘 다) */
+#acc-modal .am-sk-row2 { display: grid; grid-template-columns: auto 1fr auto auto; gap: 10px; align-items: center; }
+#acc-modal .am-sk-row2 .am-sk-label { font-size: 0.8rem; }
+#acc-modal .am-sk-row2 .tm-num-sm { min-width: 0; text-align: right; white-space: nowrap; }
+#acc-modal .am-step-pm .am-step-btn + .am-step-btn { border-left: 1px solid var(--border); }
+#acc-modal .tm-slider[data-kind="shugo_charge"] .tm-fill { background: var(--sky); }
+
 /* 일일던전 드롭다운 헤더 — hover 시 살짝 강조 (레이아웃 유지) */
 .dungeon-toggle-row {
   border-radius: var(--radius-xs);
@@ -1634,6 +1734,634 @@ html.skin-glc .alarm-row.on { background: #FBF2F6; border-color: #ecd2d2; }
   font-feature-settings: 'tnum';
   white-space: nowrap;
 }
+
+/* ── 메뉴 설정 (⚙️) v1.6.92 ── */
+.settings-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.12s;
+}
+.settings-trigger:hover {
+  background: var(--hover);
+  color: var(--text);
+  border-color: var(--text-sub);
+  transform: translateY(-1px);
+}
+.settings-trigger:active { transform: scale(0.94); }
+.settings-trigger[aria-expanded="true"] {
+  background: var(--hover);
+  border-color: var(--text-sub);
+}
+.settings-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  padding: 12px 14px;
+  min-width: 224px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+  z-index: 120;
+}
+.settings-popover.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.settings-popover-title {
+  font-size: 0.74rem;
+  color: var(--text-sub);
+  margin: 0 2px 8px;
+}
+.settings-popover-hint {
+  font-size: 0.64rem;
+  color: var(--text-sub);
+  margin: 8px 2px 0;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 2px;
+}
+.settings-row + .settings-row {
+  border-top: 1px dashed var(--border);
+}
+.settings-row-label {
+  font-size: 0.82rem;
+  color: var(--text);
+}
+.menu-toggle {
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.18s, border-color 0.18s;
+}
+.menu-toggle.on {
+  background: var(--sage);
+  border-color: var(--sage);
+}
+.menu-toggle-knob {
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(120,110,100,0.25);
+  transition: left 0.18s ease;
+}
+.menu-toggle.on .menu-toggle-knob { left: 18px; }
+
+/* ════════════ 시즌 페이지 v1.6.92 ════════════ */
+.season-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+.season-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.season-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.season-card:not(.collapsed) .season-card-head {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+.season-card-chev {
+  flex: none;
+  font-size: 0.7rem;
+  color: var(--text-sub);
+  transition: transform 0.2s ease;
+}
+.season-card:not(.collapsed) .season-card-chev { transform: rotate(90deg); }
+.season-card-body { display: flex; flex-direction: column; gap: 14px; }
+.season-card.collapsed .season-card-body { display: none; }
+.season-card-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--sage);
+  transition: width 0.3s;
+}
+.season-card-name { font-size: 0.95rem; color: var(--text); }
+.season-card-head-static { cursor: default; }
+.season-detail .season-card-name { font-size: 1.1rem; }
+.season-card-meta { font-size: 0.72rem; color: var(--text-sub); margin-left: auto; }
+.season-sec { display: flex; flex-direction: column; gap: 9px; }
+.season-sec-title {
+  font-size: 0.95rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.01em;
+}
+.season-sec-title::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--sage);
+  display: inline-block;
+  flex: none;
+}
+/* 하위 행: 큰 메뉴 아래 작은 항목 — 한 단 들여쓰고 작게 */
+.season-sec > .season-row,
+.season-sec > .season-orb-summary { margin-left: 12px; }
+.season-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.season-row-label { font-size: 0.8rem; color: var(--text-sub); }
+
+/* 스테퍼 (− 0 +) */
+.season-stepper { display: inline-flex; align-items: center; flex: none; }
+.season-stepper button {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-sub);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.season-stepper button:first-child { border-radius: var(--radius-xs) 0 0 var(--radius-xs); }
+.season-stepper button:last-child { border-radius: 0 var(--radius-xs) var(--radius-xs) 0; }
+.season-stepper button:hover { background: var(--hover); color: var(--text); }
+.season-stepper .season-stepper-val {
+  width: 44px;
+  height: 26px;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: none;
+  border-right: none;
+  font-family: 'Gowun Dodum', sans-serif;
+  font-feature-settings: 'tnum';
+  padding: 0;
+  box-sizing: border-box;
+  -moz-appearance: textfield;
+}
+.season-stepper .season-stepper-val:focus { outline: none; background: var(--hover); }
+
+/* 오드 요약 */
+.season-orb-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  padding: 11px 12px;
+}
+.season-sec-total {
+  margin-left: auto;
+  flex: none;
+  white-space: nowrap;
+  font-size: 0.74rem;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-feature-settings: 'tnum';
+}
+.season-orb-note {
+  font-size: 0.68rem;
+  color: var(--text-sub);
+  margin-bottom: 1px;
+}
+.season-orb-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+}
+.season-orb-line .k { color: var(--text-sub); }
+.season-orb-line .v { color: var(--text); font-feature-settings: 'tnum'; }
+.season-orb-line-sum {
+  border-top: 1px dashed var(--border);
+  padding-top: 5px;
+  margin-top: 1px;
+}
+.season-orb-line-sum .k { color: var(--text); }
+.season-orb-line-sum .v { font-size: 0.86rem; }
+.season-orb-status {
+  margin-top: 3px;
+  padding: 7px 10px;
+  border-radius: var(--radius-xs);
+  font-size: 0.78rem;
+  text-align: center;
+  background: var(--surface);
+}
+.season-orb-status.warn { color: #9a5a3a; border: 1px solid var(--peach); }
+.season-orb-status.done { color: var(--sage); border: 1px solid var(--sage); }
+.season-orb-run { display: inline-flex; align-items: center; gap: 8px; }
+.season-orb-run-of { font-size: 0.72rem; color: var(--text-sub); white-space: nowrap; font-feature-settings: 'tnum'; }
+.season-orb-line .v.orb-alldone { color: var(--sage); }
+.season-subsec-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+}
+.season-orb-stat { display: flex; flex-direction: column; gap: 1px; }
+.season-orb-stat .v { font-size: 0.92rem; color: var(--text); font-feature-settings: 'tnum'; }
+.season-orb-stat .k { font-size: 0.64rem; color: var(--text-sub); }
+.season-orb-stat.warn .v { color: var(--peach); }
+.season-orb-stat.done .v { color: var(--sage); }
+
+/* 계획 리스트 (원정/초월) */
+.season-plan-item {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 9px;
+  padding: 10px 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.season-plan-item.done { border-color: var(--sage); background: var(--sage-light); }
+.season-plan-top { display: flex; align-items: center; gap: 8px; }
+.season-plan-allcheck {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  flex: none;
+  font-size: 0.74rem;
+  color: var(--text-sub);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.season-plan-item.done .season-plan-allcheck { color: var(--sage); }
+.season-plan-allcheck input { width: 15px; height: 15px; accent-color: var(--sage); cursor: pointer; }
+.season-plan-ctrl { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding-left: 2px; }
+.season-plan-cg { display: flex; align-items: center; gap: 7px; }
+.season-plan-cg-label { font-size: 0.72rem; color: var(--text-sub); flex: none; }
+.season-plan-of { font-size: 0.72rem; color: var(--text-sub); font-feature-settings: 'tnum'; }
+.season-plan-name {
+  font-size: 0.8rem;
+  color: var(--text);
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.season-badge {
+  flex: none;
+  font-size: 0.66rem;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--surface2);
+  color: var(--text-sub);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.season-badge.explo { background: var(--sky-light); color: #3d6a82; border-color: transparent; }
+.season-badge.normal { background: var(--surface2); color: var(--text); }
+.season-badge.hard { background: var(--surface2); color: #9a5a3a; border-color: var(--peach); }
+.season-badge.tier { background: var(--lavender-light); color: #5b4e85; border-color: transparent; }
+.season-plan-del {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-sub);
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.season-plan-del:hover { background: var(--hover); color: var(--text); }
+.season-empty-hint { font-size: 0.72rem; color: var(--text-sub); padding: 2px 2px; }
+
+/* 추가 행 (select + 옵션 버튼) */
+.season-add { display: flex; flex-direction: column; gap: 8px; }
+.season-add-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.season-select {
+  flex: 1 1 auto;
+  min-width: 120px;
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 0.78rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 6px 8px;
+  cursor: pointer;
+}
+.season-select:focus { outline: none; border-color: var(--sage); }
+.season-opt-btn {
+  flex: none;
+  white-space: nowrap;
+  padding: 6px 10px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-sub);
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 0.74rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.season-opt-btn:hover { background: var(--sage); color: #fff; border-color: var(--sage); }
+
+/* 상점 체크 */
+.season-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text);
+}
+.season-check input { width: 16px; height: 16px; accent-color: var(--sage); cursor: pointer; }
+.season-note-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 0.76rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 6px 8px;
+  margin-top: 6px;
+}
+.season-note-input:focus { outline: none; border-color: var(--sage); }
+.season-note-input::placeholder { color: var(--text-sub); }
+.season-card.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-sub);
+  font-size: 0.8rem;
+  min-height: 80px;
+  border-style: dashed;
+}
+
+/* ════════════ 시즌 마스터-디테일 레이아웃 v1.7 ════════════ */
+.season-layout {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+/* 왼쪽 — 계정/캐릭터 목록 */
+.season-sidebar {
+  flex: none;
+  width: 252px;
+  position: sticky;
+  top: 64px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-right: 2px;
+}
+.season-owner-group { display: flex; flex-direction: column; gap: 7px; }
+.season-owner-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 4px;
+  font-size: 0.86rem;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  border-radius: var(--radius-xs);
+  transition: background 0.15s;
+}
+.season-owner-head:hover { background: var(--hover); }
+.season-owner-chev {
+  flex: none;
+  font-size: 0.66rem;
+  color: var(--text-sub);
+  transition: transform 0.2s ease;
+}
+.season-owner-group:not(.collapsed) .season-owner-chev { transform: rotate(90deg); }
+.season-owner-group.collapsed .season-list { display: none; }
+.season-owner-head .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.season-owner-group[data-owner="설냥"] .dot { background: var(--color-owner-설냥); }
+.season-owner-group[data-owner="츄츄"] .dot { background: var(--color-owner-츄츄); }
+.season-owner-count { margin-left: auto; font-size: 0.68rem; color: var(--text-sub); }
+.season-list { display: flex; flex-direction: column; gap: 6px; }
+.season-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.season-list-item:hover { background: var(--hover); }
+.season-list-item.active {
+  border-color: var(--sage);
+  background: var(--surface2);
+  box-shadow: inset 3px 0 0 var(--sage), var(--shadow-sm);
+}
+.season-list-top { display: flex; align-items: center; gap: 8px; }
+.season-list-name {
+  font-size: 0.85rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.season-list-item.active .season-list-name { color: var(--sage); }
+.season-list-pct {
+  margin-left: auto;
+  flex: none;
+  font-size: 0.66rem;
+  color: var(--text-sub);
+  font-feature-settings: 'tnum';
+}
+.season-list-item.done .season-list-pct { color: var(--sage); }
+.season-list-barwrap {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.season-list-item.active .season-list-barwrap { background: var(--surface); }
+.season-list-bar {
+  height: 100%;
+  background: var(--sage);
+  border-radius: 3px 0 0 3px;
+  transition: width 0.3s ease;
+}
+.season-list-empty {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  padding: 6px 4px;
+  font-style: normal;
+}
+/* 오른쪽 — 선택 캐릭터 카드 */
+.season-detail { flex: 1 1 auto; min-width: 0; }
+.season-detail .season-card { width: 100%; max-width: 520px; }
+.season-detail-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 240px;
+  color: var(--text-sub);
+  font-size: 0.85rem;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+@media (max-width: 720px) {
+  .season-layout { flex-direction: column; }
+  .season-sidebar {
+    width: 100%;
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+  .season-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .season-detail { width: 100%; }
+  .season-detail .season-card { max-width: none; }
+}
+
+/* 시즌 하위 섹션 (접이식) */
+.season-subsec {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.season-subsec-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  cursor: pointer;
+  user-select: none;
+  background: var(--surface2);
+  transition: background 0.15s;
+}
+.season-subsec-head:hover { background: var(--hover); }
+.season-subsec-chev {
+  flex: none;
+  font-size: 0.7rem;
+  color: var(--text-sub);
+  transition: transform 0.2s ease;
+}
+.season-subsec.open .season-subsec-chev { transform: rotate(90deg); }
+.season-subsec-title {
+  font-size: 0.95rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.01em;
+}
+.season-subsec-title::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--sage);
+  display: inline-block;
+  flex: none;
+}
+.season-subsec-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.season-subsec-sum {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  font-feature-settings: 'tnum';
+}
+.season-subsec.done .season-subsec-sum { color: var(--sage); }
+.season-subsec-check {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.74rem;
+  color: var(--text-sub);
+  cursor: pointer;
+}
+.season-subsec-check input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--sage);
+  cursor: pointer;
+}
+.season-subsec-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px 14px;
+}
+.season-subsec-body .season-row-label { font-size: 0.8rem; color: var(--text-sub); }
+.season-subsec:not(.open) .season-subsec-body { display: none; }
+
 
 /* add char form */
 .add-char-form {
@@ -4176,6 +4904,7 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
     <button class="tab-pill" id="tab-expedition" onclick="showPage('expedition-page')">원정</button>
     <button class="tab-pill" id="tab-supply" onclick="showPage('supply-page')">보급</button>
     <button class="tab-pill" id="tab-growth" onclick="showPage('growth-page')">성장</button>
+    <button class="tab-pill" id="tab-season" onclick="showPage('season-page')">시즌</button>
     <button class="tab-pill" id="tab-log" onclick="showPage('log-page')">로그</button>
   </div>
   <div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;gap:2px;position:relative">
@@ -4185,6 +4914,7 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
       <button id="reset-trigger" class="reset-trigger" aria-expanded="false" aria-controls="reset-popover" onclick="toggleResetInfo(event)" title="리셋 시각">
         리셋 정보 <span class="chev">▾</span>
       </button>
+      <button id="settings-trigger" class="settings-trigger" aria-expanded="false" aria-controls="settings-popover" onclick="toggleSettings(event)" title="메뉴 설정" aria-label="메뉴 설정">⚙️</button>
       <button id="logout-btn" onclick="logout()" style="
         display:none;padding:3px 10px;border-radius:20px;border:1px solid var(--border);
         background:transparent;color:var(--text-sub);font-size:0.72rem;
@@ -4204,6 +4934,11 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
         <span class="reset-popover-label">마지막 주간 리셋</span>
         <span class="reset-popover-value" id="reset-weekly-value">—</span>
       </div>
+    </div>
+    <div id="settings-popover" class="settings-popover" role="region" aria-label="메뉴 설정">
+      <div class="settings-popover-title">메뉴 표시 설정</div>
+      <div id="settings-menu-list"></div>
+      <div class="settings-popover-hint">이 기기에만 저장돼요</div>
     </div>
   </div>
 </div>
@@ -4494,6 +5229,15 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
   </div>
 </div>
 
+<!-- ── 시즌 페이지 (v1.6.92) ── -->
+<div id="season-page" class="page">
+  <div id="season-content">
+    <div class="card" style="text-align:center;color:var(--text-sub);font-size:0.85rem;padding:36px 16px">
+      시즌 메뉴 — 내용은 곧 추가됩니다.
+    </div>
+  </div>
+</div>
+
 <!-- ── 로그 페이지 ── -->
 <div id="log-page" class="page">
   <div id="log-content">
@@ -4768,6 +5512,692 @@ document.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeResetInfo();
 });
+
+/* ════════════ 메뉴 표시/숨김 설정 (로컬 저장, 사용자별) v1.6.92 ════════════ */
+const MENU_DEFS = [
+  { key: 'overview',   tab: 'tab-overview',   page: 'overview',        label: '전체' },
+  { key: 'sanctuary',  tab: 'tab-sanctuary',  page: 'sanctuary-page',  label: '성역' },
+  { key: 'expedition', tab: 'tab-expedition', page: 'expedition-page', label: '원정' },
+  { key: 'supply',     tab: 'tab-supply',     page: 'supply-page',     label: '보급' },
+  { key: 'growth',     tab: 'tab-growth',     page: 'growth-page',     label: '성장' },
+  { key: 'season',     tab: 'tab-season',     page: 'season-page',     label: '시즌' },
+  { key: 'log',        tab: 'tab-log',        page: 'log-page',        label: '로그' },
+];
+const MENU_STORE_KEY = 'aion2_menu_hidden';
+
+function _menuActorKey() {
+  return (typeof currentActor !== 'undefined' && currentActor) ? currentActor : 'guest';
+}
+function getHiddenMenus() {
+  let all = {};
+  try { all = JSON.parse(localStorage.getItem(MENU_STORE_KEY) || '{}'); } catch (e) {}
+  return new Set(all[_menuActorKey()] || []);
+}
+function setHiddenMenus(set) {
+  let all = {};
+  try { all = JSON.parse(localStorage.getItem(MENU_STORE_KEY) || '{}'); } catch (e) {}
+  all[_menuActorKey()] = [...set];
+  try { localStorage.setItem(MENU_STORE_KEY, JSON.stringify(all)); } catch (e) {}
+}
+function applyMenuVisibility() {
+  const hidden = getHiddenMenus();
+  MENU_DEFS.forEach(m => {
+    const el = document.getElementById(m.tab);
+    if (el) el.style.display = hidden.has(m.key) ? 'none' : '';
+  });
+  // 현재 활성 탭이 숨겨졌다면 첫 보이는 메뉴로 이동
+  const activeHidden = MENU_DEFS.find(m =>
+    hidden.has(m.key) && document.getElementById(m.tab) &&
+    document.getElementById(m.tab).classList.contains('active'));
+  if (activeHidden) {
+    const firstVisible = MENU_DEFS.find(m => !hidden.has(m.key));
+    if (firstVisible) showPage(firstVisible.page);
+  }
+}
+function buildSettingsList() {
+  const hidden = getHiddenMenus();
+  const list = document.getElementById('settings-menu-list');
+  if (!list) return;
+  list.innerHTML = MENU_DEFS.map(m => {
+    const on = !hidden.has(m.key);
+    return '<div class="settings-row">' +
+      '<span class="settings-row-label">' + m.label + '</span>' +
+      '<button type="button" class="menu-toggle' + (on ? ' on' : '') + '" role="switch" ' +
+      'aria-checked="' + (on ? 'true' : 'false') + '" aria-label="' + m.label + ' 메뉴 표시" ' +
+      'onclick="toggleMenu(event, this, \'' + m.key + '\')"><span class="menu-toggle-knob"></span></button>' +
+      '</div>';
+  }).join('');
+}
+function toggleMenu(e, btn, key) {
+  if (e) e.stopPropagation();   // 팝오버가 닫히지 않도록 버블링 차단
+  const hidden = getHiddenMenus();
+  if (hidden.has(key)) {
+    hidden.delete(key);
+  } else {
+    const visibleCount = MENU_DEFS.filter(m => !hidden.has(m.key)).length;
+    if (visibleCount <= 1) { showToast('메뉴는 최소 한 개는 남겨두세요'); return; }
+    hidden.add(key);
+  }
+  setHiddenMenus(hidden);
+  applyMenuVisibility();
+  // 전체 목록을 다시 그리지 않고 해당 토글만 갱신 → 클릭 대상이 DOM에 유지됨
+  const on = !hidden.has(key);
+  if (btn) {
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-checked', on ? 'true' : 'false');
+  }
+}
+function toggleSettings(e) {
+  if (e) e.stopPropagation();
+  if (typeof closeResetInfo === 'function') closeResetInfo();
+  const trig = document.getElementById('settings-trigger');
+  const pop = document.getElementById('settings-popover');
+  if (!trig || !pop) return;
+  if (pop.classList.contains('open')) {
+    pop.classList.remove('open');
+    trig.setAttribute('aria-expanded', 'false');
+  } else {
+    buildSettingsList();
+    pop.classList.add('open');
+    trig.setAttribute('aria-expanded', 'true');
+  }
+}
+function closeSettings() {
+  const trig = document.getElementById('settings-trigger');
+  const pop = document.getElementById('settings-popover');
+  if (pop) pop.classList.remove('open');
+  if (trig) trig.setAttribute('aria-expanded', 'false');
+}
+document.addEventListener('click', (e) => {
+  const pop = document.getElementById('settings-popover');
+  const trig = document.getElementById('settings-trigger');
+  if (!pop || !trig) return;
+  if (!pop.classList.contains('open')) return;
+  if (pop.contains(e.target) || trig.contains(e.target)) return;
+  closeSettings();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeSettings();
+});
+// 리셋 정보 열릴 때 설정 팝오버 닫기
+(function () {
+  const _origToggleReset = window.toggleResetInfo;
+  if (typeof _origToggleReset === 'function') {
+    window.toggleResetInfo = function (e) {
+      closeSettings();
+      return _origToggleReset.call(this, e);
+    };
+  }
+})();
+// 초기 적용
+document.addEventListener('DOMContentLoaded', function () {
+  try { applyMenuVisibility(); } catch (e) { console.error('[메뉴설정]', e); }
+});
+try { applyMenuVisibility(); } catch (e) {}
+
+/* ════════════════ 시즌 페이지 (로컬 저장, 캐릭터별) v1.6.92 ════════════════ */
+const SEASON_STORE_KEY = 'aion2_season';
+const TRANS_DUNGEONS = ['데우스', '아르카니스', '가라앉은 생명의 신전', '붉은 연심의 거울'];
+const EXP_MODE_LABEL = { explo: '탐험', normal: '보통', hard: '어려움' };
+const SEASON_ODD_PER_RUN = 80;   // 모든 던전 1판 = 80 오드 소모
+const _seasonExpanded = new Set();   // 펼쳐진 카드 id (기본은 모두 접힘)
+const _seasonSecExpanded = new Set(); // 펼쳐진 하위 섹션 'cid:key'
+const _seasonSeeded = new Set();      // 카드 최초 렌더 시 지령서/일일던전 기본 펼침 처리한 cid
+const _seasonOwnerCollapsed = { '설냥': false, '츄츄': false };  // 계정 목록 접힘
+let _seasonSelected = null;          // 마스터-디테일: 선택된 캐릭터 id
+
+/* ── 시즌 완료율 (목록 바) — 오드소모 / 지령서 / 일일던전 / 상점 4덩어리(각 25%).
+      오드소모는 '완료/계획' 판수 비율로 0→25% 사이를 연속 채움 (계획만으로는 안 오름) ── */
+function seasonProgress(char) {
+  const d = seasonGet(char.id);
+  const totalOdd = 40 * d.o40 + 10 * d.o10;
+  let baseOdd = 0;
+  try { baseOdd = Math.max(0, Math.round((typeof expCurrentOdd === 'function') ? expCurrentOdd(char) : (char.odd_energy_base || 0))); }
+  catch (e) { baseOdd = char.odd_energy_base || 0; }
+  const combinedOdd = baseOdd + totalOdd;
+  const planRuns = d.exped.reduce((s, r) => s + (r.c || 0), 0) + d.trans.reduce((s, r) => s + (r.c || 0), 0);
+  const doneRuns = d.exped.reduce((s, r) => s + Math.min(r.done || 0, r.c || 0), 0) + d.trans.reduce((s, r) => s + Math.min(r.done || 0, r.c || 0), 0);
+  // 계획이 있으면 완료/계획 비율, 계획이 없으면 태울 오드가 없을 때만 완료(1)
+  const orbFrac = planRuns > 0 ? doneRuns / planRuns : (combinedOdd <= 0 ? 1 : 0);
+  const shopDone = d.shopSeason && d.shopPass;
+  const parts = orbFrac + (d.cmdDone ? 1 : 0) + (d.dailyDone ? 1 : 0) + (shopDone ? 1 : 0);
+  return { pct: Math.round(parts / 4 * 100), doneCount: parts };
+}
+
+function seasonLoadAll() {
+  try { return JSON.parse(localStorage.getItem(SEASON_STORE_KEY) || '{}'); }
+  catch (e) { return {}; }
+}
+function seasonSaveAll(data) {
+  try { localStorage.setItem(SEASON_STORE_KEY, JSON.stringify(data)); } catch (e) {}
+}
+function seasonGet(charId) {
+  const d = seasonLoadAll()[charId] || {};
+  return {
+    o40: d.o40 || 0,
+    o10: d.o10 || 0,
+    exped: Array.isArray(d.exped) ? d.exped.map(r => ({ n: r.n, d: r.d, c: r.c || 0, done: Math.min(r.done || 0, r.c || 0) })) : [],
+    trans: Array.isArray(d.trans) ? d.trans.map(r => ({ n: r.n, t: r.t, c: r.c || 0, done: Math.min(r.done || 0, r.c || 0) })) : [],
+    alt: d.alt || 0,
+    low: d.low || 0,
+    mid: d.mid || 0,
+    cmdDone: !!d.cmdDone,
+    daily: d.daily || 0,
+    dailyDone: !!d.dailyDone,
+    shopSeason: !!d.shopSeason,
+    shopSeasonNote: d.shopSeasonNote || '',
+    shopPass: !!d.shopPass,
+  };
+}
+function seasonSet(charId, patch) {
+  const all = seasonLoadAll();
+  all[charId] = Object.assign(seasonGet(charId), patch);
+  seasonSaveAll(all);
+}
+function seasonExpCostOf(name, mode) {
+  const d = (typeof EXP_DUNGEONS !== 'undefined') ? EXP_DUNGEONS.find(x => x.name === name) : null;
+  return d ? (d[mode] || 0) : 0;
+}
+function seasonCleanInt(raw) {
+  let v = parseInt(String(raw).replace(/[^0-9]/g, ''), 10);
+  if (isNaN(v) || v < 0) v = 0;
+  return v;
+}
+
+/* ── 펼침/접힘 ── */
+function seasonToggleCard(cid) {
+  const key = String(cid);
+  if (_seasonExpanded.has(key)) _seasonExpanded.delete(key);
+  else _seasonExpanded.add(key);
+  const card = document.getElementById('season-card-' + cid);
+  if (card) card.classList.toggle('collapsed', !_seasonExpanded.has(key));
+}
+function seasonToggleSec(cid, key) {
+  const id = cid + ':' + key;
+  const open = _seasonSecExpanded.has(id);
+  if (open) _seasonSecExpanded.delete(id); else _seasonSecExpanded.add(id);
+  const el = document.getElementById('season-sub-' + cid + '-' + key);
+  if (el) el.classList.toggle('open', !open);
+}
+function seasonCmdDone(cid, checked) {
+  if (checked) seasonSet(cid, { alt: 0, low: 0, mid: 0, cmdDone: true });
+  else seasonSet(cid, { cmdDone: false });
+  seasonRerenderCard(cid);
+}
+function seasonDailyDone(cid, checked) {
+  if (checked) seasonSet(cid, { daily: 0, dailyDone: true });
+  else seasonSet(cid, { dailyDone: false });
+  seasonRerenderCard(cid);
+}
+
+/* ── 값 +/- 및 직접 입력 ── */
+function seasonStep(cid, key, delta) {
+  const d = seasonGet(cid);
+  let v = (d[key] || 0) + delta;
+  if (v < 0) v = 0;
+  const patch = { [key]: v };
+  if (v > 0 && (key === 'alt' || key === 'low' || key === 'mid')) patch.cmdDone = false;
+  if (v > 0 && key === 'daily') patch.dailyDone = false;
+  seasonSet(cid, patch);
+  seasonRerenderCard(cid);
+}
+function seasonSetVal(cid, key, raw) {
+  const v = seasonCleanInt(raw);
+  const patch = { [key]: v };
+  if (v > 0 && (key === 'alt' || key === 'low' || key === 'mid')) patch.cmdDone = false;
+  if (v > 0 && key === 'daily') patch.dailyDone = false;
+  seasonSet(cid, patch);
+  seasonRerenderCard(cid);
+}
+function seasonAddExped(cid, mode) {
+  const sel = document.getElementById('season-exp-sel-' + cid);
+  if (!sel || !sel.value) { showToast('원정 던전을 먼저 선택하세요'); return; }
+  const exped = seasonGet(cid).exped;
+  const found = exped.find(r => r.n === sel.value && r.d === mode);
+  if (found) found.c = (found.c || 0) + 1;
+  else exped.push({ n: sel.value, d: mode, c: 1 });
+  seasonSet(cid, { exped });
+  seasonRerenderCard(cid);
+}
+function seasonExpedCount(cid, i, delta) {
+  const exped = seasonGet(cid).exped;
+  if (!exped[i]) return;
+  exped[i].c = Math.max(0, (exped[i].c || 0) + delta);
+  if ((exped[i].done || 0) > exped[i].c) exped[i].done = exped[i].c;
+  seasonSet(cid, { exped });
+  seasonRerenderCard(cid);
+}
+function seasonExpedSet(cid, i, raw) {
+  const exped = seasonGet(cid).exped;
+  if (!exped[i]) return;
+  exped[i].c = seasonCleanInt(raw);
+  if ((exped[i].done || 0) > exped[i].c) exped[i].done = exped[i].c;
+  seasonSet(cid, { exped });
+  seasonRerenderCard(cid);
+}
+function seasonRemoveExped(cid, i) {
+  const exped = seasonGet(cid).exped;
+  exped.splice(i, 1);
+  seasonSet(cid, { exped });
+  seasonRerenderCard(cid);
+}
+function seasonAddTrans(cid, tier) {
+  const sel = document.getElementById('season-trans-sel-' + cid);
+  if (!sel || !sel.value) { showToast('초월 던전을 먼저 선택하세요'); return; }
+  const trans = seasonGet(cid).trans;
+  const found = trans.find(r => r.n === sel.value && r.t === tier);
+  if (found) found.c = (found.c || 0) + 1;
+  else trans.push({ n: sel.value, t: tier, c: 1 });
+  seasonSet(cid, { trans });
+  seasonRerenderCard(cid);
+}
+function seasonTransCount(cid, i, delta) {
+  const trans = seasonGet(cid).trans;
+  if (!trans[i]) return;
+  trans[i].c = Math.max(0, (trans[i].c || 0) + delta);
+  if ((trans[i].done || 0) > trans[i].c) trans[i].done = trans[i].c;
+  seasonSet(cid, { trans });
+  seasonRerenderCard(cid);
+}
+function seasonTransSet(cid, i, raw) {
+  const trans = seasonGet(cid).trans;
+  if (!trans[i]) return;
+  trans[i].c = seasonCleanInt(raw);
+  if ((trans[i].done || 0) > trans[i].c) trans[i].done = trans[i].c;
+  seasonSet(cid, { trans });
+  seasonRerenderCard(cid);
+}
+function seasonRemoveTrans(cid, i) {
+  const trans = seasonGet(cid).trans;
+  trans.splice(i, 1);
+  seasonSet(cid, { trans });
+  seasonRerenderCard(cid);
+}
+function seasonToggleShop(cid, which, checked) {
+  if (which === 'season') seasonSet(cid, { shopSeason: !!checked });
+  else seasonSet(cid, { shopPass: !!checked });
+  seasonRerenderCard(cid);   // 완료바 즉시 반영
+}
+function seasonShopNote(cid, val) {
+  seasonSet(cid, { shopSeasonNote: val });
+}
+
+/* ── 원정/초월 항목별 '완료 판수' (각 항목 완료/계획, 체크박스로 일괄 완료) ── */
+function seasonExpedDone(cid, i, delta) {
+  const exped = seasonGet(cid).exped;
+  if (!exped[i]) return;
+  exped[i].done = Math.max(0, Math.min((exped[i].done || 0) + delta, exped[i].c || 0));
+  seasonSet(cid, { exped });
+  seasonRerenderCard(cid);
+}
+function seasonExpedDoneSet(cid, i, raw) {
+  const exped = seasonGet(cid).exped;
+  if (!exped[i]) return;
+  exped[i].done = Math.max(0, Math.min(seasonCleanInt(raw), exped[i].c || 0));
+  seasonSet(cid, { exped });
+  seasonRerenderCard(cid);
+}
+function seasonExpedDoneAll(cid, i, checked) {
+  const exped = seasonGet(cid).exped;
+  if (!exped[i]) return;
+  exped[i].done = checked ? (exped[i].c || 0) : 0;
+  seasonSet(cid, { exped });
+  seasonRerenderCard(cid);
+}
+function seasonTransDone(cid, i, delta) {
+  const trans = seasonGet(cid).trans;
+  if (!trans[i]) return;
+  trans[i].done = Math.max(0, Math.min((trans[i].done || 0) + delta, trans[i].c || 0));
+  seasonSet(cid, { trans });
+  seasonRerenderCard(cid);
+}
+function seasonTransDoneSet(cid, i, raw) {
+  const trans = seasonGet(cid).trans;
+  if (!trans[i]) return;
+  trans[i].done = Math.max(0, Math.min(seasonCleanInt(raw), trans[i].c || 0));
+  seasonSet(cid, { trans });
+  seasonRerenderCard(cid);
+}
+function seasonTransDoneAll(cid, i, checked) {
+  const trans = seasonGet(cid).trans;
+  if (!trans[i]) return;
+  trans[i].done = checked ? (trans[i].c || 0) : 0;
+  seasonSet(cid, { trans });
+  seasonRerenderCard(cid);
+}
+
+/* ── 스테퍼 HTML (직접 입력 가능) ── */
+function seasonStepper(minusCall, val, plusCall, inputCall) {
+  return '<span class="season-stepper">' +
+    '<button type="button" onclick="' + minusCall + '">−</button>' +
+    '<input type="text" inputmode="numeric" class="season-stepper-val" value="' + val + '" ' +
+      'onfocus="this.select()" onchange="' + inputCall + '">' +
+    '<button type="button" onclick="' + plusCall + '">+</button>' +
+    '</span>';
+}
+
+/* ── 카드 HTML ── */
+function seasonCardHtml(char) {
+  const cid = char.id;
+  // 지령서·일일던전은 카드 최초 렌더 시 기본 펼침 (이후엔 사용자 토글 상태 유지)
+  if (!_seasonSeeded.has(String(cid))) {
+    _seasonSecExpanded.add(cid + ':cmd');
+    _seasonSecExpanded.add(cid + ':daily');
+    _seasonSeeded.add(String(cid));
+  }
+  const d = seasonGet(cid);
+  const totalOdd = 40 * d.o40 + 10 * d.o10;             // 기간한정 오드
+  let baseOdd = 0;                                       // 지금 쌓인 기본 오드 (먼저 소모됨)
+  try { baseOdd = Math.max(0, Math.round((typeof expCurrentOdd === 'function') ? expCurrentOdd(char) : (char.odd_energy_base || 0))); }
+  catch (e) { baseOdd = char.odd_energy_base || 0; }
+  const combinedOdd = baseOdd + totalOdd;               // 기본 오드부터 먼저 소모 → 합산해서 계산
+  const expRuns = d.exped.reduce((s, r) => s + (r.c || 0), 0);
+  const transRuns = d.trans.reduce((s, r) => s + (r.c || 0), 0);
+  const planRuns = expRuns + transRuns;
+  const planOdd = planRuns * SEASON_ODD_PER_RUN;
+  const needRuns = Math.ceil(combinedOdd / SEASON_ODD_PER_RUN);
+  const remain = combinedOdd - planOdd;
+  const doneRuns = d.exped.reduce((s, r) => s + Math.min(r.done || 0, r.c || 0), 0) + d.trans.reduce((s, r) => s + Math.min(r.done || 0, r.c || 0), 0);
+  const orbFrac = planRuns > 0 ? doneRuns / planRuns : (combinedOdd <= 0 ? 1 : 0);
+  const orbPct = Math.round(orbFrac * 100);
+
+  const expList = d.exped.length
+    ? d.exped.map((r, i) => {
+        const label = EXP_MODE_LABEL[r.d] || r.d;
+        const cost = seasonExpCostOf(r.n, r.d);
+        const allDone = (r.c || 0) > 0 && (r.done || 0) >= (r.c || 0);
+        return '<div class="season-plan-item' + (allDone ? ' done' : '') + '">' +
+          '<div class="season-plan-top">' +
+            '<span class="season-badge ' + r.d + '">' + label + '</span>' +
+            '<span class="season-plan-name">' + escapeHtml(r.n) +
+              ' <span style="color:var(--text-sub);font-size:0.68rem">전투력 ' + cost + '↑</span></span>' +
+            '<label class="season-plan-allcheck" title="계획 판수 전부 완료"><input type="checkbox" ' + (allDone ? 'checked' : '') + ' onchange="seasonExpedDoneAll(\'' + cid + '\',' + i + ',this.checked)"> 완료</label>' +
+            '<button type="button" class="season-plan-del" title="삭제" onclick="seasonRemoveExped(\'' + cid + '\',' + i + ')">×</button>' +
+          '</div>' +
+          '<div class="season-plan-ctrl">' +
+            '<span class="season-plan-cg"><span class="season-plan-cg-label">계획</span>' +
+              seasonStepper("seasonExpedCount('" + cid + "'," + i + ",-1)", (r.c || 0),
+                            "seasonExpedCount('" + cid + "'," + i + ",1)",
+                            "seasonExpedSet('" + cid + "'," + i + ",this.value)") + '</span>' +
+            '<span class="season-plan-cg"><span class="season-plan-cg-label">완료</span>' +
+              seasonStepper("seasonExpedDone('" + cid + "'," + i + ",-1)", (r.done || 0),
+                            "seasonExpedDone('" + cid + "'," + i + ",1)",
+                            "seasonExpedDoneSet('" + cid + "'," + i + ",this.value)") +
+              '<span class="season-plan-of">/ ' + (r.c || 0) + '판</span></span>' +
+          '</div>' +
+        '</div>';
+      }).join('')
+    : '<div class="season-empty-hint">아직 추가한 원정이 없어요</div>';
+
+  const transList = d.trans.length
+    ? d.trans.map((r, i) => {
+        const allDone = (r.c || 0) > 0 && (r.done || 0) >= (r.c || 0);
+        return '<div class="season-plan-item' + (allDone ? ' done' : '') + '">' +
+          '<div class="season-plan-top">' +
+            '<span class="season-badge tier">' + r.t + '단</span>' +
+            '<span class="season-plan-name">' + escapeHtml(r.n) + '</span>' +
+            '<label class="season-plan-allcheck" title="계획 판수 전부 완료"><input type="checkbox" ' + (allDone ? 'checked' : '') + ' onchange="seasonTransDoneAll(\'' + cid + '\',' + i + ',this.checked)"> 완료</label>' +
+            '<button type="button" class="season-plan-del" title="삭제" onclick="seasonRemoveTrans(\'' + cid + '\',' + i + ')">×</button>' +
+          '</div>' +
+          '<div class="season-plan-ctrl">' +
+            '<span class="season-plan-cg"><span class="season-plan-cg-label">계획</span>' +
+              seasonStepper("seasonTransCount('" + cid + "'," + i + ",-1)", (r.c || 0),
+                            "seasonTransCount('" + cid + "'," + i + ",1)",
+                            "seasonTransSet('" + cid + "'," + i + ",this.value)") + '</span>' +
+            '<span class="season-plan-cg"><span class="season-plan-cg-label">완료</span>' +
+              seasonStepper("seasonTransDone('" + cid + "'," + i + ",-1)", (r.done || 0),
+                            "seasonTransDone('" + cid + "'," + i + ",1)",
+                            "seasonTransDoneSet('" + cid + "'," + i + ",this.value)") +
+              '<span class="season-plan-of">/ ' + (r.c || 0) + '판</span></span>' +
+          '</div>' +
+        '</div>';
+      }).join('')
+    : '<div class="season-empty-hint">아직 추가한 초월이 없어요</div>';
+
+  const expOptions = (typeof EXP_DUNGEONS !== 'undefined' ? EXP_DUNGEONS : [])
+    .map(x => '<option value="' + escapeAttr(x.name) + '">' + escapeHtml(x.name) + '</option>').join('');
+  const transOptions = TRANS_DUNGEONS
+    .map(n => '<option value="' + escapeAttr(n) + '">' + escapeHtml(n) + '</option>').join('');
+
+  return '' +
+  '<div class="season-card" id="season-card-' + cid + '">' +
+    '<div class="season-card-head season-card-head-static">' +
+      '<span class="season-card-name">' + escapeHtml(char.name || '(이름없음)') + '</span>' +
+      '<span class="season-card-meta">' + (char.item_level || 0) + ' / ' +
+        (typeof formatCp === 'function' ? formatCp(char.combat_power || 0) : (char.combat_power || 0)) + '</span>' +
+    '</div>' +
+
+    '<div class="season-card-body">' +
+
+      /* 기간한정 오드 */
+      '<div class="season-sec">' +
+        '<div class="season-sec-title">기간한정 오드<span class="season-sec-total">총 ' + totalOdd.toLocaleString() + ' 오드</span></div>' +
+        '<div class="season-row"><span class="season-row-label">40짜리 오드</span>' +
+          seasonStepper("seasonStep('" + cid + "','o40',-1)", d.o40, "seasonStep('" + cid + "','o40',1)",
+                        "seasonSetVal('" + cid + "','o40',this.value)") + '</div>' +
+        '<div class="season-row"><span class="season-row-label">10짜리 오드</span>' +
+          seasonStepper("seasonStep('" + cid + "','o10',-1)", d.o10, "seasonStep('" + cid + "','o10',1)",
+                        "seasonSetVal('" + cid + "','o10',this.value)") + '</div>' +
+        '<div class="season-orb-summary">' +
+          '<div class="season-orb-line"><span class="k">기본 오드 (지금)</span><span class="v">' + baseOdd.toLocaleString() + '</span></div>' +
+          '<div class="season-orb-line"><span class="k">기간한정 오드</span><span class="v">' + totalOdd.toLocaleString() + '</span></div>' +
+          '<div class="season-orb-line season-orb-line-sum"><span class="k">소진할 총 오드</span><span class="v">' + combinedOdd.toLocaleString() + '</span></div>' +
+          '<div class="season-orb-note">던전 1판 = 80 오드 · 기본 오드부터 먼저 소모돼요</div>' +
+          (combinedOdd === 0
+            ? '<div class="season-orb-status">오드가 쌓이면 계산돼요</div>'
+            : '<div class="season-orb-line"><span class="k">오드 다 쓰려면</span><span class="v">' + needRuns + '판 필요</span></div>' +
+              '<div class="season-orb-line"><span class="k">지금 계획한 던전</span><span class="v">' + planRuns + '판</span></div>' +
+              (planRuns > 0
+                ? '<div class="season-orb-line"><span class="k">계획 던전 완료</span><span class="v' + (orbFrac >= 1 ? ' orb-alldone' : '') + '">' + doneRuns + ' / ' + planRuns + '판 · ' + orbPct + '%</span></div>'
+                : '') +
+              '<div class="season-orb-status ' + (remain > 0 ? 'warn' : 'done') + '">' +
+                (remain > 0
+                  ? Math.ceil(remain / 80) + '판 더 계획해야 오드 소진 (오드 ' + remain.toLocaleString() + ' 남음)'
+                  : '✓ 계획대로 돌면 오드 소진 완료') +
+              '</div>') +
+        '</div>' +
+      '</div>' +
+
+      /* 원정 계획 (접기) */
+      '<div class="season-subsec' + (_seasonSecExpanded.has(cid + ':exped') ? ' open' : '') + '" id="season-sub-' + cid + '-exped">' +
+        '<div class="season-subsec-head" onclick="seasonToggleSec(\'' + cid + '\',\'exped\')">' +
+          '<span class="season-subsec-chev">▸</span>' +
+          '<span class="season-subsec-title">원정 계획</span>' +
+          '<span class="season-subsec-right"><span class="season-subsec-sum">' + (expRuns > 0 ? expRuns + '판' : '') + '</span></span>' +
+        '</div>' +
+        '<div class="season-subsec-list">' + expList + '</div>' +
+        '<div class="season-subsec-body">' +
+          '<div class="season-add">' +
+            '<div class="season-add-row">' +
+              '<select class="season-select" id="season-exp-sel-' + cid + '">' +
+                '<option value="">원정 던전 선택…</option>' + expOptions + '</select>' +
+            '</div>' +
+            '<div class="season-add-row">' +
+              '<button type="button" class="season-opt-btn" onclick="seasonAddExped(\'' + cid + '\',\'explo\')">탐험</button>' +
+              '<button type="button" class="season-opt-btn" onclick="seasonAddExped(\'' + cid + '\',\'normal\')">보통</button>' +
+              '<button type="button" class="season-opt-btn" onclick="seasonAddExped(\'' + cid + '\',\'hard\')">어려움</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      /* 초월 계획 (접기) */
+      '<div class="season-subsec' + (_seasonSecExpanded.has(cid + ':trans') ? ' open' : '') + '" id="season-sub-' + cid + '-trans">' +
+        '<div class="season-subsec-head" onclick="seasonToggleSec(\'' + cid + '\',\'trans\')">' +
+          '<span class="season-subsec-chev">▸</span>' +
+          '<span class="season-subsec-title">초월 계획</span>' +
+          '<span class="season-subsec-right"><span class="season-subsec-sum">' + (transRuns > 0 ? transRuns + '판' : '') + '</span></span>' +
+        '</div>' +
+        '<div class="season-subsec-list">' + transList + '</div>' +
+        '<div class="season-subsec-body">' +
+          '<div class="season-add">' +
+            '<div class="season-add-row">' +
+              '<select class="season-select" id="season-trans-sel-' + cid + '">' +
+                '<option value="">초월 던전 선택…</option>' + transOptions + '</select>' +
+            '</div>' +
+            '<div class="season-add-row">' +
+              '<button type="button" class="season-opt-btn" onclick="seasonAddTrans(\'' + cid + '\',1)">1단</button>' +
+              '<button type="button" class="season-opt-btn" onclick="seasonAddTrans(\'' + cid + '\',2)">2단</button>' +
+              '<button type="button" class="season-opt-btn" onclick="seasonAddTrans(\'' + cid + '\',3)">3단</button>' +
+              '<button type="button" class="season-opt-btn" onclick="seasonAddTrans(\'' + cid + '\',4)">4단</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      /* 지령서 (접기 + 완료 체크) */
+      '<div class="season-subsec' + (_seasonSecExpanded.has(cid + ':cmd') ? ' open' : '') + (d.cmdDone ? ' done' : '') + '" id="season-sub-' + cid + '-cmd">' +
+        '<div class="season-subsec-head" onclick="seasonToggleSec(\'' + cid + '\',\'cmd\')">' +
+          '<span class="season-subsec-chev">▸</span>' +
+          '<span class="season-subsec-title">지령서</span>' +
+          '<span class="season-subsec-right">' +
+            '<span class="season-subsec-sum">' + ((d.alt + d.low + d.mid) > 0 ? (d.alt + d.low + d.mid) + '장' : '') + '</span>' +
+            '<label class="season-subsec-check" onclick="event.stopPropagation()"><input type="checkbox" ' + (d.cmdDone ? 'checked' : '') + ' onchange="seasonCmdDone(\'' + cid + '\',this.checked)"> 완료</label>' +
+          '</span>' +
+        '</div>' +
+        '<div class="season-subsec-body">' +
+          '<div class="season-row"><span class="season-row-label">알트가르드 지령서</span>' +
+            seasonStepper("seasonStep('" + cid + "','alt',-1)", d.alt, "seasonStep('" + cid + "','alt',1)",
+                          "seasonSetVal('" + cid + "','alt',this.value)") + '</div>' +
+          '<div class="season-row"><span class="season-row-label">하층 지령서</span>' +
+            seasonStepper("seasonStep('" + cid + "','low',-1)", d.low, "seasonStep('" + cid + "','low',1)",
+                          "seasonSetVal('" + cid + "','low',this.value)") + '</div>' +
+          '<div class="season-row"><span class="season-row-label">중층 지령서</span>' +
+            seasonStepper("seasonStep('" + cid + "','mid',-1)", d.mid, "seasonStep('" + cid + "','mid',1)",
+                          "seasonSetVal('" + cid + "','mid',this.value)") + '</div>' +
+        '</div>' +
+      '</div>' +
+
+      /* 일일던전 (접기 + 완료 체크) */
+      '<div class="season-subsec' + (_seasonSecExpanded.has(cid + ':daily') ? ' open' : '') + (d.dailyDone ? ' done' : '') + '" id="season-sub-' + cid + '-daily">' +
+        '<div class="season-subsec-head" onclick="seasonToggleSec(\'' + cid + '\',\'daily\')">' +
+          '<span class="season-subsec-chev">▸</span>' +
+          '<span class="season-subsec-title">일일던전</span>' +
+          '<span class="season-subsec-right">' +
+            '<span class="season-subsec-sum">' + (d.daily > 0 ? d.daily + '장' : '') + '</span>' +
+            '<label class="season-subsec-check" onclick="event.stopPropagation()"><input type="checkbox" ' + (d.dailyDone ? 'checked' : '') + ' onchange="seasonDailyDone(\'' + cid + '\',this.checked)"> 완료</label>' +
+          '</span>' +
+        '</div>' +
+        '<div class="season-subsec-body">' +
+          '<div class="season-row"><span class="season-row-label">미지의 틈새 티켓</span>' +
+            seasonStepper("seasonStep('" + cid + "','daily',-1)", d.daily, "seasonStep('" + cid + "','daily',1)",
+                          "seasonSetVal('" + cid + "','daily',this.value)") + '</div>' +
+        '</div>' +
+      '</div>' +
+
+      /* 상점 */
+      '<div class="season-sec">' +
+        '<div class="season-sec-title">상점</div>' +
+        '<label class="season-check"><input type="checkbox" ' + (d.shopPass ? 'checked' : '') +
+          ' onchange="seasonToggleShop(\'' + cid + '\',\'pass\',this.checked)"> 패스상점</label>' +
+        '<label class="season-check"><input type="checkbox" ' + (d.shopSeason ? 'checked' : '') +
+          ' onchange="seasonToggleShop(\'' + cid + '\',\'season\',this.checked)"> 시즌상점</label>' +
+        '<input class="season-note-input" type="text" placeholder="기타 — 사고 싶은 물건 메모" value="' +
+          escapeAttr(d.shopSeasonNote) + '" oninput="seasonShopNote(\'' + cid + '\',this.value)">' +
+      '</div>' +
+
+    '</div>' +   /* /season-card-body */
+  '</div>';
+}
+
+function seasonRerenderCard(cid) {
+  const old = document.getElementById('season-card-' + cid);
+  if (!old) return;
+  const char = allChars.find(c => String(c.id) === String(cid));
+  if (!char) return;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = seasonCardHtml(char);
+  old.replaceWith(tmp.firstElementChild);
+  seasonUpdateListItem(cid);
+}
+
+function seasonListItemHtml(char) {
+  const cid = char.id;
+  const { pct } = seasonProgress(char);
+  const active = String(cid) === String(_seasonSelected);
+  return '<div class="season-list-item' + (active ? ' active' : '') + (pct >= 100 ? ' done' : '') + '" ' +
+      'id="season-li-' + cid + '" onclick="seasonSelectChar(\'' + cid + '\')">' +
+    '<div class="season-list-top">' +
+      '<span class="season-list-name">' + escapeHtml(char.name || '(이름없음)') + '</span>' +
+      '<span class="season-list-pct">' + pct + '%</span>' +
+    '</div>' +
+    '<div class="season-list-barwrap"><div class="season-list-bar" style="width:' + pct + '%"></div></div>' +
+  '</div>';
+}
+
+function seasonSelectChar(cid) {
+  _seasonSelected = String(cid);
+  document.querySelectorAll('.season-list-item.active').forEach(el => el.classList.remove('active'));
+  const li = document.getElementById('season-li-' + cid);
+  if (li) li.classList.add('active');
+  const detail = document.getElementById('season-detail');
+  const char = allChars.find(c => String(c.id) === String(cid));
+  if (detail) detail.innerHTML = char ? seasonCardHtml(char) : '<div class="season-detail-empty">캐릭터를 찾을 수 없어요</div>';
+}
+
+function seasonUpdateListItem(cid) {
+  const char = allChars.find(c => String(c.id) === String(cid));
+  const li = document.getElementById('season-li-' + cid);
+  if (!char || !li) return;
+  const { pct } = seasonProgress(char);
+  const bar = li.querySelector('.season-list-bar');
+  const pctEl = li.querySelector('.season-list-pct');
+  if (bar) bar.style.width = pct + '%';
+  if (pctEl) pctEl.textContent = pct + '%';
+  li.classList.toggle('done', pct >= 100);
+}
+
+function seasonToggleOwner(owner) {
+  _seasonOwnerCollapsed[owner] = !_seasonOwnerCollapsed[owner];
+  const grp = document.getElementById('season-owner-' + owner);
+  if (grp) grp.classList.toggle('collapsed', _seasonOwnerCollapsed[owner]);
+}
+
+function renderSeasonPage() {
+  const el = document.getElementById('season-content');
+  if (!el) return;
+  if (typeof allChars === 'undefined' || !Array.isArray(allChars) || allChars.length === 0) {
+    el.innerHTML = '<div class="loading"><div class="spinner"></div> 불러오는 중...</div>';
+    return;
+  }
+
+  // 정렬된 전체 목록 (계정 순 → 슬롯 순)
+  const byOwner = OWNERS.map(owner => ({
+    owner,
+    chars: allChars.filter(c => c.owner === owner).sort((a, b) => (a.slot || 0) - (b.slot || 0)),
+  }));
+
+  // 선택 유효성 검사 — 없으면 첫 캐릭 자동 선택
+  if (!allChars.some(c => String(c.id) === String(_seasonSelected))) {
+    const first = byOwner.flatMap(g => g.chars)[0];
+    _seasonSelected = first ? String(first.id) : null;
+  }
+
+  // 왼쪽 사이드바
+  let side = '';
+  for (const { owner, chars } of byOwner) {
+    const ocol = _seasonOwnerCollapsed[owner];
+    side += '<div class="season-owner-group' + (ocol ? ' collapsed' : '') + '" id="season-owner-' + owner + '" data-owner="' + escapeAttr(owner) + '">' +
+      '<div class="season-owner-head" onclick="seasonToggleOwner(\'' + owner + '\')">' +
+        '<span class="season-owner-chev">▸</span>' +
+        '<span class="dot"></span><span>' + escapeHtml(owner) + '</span>' +
+        '<span class="season-owner-count">' + chars.length + '</span></div>' +
+      '<div class="season-list">';
+    if (chars.length === 0) side += '<div class="season-list-empty">캐릭터가 없어요</div>';
+    else chars.forEach(char => { side += seasonListItemHtml(char); });
+    side += '</div></div>';
+  }
+
+  // 오른쪽 디테일
+  const sel = allChars.find(c => String(c.id) === String(_seasonSelected));
+  const detail = sel ? seasonCardHtml(sel) : '<div class="season-detail-empty">왼쪽에서 캐릭터를 선택해줘</div>';
+
+  el.innerHTML = '<div class="season-layout">' +
+    '<div class="season-sidebar">' + side + '</div>' +
+    '<div class="season-detail" id="season-detail">' + detail + '</div>' +
+  '</div>';
+}
+
 
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -5206,6 +6636,18 @@ function showPage(id) {
         `</div>`;
     }
   }
+  if (id === 'season-page') {
+    document.getElementById('tab-season').classList.add('active');
+    try {
+      renderSeasonPage();
+    } catch (e) {
+      console.error('[시즌 탭 에러]', e);
+      document.getElementById('season-content').innerHTML =
+        `<div class="card" style="color:#b85050;font-size:0.85rem;white-space:pre-wrap">` +
+        `시즌 탭 렌더 오류:\n${e.message}\n\n콘솔 로그를 확인해 주세요.` +
+        `</div>`;
+    }
+  }
   if (id === 'log-page') {
     document.getElementById('tab-log').classList.add('active');
     renderLogPage();
@@ -5471,7 +6913,7 @@ function renderOverview() {
     const acc = accountData[owner] || {};
     const ownerTicketSum = allChars
       .filter(c => c.owner === owner)
-      .reduce((s, c) => s + (c.dungeon_tickets || 0), 0);
+      .reduce((s, c) => s + (c.dungeon_tickets || 0) + (c.dungeon_tickets_perm || 0), 0);
     // 물질변환 (v1.6.1): 캐릭별 주 4회 + 계정 통합 16회
     const tmChars = allChars.filter(c => c.owner === owner);
     const tmCharSum = tmChars.reduce((s, c) => s + Math.min(4, c.transmutation_count || 0), 0);
@@ -6792,16 +8234,30 @@ async function cycleAwakening(charId, cur, pip) {
 }
 
 // ── ACCOUNT MODAL ──
+// 슈고열쇠 게이지 즉시 갱신 (기본 14 / 충전 30)
+function refreshShugoGauge(owner) {
+  const acc = accountData[owner] || {};
+  const upd = (k, max, cls) => {
+    const v = Math.max(0, acc[k] || 0);
+    const fill = document.getElementById(`am-sk-fill-${cls}-${owner}`);
+    const cnt = document.getElementById(`am-sk-count-${cls}-${owner}`);
+    if (fill) fill.style.width = Math.min(v, max) / max * 100 + '%';
+    if (cnt) cnt.textContent = v;
+  };
+  upd('shugo_key_base', 14, 'base');
+  upd('shugo_key_charged', 30, 'charge');
+}
+
 function accModalNumInput(field, val, owner, min, max) {
   const id = `amn-${owner}-${field}`;
-  return `<div class="num-input-wrap">
-    <button class="num-btn" onclick="stepAccModal('${owner}','${field}','${id}',-1,${min},${max})">−</button>
-    <input class="num-val-input" id="${id}" name="${id}" type="number" value="${val}" min="${min}" max="${max}"
+  return `<span class="am-step">
+    <button class="am-step-btn" onclick="stepAccModal('${owner}','${field}','${id}',-1,${min},${max})">−</button>
+    <input class="am-step-input" id="${id}" name="${id}" type="number" value="${val}" min="${min}" max="${max}"
       autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
       onfocus="this.select()"
       oninput="liveAccModal('${owner}','${field}','${id}',${min},${max})">
-    <button class="num-btn" onclick="stepAccModal('${owner}','${field}','${id}',1,${min},${max})">+</button>
-  </div>`;
+    <button class="am-step-btn" onclick="stepAccModal('${owner}','${field}','${id}',1,${min},${max})">+</button>
+  </span>`;
 }
 
 function stepAccModal(owner, field, inputId, delta, min, max) {
@@ -6832,6 +8288,7 @@ function commitAccModal(owner, field, val) {
   const LABELS = {
     shugo_key_base:    '슈고 열쇠',
     dungeon_remaining: '일일던전',
+    dungeon_charge:    '일일던전 충전',
   };
   const label = LABELS[field];
   if (label && val !== prevVal) {
@@ -6839,6 +8296,10 @@ function commitAccModal(owner, field, val) {
     const sign = diff > 0 ? '+' : '';
     writeLog(owner, null, `${label} ${sign}${diff} (${prevVal}→${val})`, null, null);
   }
+
+  // total(충전권 합계) 표시 즉시 갱신
+  if (field === 'dungeon_charge') refreshDungeonTotal(owner);
+  if (field === 'shugo_key_base' || field === 'shugo_key_charged') refreshShugoGauge(owner);
 
   // DB 저장은 debounce 유지 (네트워크 부하 방지)
   debounce(`acc-${owner}-${field}`, async () => {
@@ -6855,7 +8316,7 @@ function toggleDungeonDropdown(owner) {
   _dungeonDropdownExpanded = !_dungeonDropdownExpanded;
   const drop = document.getElementById(`dungeon-dropdown-${owner}`);
   const chev = document.getElementById(`dungeon-chevron-${owner}`);
-  if (drop) drop.style.display = _dungeonDropdownExpanded ? 'flex' : 'none';
+  if (drop) drop.style.display = _dungeonDropdownExpanded ? 'block' : 'none';
   if (chev) chev.style.transform = _dungeonDropdownExpanded ? 'rotate(180deg)' : '';
 }
 
@@ -6866,7 +8327,7 @@ function toggleOrderDropdown(owner) {
   _orderDropdownExpanded = !_orderDropdownExpanded;
   const drop = document.getElementById(`order-dropdown-${owner}`);
   const chev = document.getElementById(`order-chevron-${owner}`);
-  if (drop) drop.style.display = _orderDropdownExpanded ? 'flex' : 'none';
+  if (drop) drop.style.display = _orderDropdownExpanded ? 'block' : 'none';
   if (chev) chev.style.transform = _orderDropdownExpanded ? 'rotate(180deg)' : '';
 }
 
@@ -6878,7 +8339,7 @@ function toggleTransmutationDropdown(owner) {
   _transmutationDropdownExpanded = !_transmutationDropdownExpanded;
   const drop = document.getElementById(`transmutation-dropdown-${owner}`);
   const chev = document.getElementById(`transmutation-chevron-${owner}`);
-  if (drop) drop.style.display = _transmutationDropdownExpanded ? 'flex' : 'none';
+  if (drop) drop.style.display = _transmutationDropdownExpanded ? 'block' : 'none';
   if (chev) chev.style.transform = _transmutationDropdownExpanded ? 'rotate(180deg)' : '';
 }
 
@@ -6890,7 +8351,7 @@ function toggleShopDropdown(owner) {
   _shopDropdownExpanded = !_shopDropdownExpanded;
   const drop = document.getElementById(`shop-dropdown-${owner}`);
   const chev = document.getElementById(`shop-chevron-${owner}`);
-  if (drop) drop.style.display = _shopDropdownExpanded ? 'flex' : 'none';
+  if (drop) drop.style.display = _shopDropdownExpanded ? 'block' : 'none';
   if (chev) chev.style.transform = _shopDropdownExpanded ? 'rotate(180deg)' : '';
 }
 
@@ -7046,7 +8507,11 @@ function initTmSliders() {
     _tmSnap(sl, val, max);          // 연속 위치 → 정수 위치로 부드럽게 스냅
     const owner = sl.dataset.owner, tm = sl.dataset.tm, charId = sl.dataset.char, kind = sl.dataset.kind || 'tm';
     _tmDrag = null;
-    if (kind === 'shop') {
+    if (kind === 'shugo_base') {
+      setShugoVal(owner, 'shugo_key_base', val, 14);
+    } else if (kind === 'shugo_charge') {
+      setShugoVal(owner, 'shugo_key_charged', val, 30);
+    } else if (kind === 'shop') {
       if (tm === 'acc') setAccountShopVal(owner, val);
       else setCharShopVal(owner, charId, val);
     } else {
@@ -7058,6 +8523,38 @@ function initTmSliders() {
   document.addEventListener('pointercancel', finish);
 }
 initTmSliders();
+
+// 슈고열쇠 절대값 저장 (기본 0~14 / 충전 0~30) — 슬라이더 드래그/클릭
+async function setShugoVal(owner, field, val, max) {
+  if (currentActor === 'guest') return;
+  val = Math.max(0, Math.min(max, val));
+  const acc = accountData[owner]; if (!acc) return;
+  const prev = acc[field] || 0;
+  if (prev === val) return;
+  acc[field] = val;
+  renderOverview();
+  const label = field === 'shugo_key_base' ? '슈고 기본' : '슈고 충전';
+  writeLog(owner, null, `${label} ${val > prev ? '+' : ''}${val - prev} (${prev}→${val})`, null, null);
+  markSelfChange('account_data', owner);
+  const { error } = await sb.from('account_data').update({ [field]: val }).eq('owner', owner);
+  if (error) { showToast('저장 실패: ' + (error.message || error.code || '')); return; }
+}
+
+// 슈고 −/+ 버튼: 슬라이더/숫자 즉시 반영 + 저장
+function stepShugo(owner, which, delta) {
+  const field = which === 'base' ? 'shugo_key_base' : 'shugo_key_charged';
+  const max = which === 'base' ? 14 : 30;
+  const acc = accountData[owner] || {};
+  const v = Math.max(0, Math.min(max, (acc[field] || 0) + delta));
+  const sl = document.querySelector(`#acc-modal .tm-slider[data-kind="shugo_${which}"]`);
+  if (sl) {
+    const p = v / max * 100;
+    const f = sl.querySelector('.tm-fill'); if (f) f.style.width = p + '%';
+    const k = sl.querySelector('.tm-knob'); if (k) k.style.left = p + '%';
+    const num = sl.nextElementSibling; const n = num && num.querySelector('.tm-n'); if (n) n.textContent = v;
+  }
+  setShugoVal(owner, field, v, max);
+}
 
 // 카드 겉 버튼: 전체 완료/해제 ↔ 모달 내부(캐릭별 4 + 계정 통합 16) 연동
 async function toggleAllTransmutation(owner, value) {
@@ -7113,50 +8610,61 @@ async function toggleAllShopPurchase(owner, value) {
   renderOverview();
 }
 
-// 모달 내 캐릭별 충전권 입력
-function accModalCharTicketInput(charId, val, owner) {
-  const id = `amct-${owner}-${charId}`;
-  return `<div class="num-input-wrap">
-    <button class="num-btn" onclick="stepAccModalCharTicket('${owner}','${charId}','${id}',-1)">−</button>
-    <input class="num-val-input" id="${id}" name="${id}" type="number" value="${val}" min="0" max="999"
-      autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
-      onfocus="this.select()"
-      oninput="liveAccModalCharTicket('${owner}','${charId}','${id}')">
-    <button class="num-btn" onclick="stepAccModalCharTicket('${owner}','${charId}','${id}',1)">+</button>
-  </div>`;
+// 일일던전 충전권 합계 (계정 충전 + 캐릭별 무기한 + 기간제)
+function ownerDungeonTotal(owner) {
+  const acc = accountData[owner] || {};
+  const tix = allChars
+    .filter(c => c.owner === owner)
+    .reduce((s, c) => s + (c.dungeon_tickets || 0) + (c.dungeon_tickets_perm || 0), 0);
+  return (acc.dungeon_charge || 0) + tix;
+}
+function refreshDungeonTotal(owner) {
+  const el = document.getElementById(`dungeon-ticket-sum-${owner}`);
+  if (el) el.textContent = ownerDungeonTotal(owner);
 }
 
-function stepAccModalCharTicket(owner, charId, inputId, delta) {
+// 모달 내 캐릭별 충전권 입력 (field: dungeon_tickets=기간제 / dungeon_tickets_perm=무기한)
+function accModalCharTicketInput(charId, val, owner, field) {
+  field = field || 'dungeon_tickets';
+  const id = `amct-${owner}-${charId}-${field}`;
+  return `<span class="am-step">
+    <button class="am-step-btn" onclick="stepAccModalCharTicket('${owner}','${charId}','${id}',-1,'${field}')">−</button>
+    <input class="am-step-input" id="${id}" name="${id}" type="number" value="${val}" min="0" max="999"
+      autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+      onfocus="this.select()"
+      oninput="liveAccModalCharTicket('${owner}','${charId}','${id}','${field}')">
+    <button class="am-step-btn" onclick="stepAccModalCharTicket('${owner}','${charId}','${id}',1,'${field}')">+</button>
+  </span>`;
+}
+
+function stepAccModalCharTicket(owner, charId, inputId, delta, field) {
   const el = document.getElementById(inputId);
   if (!el) return;
   const newVal = Math.min(999, Math.max(0, (parseInt(el.value)||0) + delta));
   el.value = newVal;
-  commitAccModalCharTicket(owner, charId, newVal);
+  commitAccModalCharTicket(owner, charId, newVal, field || 'dungeon_tickets');
 }
 
-function liveAccModalCharTicket(owner, charId, inputId) {
+function liveAccModalCharTicket(owner, charId, inputId, field) {
   const el = document.getElementById(inputId);
   if (!el) return;
   let val = parseInt(el.value);
   if (isNaN(val)) return;
   val = Math.min(999, Math.max(0, val));
-  commitAccModalCharTicket(owner, charId, val);
+  commitAccModalCharTicket(owner, charId, val, field || 'dungeon_tickets');
 }
 
-function commitAccModalCharTicket(owner, charId, val) {
+function commitAccModalCharTicket(owner, charId, val, field) {
+  field = field || 'dungeon_tickets';
   const char = allChars.find(c => c.id === charId);
   if (!char) return;
-  char.dungeon_tickets = val;
+  char[field] = val;
 
-  // 모달 상단 합계 즉시 갱신
-  const sum = allChars
-    .filter(c => c.owner === owner)
-    .reduce((s, c) => s + (c.dungeon_tickets || 0), 0);
-  const sumEl = document.getElementById(`dungeon-ticket-sum-${owner}`);
-  if (sumEl) sumEl.textContent = sum;
+  // 모달 상단 합계(total) 즉시 갱신
+  refreshDungeonTotal(owner);
 
-  // 캐릭 상세뷰가 같은 캐릭터를 보고 있으면 입력값 동기화
-  if (currentCharId === charId) {
+  // 캐릭 상세뷰가 같은 캐릭터를 보고 있으면 입력값 동기화 (기간제만 상세뷰에 존재)
+  if (field === 'dungeon_tickets' && currentCharId === charId) {
     const detailInput = document.getElementById(`nv-${charId}-dungeon_tickets`);
     if (detailInput && parseInt(detailInput.value) !== val) detailInput.value = val;
   }
@@ -7165,10 +8673,10 @@ function commitAccModalCharTicket(owner, charId, val) {
   lazyRenderOverview();
 
   // DB 저장 (debounce)
-  debounce(`char-ticket-${charId}`, async () => {
+  debounce(`char-ticket-${charId}-${field}`, async () => {
     if (currentActor === 'guest') return;
     markSelfChange('characters', charId);
-    const { error } = await sb.from('characters').update({ dungeon_tickets: val }).eq('id', charId);
+    const { error } = await sb.from('characters').update({ [field]: val }).eq('id', charId);
     if (error) { showToast('저장 실패'); return; }
   });
 }
@@ -7193,116 +8701,125 @@ function openAccountModal(owner) {
   const shopAccCnt = Math.min(16, acc.shop_purchase_account_count || 0);
 
   document.getElementById('acc-modal-body').innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
-        <div style="font-size:0.75rem;color:var(--text-sub);margin-bottom:8px">슈고열쇠 <span style="font-size:0.7rem">(계정 공유 · 최대 14장)</span></div>
-        <div style="display:grid;grid-template-columns:1fr 1.35fr 1fr 1.35fr;align-items:center;gap:6px">
-          <span style="font-size:0.72rem;color:var(--text-sub);text-align:center">기본</span>
-          ${accModalNumInput('shugo_key_base', acc.shugo_key_base||0, owner, 0, 14)}
-          <span style="font-size:0.72rem;color:var(--text-sub);text-align:center">충전</span>
-          ${accModalNumInput('shugo_key_charged', acc.shugo_key_charged||0, owner, 0, 99)}
+    <div class="am-body">
+
+      <div class="am-sec">
+        <div class="am-sec-head">
+          <span class="am-sec-title">슈고열쇠 <small>계정 공유</small></span>
         </div>
-        ${skWarn ? `<div style="margin-top:6px;font-size:0.72rem;color:#b85050">⚠ 14장 초과! 충전이 낭비돼요</div>` : ''}
-      </div>
-      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
-        <div class="dungeon-toggle-row" onclick="toggleDungeonDropdown('${owner}')"
-             style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
-          <div class="dungeon-toggle-label" style="font-size:0.75rem;color:var(--text-sub);transition:color 0.15s">일일던전 <span style="font-size:0.7rem">(계정 공유 · 주간 14회)</span></div>
-          <span id="dungeon-chevron-${owner}" class="dungeon-chevron"
-                style="${_dungeonDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1.35fr 1fr 1.35fr;align-items:center;gap:6px">
-          <span style="font-size:0.72rem;color:var(--text-sub);text-align:center">남은판</span>
-          ${accModalNumInput('dungeon_remaining', acc.dungeon_remaining||0, owner, 0, 14)}
-          <span style="font-size:0.72rem;color:var(--text-sub);text-align:center">충전권</span>
-          <div id="dungeon-ticket-sum-${owner}"
-               style="text-align:center;font-size:0.85rem;color:var(--text);font-weight:500">${ticketSum}</div>
-        </div>
-        <div id="dungeon-dropdown-${owner}"
-             style="display:${_dungeonDropdownExpanded?'flex':'none'};flex-direction:column;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-          ${ownerChars.length === 0
-            ? `<div style="text-align:center;font-size:0.75rem;color:var(--text-sub);padding:8px">등록된 캐릭터가 없어요</div>`
-            : ownerChars.map(c => `
-              <div style="display:grid;grid-template-columns:1fr 1.35fr;align-items:center;gap:6px">
-                <span style="font-size:0.78rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(c.name || '(이름없음)')}</span>
-                ${accModalCharTicketInput(c.id, c.dungeon_tickets||0, owner)}
-              </div>
-            `).join('')}
-        </div>
-      </div>
-      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
-        <div class="dungeon-toggle-row" onclick="toggleTransmutationDropdown('${owner}')"
-             style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
-          <div class="dungeon-toggle-label" style="font-size:0.75rem;color:var(--text-sub);transition:color 0.15s">물질변환 <span style="font-size:0.7rem">(주간 · 캐릭별 4회 + 계정 16회)</span></div>
-          <span id="transmutation-chevron-${owner}" class="dungeon-chevron"
-                style="${_transmutationDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
-        </div>
-        <div id="transmutation-dropdown-${owner}"
-             style="display:${_transmutationDropdownExpanded?'flex':'none'};flex-direction:column;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-          <div style="display:flex;align-items:center;gap:12px">
-            <span style="font-size:0.78rem;color:var(--text);white-space:nowrap">계정 통합</span>
-            ${tmSliderHtml(owner, tmAccCnt, 16, 'acc')}
-            <span class="tm-num"><span class="tm-n">${tmAccCnt}</span><span class="tm-unit"> / 16</span></span>
+        <div class="am-sk">
+          <div class="am-sk-row2">
+            <span class="am-sk-label"><i style="background:var(--sage)"></i>기본</span>
+            ${tmSliderHtml(owner, acc.shugo_key_base||0, 14, 'acc', null, 'shugo_base')}
+            <span class="tm-num tm-num-sm"><span class="tm-n">${acc.shugo_key_base||0}</span><span class="tm-unit"> / 14</span></span>
+            <span class="am-step am-step-pm"><button class="am-step-btn" onclick="stepShugo('${owner}','base',-1)">−</button><button class="am-step-btn" onclick="stepShugo('${owner}','base',1)">+</button></span>
           </div>
-          <div style="border-top:1px dashed var(--border)"></div>
-          ${ownerChars.length === 0
-            ? `<div style="text-align:center;font-size:0.75rem;color:var(--text-sub);padding:8px">등록된 캐릭터가 없어요</div>`
-            : ownerChars.map(c => {
-              const cnt = Math.min(4, c.transmutation_count||0);
-              return `
-              <div style="display:flex;align-items:center;gap:10px">
-                <span style="flex:1;font-size:0.78rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(c.name || '(이름없음)')}</span>
-                ${tmSliderHtml(owner, cnt, 4, 'char', c.id)}
-                <span class="tm-num tm-num-sm"><span class="tm-n">${cnt}</span><span class="tm-unit"> / 4</span></span>
-              </div>`;
-            }).join('')}
-        </div>
-      </div>
-      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
-        <div class="dungeon-toggle-row" onclick="toggleShopDropdown('${owner}')"
-             style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
-          <div class="dungeon-toggle-label" style="font-size:0.75rem;color:var(--text-sub);transition:color 0.15s">상점(오드구매) <span style="font-size:0.7rem">(주간 · 캐릭별 4회 + 계정 16회)</span></div>
-          <span id="shop-chevron-${owner}" class="dungeon-chevron"
-                style="${_shopDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
-        </div>
-        <div id="shop-dropdown-${owner}"
-             style="display:${_shopDropdownExpanded?'flex':'none'};flex-direction:column;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-          <div style="display:flex;align-items:center;gap:12px">
-            <span style="font-size:0.78rem;color:var(--text);white-space:nowrap">계정 통합</span>
-            ${tmSliderHtml(owner, shopAccCnt, 16, 'acc', null, 'shop')}
-            <span class="tm-num"><span class="tm-n">${shopAccCnt}</span><span class="tm-unit"> / 16</span></span>
+          <div class="am-sk-row2">
+            <span class="am-sk-label"><i style="background:var(--sky)"></i>충전</span>
+            ${tmSliderHtml(owner, acc.shugo_key_charged||0, 30, 'acc', null, 'shugo_charge')}
+            <span class="tm-num tm-num-sm"><span class="tm-n">${acc.shugo_key_charged||0}</span><span class="tm-unit"> / 30</span></span>
+            <span class="am-step am-step-pm"><button class="am-step-btn" onclick="stepShugo('${owner}','charge',-1)">−</button><button class="am-step-btn" onclick="stepShugo('${owner}','charge',1)">+</button></span>
           </div>
-          <div style="border-top:1px dashed var(--border)"></div>
+        </div>
+      </div>
+
+      <div class="am-sec">
+        <div class="am-sec-head am-sec-toggle" onclick="toggleDungeonDropdown('${owner}')">
+          <span class="am-sec-title">일일던전 <small>계정 공유 · 주간 14회</small></span>
+          <span id="dungeon-chevron-${owner}" class="am-chev" style="${_dungeonDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
+        </div>
+        <div class="am-stats" style="grid-template-columns:repeat(3,1fr)">
+          <div class="am-stat"><span class="am-stat-label">이번주</span><div class="am-stat-ctrl">${accModalNumInput('dungeon_remaining', acc.dungeon_remaining||0, owner, 0, 14)}<span class="am-unit">/ 14</span></div></div>
+          <div class="am-stat"><span class="am-stat-label">충전</span><div class="am-stat-ctrl">${accModalNumInput('dungeon_charge', acc.dungeon_charge||0, owner, 0, 99)}</div></div>
+          <div class="am-stat"><span class="am-stat-label">total</span><span class="am-stat-val" id="dungeon-ticket-sum-${owner}">${ownerDungeonTotal(owner)}</span></div>
+        </div>
+        <div id="dungeon-dropdown-${owner}" class="am-body-inner" style="display:${_dungeonDropdownExpanded?'block':'none'}">
           ${ownerChars.length === 0
-            ? `<div style="text-align:center;font-size:0.75rem;color:var(--text-sub);padding:8px">등록된 캐릭터가 없어요</div>`
-            : ownerChars.map(c => {
-              const cnt = Math.min(4, c.shop_purchase_count||0);
-              return `
-              <div style="display:flex;align-items:center;gap:10px">
-                <span style="flex:1;font-size:0.78rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(c.name || '(이름없음)')}</span>
-                ${tmSliderHtml(owner, cnt, 4, 'char', c.id, 'shop')}
-                <span class="tm-num tm-num-sm"><span class="tm-n">${cnt}</span><span class="tm-unit"> / 4</span></span>
-              </div>`;
-            }).join('')}
+            ? `<div style="text-align:center;font-size:0.75rem;color:var(--text-sub);padding:4px">등록된 캐릭터가 없어요</div>`
+            : `<div class="am-dk-tbl">
+                 <div class="am-dk-head"><span>캐릭터</span><span>무기한</span><span>기간제</span></div>
+                 <div class="am-dk-body">` +
+                 ownerChars.map(c => `<div class="am-dk-row">
+                   <span class="am-nmwrap"><span class="am-odot" style="background:var(--color-owner-${owner})"></span><span class="am-row-name">${escapeHtml(c.name || '(이름없음)')}</span></span>
+                   ${accModalCharTicketInput(c.id, c.dungeon_tickets_perm||0, owner, 'dungeon_tickets_perm')}
+                   ${accModalCharTicketInput(c.id, c.dungeon_tickets||0, owner, 'dungeon_tickets')}
+                 </div>`).join('') +
+                 `</div>
+               </div>`}
         </div>
       </div>
-      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px">
-        <div class="dungeon-toggle-row" onclick="toggleOrderDropdown('${owner}')"
-             style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
-          <div class="dungeon-toggle-label" style="font-size:0.75rem;color:var(--text-sub);transition:color 0.15s">지령서 <span style="font-size:0.7rem">(주간 리셋)</span></div>
-          <span id="order-chevron-${owner}" class="dungeon-chevron"
-                style="${_orderDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
+
+      <div class="am-sec">
+        <div class="am-sec-head am-sec-toggle" onclick="toggleTransmutationDropdown('${owner}')">
+          <span class="am-sec-title">물질변환 <small>주간 · 캐릭 4 + 계정 16</small></span>
+          <span id="transmutation-chevron-${owner}" class="am-chev" style="${_transmutationDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
         </div>
-        <div id="order-dropdown-${owner}"
-             style="display:${_orderDropdownExpanded?'flex':'none'};flex-direction:column;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-          ${[['order_lower','하층'],['order_middle','중층'],['order_town','마을']].map(([key,label]) => `
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <span style="font-size:0.8rem;color:var(--text)">${label} 지령서</span>
-            <button class="toggle-btn ${acc[key]?'done':''}" style="font-size:0.78rem;padding:4px 12px"
-              onclick="toggleAccOrder('${owner}','${key}',${!acc[key]})">${acc[key]?'구매':'미구매'}</button>
-          </div>`).join('')}
+        <div id="transmutation-dropdown-${owner}" class="am-body-inner" style="display:${_transmutationDropdownExpanded?'block':'none'}">
+          ${ownerChars.length === 0
+            ? `<div style="text-align:center;font-size:0.75rem;color:var(--text-sub);padding:4px">등록된 캐릭터가 없어요</div>`
+            : `<div class="am-ledger">
+                 <div class="am-ledger-head" style="grid-template-columns:minmax(0,1.05fr) 2fr 46px"><span>캐릭터</span><span></span><span></span></div>
+                 <div class="am-ledger-row" style="grid-template-columns:minmax(0,1.05fr) 2fr 46px">
+                   <div class="am-nmcell"><span class="am-row-name">계정 통합</span></div>
+                   <div class="am-cc">${tmSliderHtml(owner, tmAccCnt, 16, 'acc')}</div>
+                   <div class="am-cc"><span class="tm-num tm-num-sm"><span class="tm-n">${tmAccCnt}</span><span class="tm-unit">/16</span></span></div>
+                 </div>` +
+                 ownerChars.map(c => {
+                   const cnt = Math.min(4, c.transmutation_count||0);
+                   return `<div class="am-ledger-row" style="grid-template-columns:minmax(0,1.05fr) 2fr 46px">
+                   <div class="am-nmcell"><span class="am-odot" style="background:var(--color-owner-${owner})"></span><span class="am-row-name">${escapeHtml(c.name || '(이름없음)')}</span></div>
+                   <div class="am-cc">${tmSliderHtml(owner, cnt, 4, 'char', c.id)}</div>
+                   <div class="am-cc"><span class="tm-num tm-num-sm"><span class="tm-n">${cnt}</span><span class="tm-unit">/4</span></span></div>
+                 </div>`;
+                 }).join('') +
+               `</div>`}
         </div>
       </div>
+
+      <div class="am-sec">
+        <div class="am-sec-head am-sec-toggle" onclick="toggleShopDropdown('${owner}')">
+          <span class="am-sec-title">상점(오드구매) <small>주간 · 캐릭 4 + 계정 16</small></span>
+          <span id="shop-chevron-${owner}" class="am-chev" style="${_shopDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
+        </div>
+        <div id="shop-dropdown-${owner}" class="am-body-inner" style="display:${_shopDropdownExpanded?'block':'none'}">
+          ${ownerChars.length === 0
+            ? `<div style="text-align:center;font-size:0.75rem;color:var(--text-sub);padding:4px">등록된 캐릭터가 없어요</div>`
+            : `<div class="am-ledger">
+                 <div class="am-ledger-head" style="grid-template-columns:minmax(0,1.05fr) 2fr 46px"><span>캐릭터</span><span></span><span></span></div>
+                 <div class="am-ledger-row" style="grid-template-columns:minmax(0,1.05fr) 2fr 46px">
+                   <div class="am-nmcell"><span class="am-row-name">계정 통합</span></div>
+                   <div class="am-cc">${tmSliderHtml(owner, shopAccCnt, 16, 'acc', null, 'shop')}</div>
+                   <div class="am-cc"><span class="tm-num tm-num-sm"><span class="tm-n">${shopAccCnt}</span><span class="tm-unit">/16</span></span></div>
+                 </div>` +
+                 ownerChars.map(c => {
+                   const cnt = Math.min(4, c.shop_purchase_count||0);
+                   return `<div class="am-ledger-row" style="grid-template-columns:minmax(0,1.05fr) 2fr 46px">
+                   <div class="am-nmcell"><span class="am-odot" style="background:var(--color-owner-${owner})"></span><span class="am-row-name">${escapeHtml(c.name || '(이름없음)')}</span></div>
+                   <div class="am-cc">${tmSliderHtml(owner, cnt, 4, 'char', c.id, 'shop')}</div>
+                   <div class="am-cc"><span class="tm-num tm-num-sm"><span class="tm-n">${cnt}</span><span class="tm-unit">/4</span></span></div>
+                 </div>`;
+                 }).join('') +
+               `</div>`}
+        </div>
+      </div>
+
+      <div class="am-sec">
+        <div class="am-sec-head am-sec-toggle" onclick="toggleOrderDropdown('${owner}')">
+          <span class="am-sec-title">지령서 <small>주간 리셋</small></span>
+          <span id="order-chevron-${owner}" class="am-chev" style="${_orderDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
+        </div>
+        <div id="order-dropdown-${owner}" class="am-body-inner" style="display:${_orderDropdownExpanded?'block':'none'}">
+          <div class="am-rows">
+            ${[['order_lower','하층'],['order_middle','중층'],['order_town','마을']].map(([key,label]) => `
+            <div class="am-ord">
+              <span class="am-ord-label">${label} 지령서</span>
+              <button class="toggle-btn ${acc[key]?'done':''}" style="font-size:0.76rem;padding:4px 14px"
+                onclick="toggleAccOrder('${owner}','${key}',${!acc[key]})">${acc[key]?'구매':'미구매'}</button>
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+
     </div>
   `;
 
@@ -7769,6 +9286,8 @@ function setActor(name) {
 
   // topbar actor 표시 갱신
   updateActorIndicator();
+  // 사용자별 메뉴 표시 설정 적용
+  try { applyMenuVisibility(); } catch (e) {}
 }
 
 function updateActorIndicator() {
@@ -11077,7 +12596,8 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
 " onclick="closeAccountModal()">
   <div id="acc-modal" style="
     background:var(--surface);border-radius:var(--radius);
-    border:1px solid var(--border);padding:20px;width:100%;max-width:320px;
+    border:1px solid var(--border);padding:20px;width:100%;max-width:420px;
+    max-height:calc(100vh - 40px);overflow-y:auto;
     box-shadow:0 12px 40px rgba(160,150,140,0.18);
     animation:fadeUp 0.2s ease-out;
   " onclick="event.stopPropagation()">
