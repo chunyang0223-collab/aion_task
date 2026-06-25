@@ -5636,7 +5636,8 @@ document.addEventListener('DOMContentLoaded', function () {
 try { applyMenuVisibility(); } catch (e) {}
 
 /* ════════════════ 시즌 페이지 (로컬 저장, 캐릭터별) v1.6.92 ════════════════ */
-const SEASON_STORE_KEY = 'aion2_season';
+const SEASON_STORE_KEY = 'aion2_season';   // 기존 로컬 키 (1회 이관용)
+let seasonStore = {};                       // 서버 동기화 캐시 { charId: data }
 const TRANS_DUNGEONS = ['데우스', '아르카니스', '가라앉은 생명의 신전', '붉은 연심의 거울'];
 const EXP_MODE_LABEL = { explo: '탐험', normal: '보통', hard: '어려움' };
 const SEASON_ODD_PER_RUN = 80;   // 모든 던전 1판 = 80 오드 소모
@@ -5664,12 +5665,45 @@ function seasonProgress(char) {
   return { pct: Math.round(parts / 4 * 100), doneCount: parts };
 }
 
-function seasonLoadAll() {
-  try { return JSON.parse(localStorage.getItem(SEASON_STORE_KEY) || '{}'); }
-  catch (e) { return {}; }
+function seasonLoadAll() { return seasonStore; }
+
+// 변경 즉시 캐시 반영 + DB 저장 (디바운스)
+function seasonPersist(charId) {
+  if (currentActor === 'guest') return;
+  markSelfChange('season_data', String(charId));
+  debounce('season-' + charId, async () => {
+    const { error } = await sb.from('season_data')
+      .upsert({ character_id: charId, data: seasonStore[charId], updated_at: new Date().toISOString() }, { onConflict: 'character_id' });
+    if (error) { showToast('시즌 저장 실패'); console.error('[시즌 저장]', error); }
+  });
 }
-function seasonSaveAll(data) {
-  try { localStorage.setItem(SEASON_STORE_KEY, JSON.stringify(data)); } catch (e) {}
+
+// 초기 로드 (서버) + 기존 로컬 데이터 1회 이관
+async function seasonInitLoad() {
+  try {
+    const { data } = await sb.from('season_data').select('character_id, data');
+    seasonStore = {};
+    (data || []).forEach(r => { seasonStore[r.character_id] = r.data || {}; });
+  } catch (e) { console.error('[시즌 로드]', e); seasonStore = {}; }
+  await seasonMigrateLocalOnce();
+}
+async function seasonMigrateLocalOnce() {
+  const FLAG = 'aion2_season_migrated';
+  if (localStorage.getItem(FLAG)) return;
+  if (currentActor === 'guest') return;          // 게스트는 쓰기 불가 → 로그인 후 이관
+  let local = {};
+  try { local = JSON.parse(localStorage.getItem(SEASON_STORE_KEY) || '{}'); } catch (e) {}
+  const validIds = new Set((allChars || []).map(c => String(c.id)));
+  // 실제 존재하는 캐릭 + 서버에 아직 없는 것만 (서버 우선)
+  const rows = Object.keys(local)
+    .filter(id => validIds.has(String(id)) && !seasonStore[id] && local[id] && Object.keys(local[id]).length)
+    .map(id => ({ character_id: id, data: local[id] }));
+  if (rows.length) {
+    const { error } = await sb.from('season_data').upsert(rows, { onConflict: 'character_id', ignoreDuplicates: true });
+    if (error) { console.error('[시즌 이관]', error); return; }   // 실패 시 플래그 미설정 → 다음에 재시도
+    rows.forEach(r => { seasonStore[r.character_id] = r.data; });
+  }
+  localStorage.setItem(FLAG, '1');
 }
 function seasonGet(charId) {
   const d = seasonLoadAll()[charId] || {};
@@ -5690,9 +5724,8 @@ function seasonGet(charId) {
   };
 }
 function seasonSet(charId, patch) {
-  const all = seasonLoadAll();
-  all[charId] = Object.assign(seasonGet(charId), patch);
-  seasonSaveAll(all);
+  seasonStore[charId] = Object.assign(seasonGet(charId), patch);
+  seasonPersist(charId);
 }
 function seasonExpCostOf(name, mode) {
   const d = (typeof EXP_DUNGEONS !== 'undefined') ? EXP_DUNGEONS.find(x => x.name === name) : null;
@@ -6828,6 +6861,9 @@ async function loadAll() {
   (supProgRes.data || []).forEach(p => {
     supplyProgress[`${p.slot_id}_${p.character_id}`] = p;
   });
+
+  // ── 시즌 데이터 (Supabase 공유 + 1회 로컬 이관) ──
+  await seasonInitLoad();
 }
 
 // ── OVERVIEW RENDER ──
@@ -6935,7 +6971,7 @@ function renderOverview() {
       </div>
       <div class="stat-row" style="padding:3px 0;border:none">
         <span class="stat-label" style="font-size:0.78rem">일일던전</span>
-        <span style="font-size:0.78rem;color:var(--text)">${acc.dungeon_remaining||0} <span style="color:var(--text-sub)">+${ownerTicketSum} 충전권</span></span>
+        <span style="font-size:0.78rem;color:var(--text)">${acc.dungeon_remaining||0} <span style="color:var(--text-sub)">+${ownerDungeonTotal(owner)} 충전권</span></span>
       </div>
       <div class="account-bool-row">
         <span class="toggle-btn ${shopAllDone?'done':''}" style="font-size:0.72rem;padding:3px 8px" title="상점(오드구매) 캐릭 ${shopCharSum}/${tmChars.length*4} · 계정 ${shopAccCnt}/16 (주간)" onclick="event.stopPropagation();toggleAllShopPurchase('${owner}',${!shopAllDone})">상점</span>
@@ -8683,7 +8719,7 @@ function commitAccModalCharTicket(owner, charId, val, field) {
 
 function openAccountModal(owner) {
   const acc = accountData[owner] || {};
-  document.getElementById('acc-modal-title').textContent = `${owner} 계정 수정`;
+  document.getElementById('acc-modal-title').textContent = `${owner} 계정 정보`;
 
   const skWarn = (acc.shugo_key_base||0) > 12;
 
@@ -9012,6 +9048,9 @@ function subscribeRealtime() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'supply_progress' }, async (payload) => {
       await handleRealtimeChange('supply_progress', payload);
     })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'season_data' }, async (payload) => {
+      await handleRealtimeChange('season_data', payload);
+    })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_log' }, async () => {
       if (document.getElementById('log-page').classList.contains('active')) renderLogPage();
     })
@@ -9053,9 +9092,11 @@ async function handleRealtimeChange(table, payload) {
   const eventType = payload.eventType;
   const newRow = payload.new;
   const oldRow = payload.old;
-  // account_data는 owner가 PK 역할, 나머지는 id
+  // account_data는 owner가 PK 역할, season_data는 character_id, 나머지는 id
   const rowKey = table === 'account_data'
     ? ((newRow && newRow.owner) || (oldRow && oldRow.owner))
+    : table === 'season_data'
+    ? ((newRow && newRow.character_id) || (oldRow && oldRow.character_id))
     : ((newRow && newRow.id) || (oldRow && oldRow.id));
 
   if (isSelfEcho(table, rowKey)) return;
@@ -9110,6 +9151,8 @@ function applyRowUpdate(table, row) {
     }
   } else if (table === 'supply_progress') {
     supplyProgress[`${row.slot_id}_${row.character_id}`] = row;
+  } else if (table === 'season_data') {
+    seasonStore[row.character_id] = row.data || {};
   }
 }
 
@@ -9129,10 +9172,15 @@ function scheduleLocalRerender() {
     } else if (document.getElementById('supply-page').classList.contains('active')) {
       // 입력 중인 인풋(자동완성, 모달 등)에 포커스가 있으면 재렌더 건너뜀
       const focused = document.activeElement;
-      const supplyPage = document.getElementById('supply-page');
       const inModalInput = focused && (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA') &&
         document.querySelector('.supply-modal-overlay.show')?.contains(focused);
       if (!inModalInput) renderSupplyPage();
+    } else if (document.getElementById('season-page')?.classList.contains('active')) {
+      const focused = document.activeElement;
+      const seasonPage = document.getElementById('season-page');
+      if (focused && seasonPage && seasonPage.contains(focused) &&
+          (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA' || focused.tagName === 'SELECT')) return;
+      renderSeasonPage();
     } else if (currentCharId) {
       // detail 페이지에 포커스된 input/textarea가 있으면 re-render 건너뜀
       const focused = document.activeElement;
@@ -9199,6 +9247,10 @@ async function reloadTable(table) {
     const { data } = await sb.from('supply_progress').select('*');
     supplyProgress = {};
     (data || []).forEach(p => { supplyProgress[`${p.slot_id}_${p.character_id}`] = p; });
+  } else if (table === 'season_data') {
+    const { data } = await sb.from('season_data').select('character_id, data');
+    seasonStore = {};
+    (data || []).forEach(r => { seasonStore[r.character_id] = r.data || {}; });
   }
 
   // re-render current view
@@ -9214,6 +9266,12 @@ async function reloadTable(table) {
     const inModalInput = focused && (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA') &&
       document.querySelector('.supply-modal-overlay.show')?.contains(focused);
     if (!inModalInput) renderSupplyPage();
+  } else if (document.getElementById('season-page')?.classList.contains('active')) {
+    const focused = document.activeElement;
+    const seasonPage = document.getElementById('season-page');
+    if (focused && seasonPage && seasonPage.contains(focused) &&
+        (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA' || focused.tagName === 'SELECT')) return;
+    renderSeasonPage();
   } else if (currentCharId) {
     const char = allChars.find(c => c.id === currentCharId);
     if (char) renderDetail(char);
