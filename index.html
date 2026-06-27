@@ -1634,7 +1634,7 @@ html.skin-glc .alarm-row.on { background: #FBF2F6; border-color: #ecd2d2; }
 .alarm-row.on .alarm-row-body { display: flex; }
 .alarm-field { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .alarm-field-label { font-size: 0.74rem; color: var(--text); }
-.alarm-inline { display: flex; align-items: center; gap: 6px; }
+.alarm-inline { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .alarm-select {
   font-family: 'Gowun Dodum', sans-serif; font-size: 0.74rem; color: var(--text);
   background: var(--surface); border: 1px solid var(--border);
@@ -1643,6 +1643,19 @@ html.skin-glc .alarm-row.on { background: #FBF2F6; border-color: #ecd2d2; }
 .alarm-select:focus { outline: none; border-color: var(--sage); }
 .alarm-sub-block { display: flex; flex-direction: column; gap: 10px; }
 .alarm-after-note { font-size: 0.66rem; color: var(--text-sub); }
+/* ── 알람 숫자 입력 (드롭다운과 동일 토큰) v1.6.94 ── */
+.alarm-num {
+  font-family: 'Gowun Dodum', sans-serif; font-size: 0.74rem; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-xs); padding: 5px 8px; width: 56px; text-align: center;
+}
+.alarm-num:focus { outline: none; border-color: var(--sage); }
+.alarm-num::-webkit-outer-spin-button,
+.alarm-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.alarm-num[type=number] { -moz-appearance: textfield; }
+/* 조건부 노출 보조 행 (알림 시점 직접입력 등) */
+.alarm-subfield { display: none; }
+.alarm-subfield.show { display: flex; }
 .reset-trigger {
   display: inline-flex;
   align-items: center;
@@ -4980,9 +4993,13 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
       <div class="alarm-row-body">
         <div class="alarm-field">
           <span class="alarm-field-label">알림 시점</span>
+          <select class="alarm-select" id="alarm-sugo-leadsel" onchange="onLeadSelChange('sugo')"></select>
+        </div>
+        <div class="alarm-field alarm-subfield" id="alarm-sugo-leadcustom">
+          <span class="alarm-field-label">미리 알림</span>
           <div class="alarm-inline">
-            <select class="alarm-select" id="alarm-sugo-lead" onchange="updateAlarmFromUI()"></select>
-            <span class="alarm-field-label">전</span>
+            <input type="number" class="alarm-num" id="alarm-sugo-leadnum" min="1" max="600" inputmode="numeric" oninput="onLeadNumInput('sugo')">
+            <span class="alarm-field-label">분 전</span>
           </div>
         </div>
       </div>
@@ -5000,9 +5017,13 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
       <div class="alarm-row-body">
         <div class="alarm-field">
           <span class="alarm-field-label">알림 시점</span>
+          <select class="alarm-select" id="alarm-chimgong-leadsel" onchange="onLeadSelChange('chimgong')"></select>
+        </div>
+        <div class="alarm-field alarm-subfield" id="alarm-chimgong-leadcustom">
+          <span class="alarm-field-label">미리 알림</span>
           <div class="alarm-inline">
-            <select class="alarm-select" id="alarm-chimgong-lead" onchange="updateAlarmFromUI()"></select>
-            <span class="alarm-field-label">전</span>
+            <input type="number" class="alarm-num" id="alarm-chimgong-leadnum" min="1" max="600" inputmode="numeric" oninput="onLeadNumInput('chimgong')">
+            <span class="alarm-field-label">분 전</span>
           </div>
         </div>
       </div>
@@ -5033,13 +5054,19 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
               <span class="alarm-field-label">시</span>
               <select class="alarm-select" id="alarm-custom-min" onchange="updateAlarmFromUI()"></select>
               <span class="alarm-field-label">분</span>
+              <select class="alarm-select" id="alarm-custom-sec" onchange="updateAlarmFromUI()"></select>
+              <span class="alarm-field-label">초</span>
             </div>
           </div>
           <div class="alarm-field">
             <span class="alarm-field-label">알림 시점</span>
+            <select class="alarm-select" id="alarm-custom-leadsel" onchange="onLeadSelChange('custom')"></select>
+          </div>
+          <div class="alarm-field alarm-subfield" id="alarm-custom-leadcustom">
+            <span class="alarm-field-label">미리 알림</span>
             <div class="alarm-inline">
-              <select class="alarm-select" id="alarm-custom-lead" onchange="updateAlarmFromUI()"></select>
-              <span class="alarm-field-label">전</span>
+              <input type="number" class="alarm-num" id="alarm-custom-leadnum" min="1" max="600" inputmode="numeric" oninput="onLeadNumInput('custom')">
+              <span class="alarm-field-label">분 전</span>
             </div>
           </div>
         </div>
@@ -5047,12 +5074,48 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
           <div class="alarm-field">
             <span class="alarm-field-label">지금부터</span>
             <div class="alarm-inline">
-              <select class="alarm-select" id="alarm-custom-after-min" onchange="updateAlarmFromUI()"></select>
-              <span class="alarm-field-label">분 뒤</span>
+              <input type="number" class="alarm-num" id="alarm-custom-after-h" min="0" max="999" inputmode="numeric" oninput="updateAlarmFromUI()">
+              <span class="alarm-field-label">시간</span>
+              <input type="number" class="alarm-num" id="alarm-custom-after-m" min="0" max="59" inputmode="numeric" oninput="updateAlarmFromUI()">
+              <span class="alarm-field-label">분</span>
+              <input type="number" class="alarm-num" id="alarm-custom-after-s" min="0" max="59" inputmode="numeric" oninput="updateAlarmFromUI()">
+              <span class="alarm-field-label">초 뒤</span>
             </div>
           </div>
           <div class="alarm-after-note" id="alarm-after-note"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- 수면 모드 (사용자별) v1.6.94 -->
+    <div class="alarm-row" id="alarm-row-sleep">
+      <div class="alarm-row-head">
+        <div>
+          <div class="alarm-row-name">수면 모드</div>
+          <div class="alarm-row-sub">이 시간대엔 모든 알림 꺼짐 · 사용자별 저장</div>
+        </div>
+        <button class="alarm-toggle" onclick="toggleSleepMode()">꺼짐</button>
+      </div>
+      <div class="alarm-row-body">
+        <div class="alarm-field">
+          <span class="alarm-field-label">시작</span>
+          <div class="alarm-inline">
+            <select class="alarm-select" id="alarm-sleep-start-h" onchange="updateSleepFromUI()"></select>
+            <span class="alarm-field-label">시</span>
+            <select class="alarm-select" id="alarm-sleep-start-m" onchange="updateSleepFromUI()"></select>
+            <span class="alarm-field-label">분</span>
+          </div>
+        </div>
+        <div class="alarm-field">
+          <span class="alarm-field-label">종료</span>
+          <div class="alarm-inline">
+            <select class="alarm-select" id="alarm-sleep-end-h" onchange="updateSleepFromUI()"></select>
+            <span class="alarm-field-label">시</span>
+            <select class="alarm-select" id="alarm-sleep-end-m" onchange="updateSleepFromUI()"></select>
+            <span class="alarm-field-label">분</span>
+          </div>
+        </div>
+        <div class="alarm-after-note" id="alarm-sleep-note"></div>
       </div>
     </div>
 
@@ -6253,11 +6316,15 @@ function closeAlarm(ev) {
 // ── 알람 (로컬 저장, 한국시간 기준) v1.6.91 ──
 const ALARM_KEY = 'chunyang-alarm-settings';
 const _alarmDefaults = {
-  sugo:     { on:false, lead:5 },
-  chimgong: { on:false, lead:5 },
-  custom:   { on:false, mode:'time', hour:21, minute:0, lead:5, afterMin:10, fireAt:null },
+  sugo:     { on:false, leadOn:true, lead:5 },
+  chimgong: { on:false, leadOn:true, lead:5 },
+  custom:   { on:false, mode:'time', hour:21, minute:0, second:0, leadOn:true, lead:5, afterH:0, afterMin:10, afterSec:0, fireAt:null },
   volume:   0.7,
 };
+const LEAD_PRESETS = [1, 2, 3, 5, 10, 15, 20, 30];     // 알림 시점 드롭다운 프리셋 (분)
+// 수면 모드: 사용자별 저장 (한국시간 구간엔 모든 알림 차단) v1.6.94
+const ALARM_SLEEP_KEY = 'aion2_alarm_sleep';
+const _sleepDefault = { on:false, startH:2, startM:0, endH:8, endM:0 };
 let alarmSettings = loadAlarmSettings();
 let _alarmSelectsBuilt = false;
 let _alarmFired = {};
@@ -6279,6 +6346,21 @@ function loadAlarmSettings() {
 }
 function saveAlarmSettings() {
   try { localStorage.setItem(ALARM_KEY, JSON.stringify(alarmSettings)); } catch (e) {}
+}
+// ── 수면 모드 설정 (사용자별) v1.6.94 ──
+function _alarmActorKey() {
+  return (typeof currentActor !== 'undefined' && currentActor) ? currentActor : 'guest';
+}
+function loadSleepCfg() {
+  let all = {};
+  try { all = JSON.parse(localStorage.getItem(ALARM_SLEEP_KEY) || '{}'); } catch (e) {}
+  return Object.assign({}, _sleepDefault, all[_alarmActorKey()] || {});
+}
+function saveSleepCfg(cfg) {
+  let all = {};
+  try { all = JSON.parse(localStorage.getItem(ALARM_SLEEP_KEY) || '{}'); } catch (e) {}
+  all[_alarmActorKey()] = cfg;
+  try { localStorage.setItem(ALARM_SLEEP_KEY, JSON.stringify(all)); } catch (e) {}
 }
 function _apad(n) { return String(n).padStart(2, '0'); }
 let _timeOffset = 0;   // (정확한 UTC) - (이 PC의 Date.now()), 인터넷 시간으로 보정
@@ -6303,14 +6385,42 @@ function kstNow() {
   const d = new Date(t);
   return new Date(t + d.getTimezoneOffset() * 60000 + 9 * 3600000);
 }
+// ── 수면 모드 판정 (한국시간 기준, 자정 넘김 지원) v1.6.94 ──
+function _inSleepWindow(curMin, cfg) {
+  const sMin = cfg.startH * 60 + cfg.startM, eMin = cfg.endH * 60 + cfg.endM;
+  if (sMin === eMin) return false;                       // 시작=종료 → 적용 안 함
+  return sMin < eMin ? (curMin >= sMin && curMin < eMin) // 일반 구간
+                     : (curMin >= sMin || curMin < eMin); // 자정 넘김 구간
+}
+function isSleepNow(k) {                                  // k: kstNow() 결과
+  const cfg = loadSleepCfg();
+  if (!cfg.on) return false;
+  return _inSleepWindow(k.getHours() * 60 + k.getMinutes(), cfg);
+}
+function _isSleepEpoch(epoch) {                           // epoch: 보정 UTC epoch
+  const cfg = loadSleepCfg();
+  if (!cfg.on) return false;
+  const d = new Date(epoch + 9 * 3600000);               // KST 벽시계로 변환
+  return _inSleepWindow(d.getUTCHours() * 60 + d.getUTCMinutes(), cfg);
+}
 
 function buildAlarmSelects() {
   if (_alarmSelectsBuilt) return;
-  const leadOpts = Array.from({length:10}, (_, i) => i + 1).map(n => `<option value="${n}">${n}분</option>`).join('');
-  ['alarm-sugo-lead','alarm-chimgong-lead','alarm-custom-lead'].forEach(id => { document.getElementById(id).innerHTML = leadOpts; });
-  document.getElementById('alarm-custom-hour').innerHTML = Array.from({length:24}, (_, i) => i).map(n => `<option value="${n}">${_apad(n)}</option>`).join('');
-  document.getElementById('alarm-custom-min').innerHTML = Array.from({length:60}, (_, i) => i).map(n => `<option value="${n}">${_apad(n)}</option>`).join('');
-  document.getElementById('alarm-custom-after-min').innerHTML = [1,3,5,10,15,20,30,45,60,90,120].map(n => `<option value="${n}">${n}</option>`).join('');
+  // 알림 시점: "미리 알림 없음" + 프리셋 + "직접 입력" (드롭다운/숫자입력 병행) v1.6.94
+  const leadOpts = '<option value="0">미리 알림 없음</option>'
+    + LEAD_PRESETS.map(n => `<option value="${n}">${n}분 전</option>`).join('')
+    + '<option value="custom">직접 입력…</option>';
+  ['alarm-sugo-leadsel','alarm-chimgong-leadsel','alarm-custom-leadsel'].forEach(id => { document.getElementById(id).innerHTML = leadOpts; });
+  const h24 = Array.from({length:24}, (_, i) => i).map(n => `<option value="${n}">${_apad(n)}</option>`).join('');
+  const m60 = Array.from({length:60}, (_, i) => i).map(n => `<option value="${n}">${_apad(n)}</option>`).join('');
+  document.getElementById('alarm-custom-hour').innerHTML = h24;
+  document.getElementById('alarm-custom-min').innerHTML = m60;
+  document.getElementById('alarm-custom-sec').innerHTML = m60;     // 초 단위 v1.6.94
+  // 수면 모드 시/분
+  document.getElementById('alarm-sleep-start-h').innerHTML = h24;
+  document.getElementById('alarm-sleep-end-h').innerHTML = h24;
+  document.getElementById('alarm-sleep-start-m').innerHTML = m60;
+  document.getElementById('alarm-sleep-end-m').innerHTML = m60;
   _alarmSelectsBuilt = true;
 }
 
@@ -6328,20 +6438,34 @@ function renderAlarmModal() {
   setAlarmRow('sugo', s.sugo.on);
   setAlarmRow('chimgong', s.chimgong.on);
   setAlarmRow('custom', s.custom.on);
-  document.getElementById('alarm-sugo-lead').value = s.sugo.lead;
-  document.getElementById('alarm-chimgong-lead').value = s.chimgong.lead;
+  renderLead('sugo'); renderLead('chimgong'); renderLead('custom');
   document.getElementById('alarm-custom-mode').value = s.custom.mode;
   document.getElementById('alarm-custom-hour').value = s.custom.hour;
   document.getElementById('alarm-custom-min').value = s.custom.minute;
-  document.getElementById('alarm-custom-lead').value = s.custom.lead;
-  document.getElementById('alarm-custom-after-min').value = s.custom.afterMin;
+  document.getElementById('alarm-custom-sec').value = s.custom.second;
+  document.getElementById('alarm-custom-after-h').value = s.custom.afterH;
+  document.getElementById('alarm-custom-after-m').value = s.custom.afterMin;
+  document.getElementById('alarm-custom-after-s').value = s.custom.afterSec;
   document.getElementById('alarm-custom-time').style.display = s.custom.mode === 'time' ? '' : 'none';
   document.getElementById('alarm-custom-after').style.display = s.custom.mode === 'after' ? '' : 'none';
   const vol = Math.round(s.volume * 100);
   document.getElementById('alarm-volume').value = vol;
   document.getElementById('alarm-volume-val').textContent = vol + '%';
+  renderSleepMode();
   updateAfterNote();
   updateAlarmBadge();
+}
+// 알림 시점 컨트롤 렌더: leadOn=false→"없음", 프리셋이면 그 값, 아니면 "직접 입력" v1.6.94
+function renderLead(type) {
+  const c = alarmSettings[type];
+  const sel = document.getElementById(`alarm-${type}-leadsel`);
+  const num = document.getElementById(`alarm-${type}-leadnum`);
+  const sub = document.getElementById(`alarm-${type}-leadcustom`);
+  if (!sel) return;
+  if (!c.leadOn) { sel.value = '0'; sub.classList.remove('show'); }
+  else if (LEAD_PRESETS.includes(c.lead)) { sel.value = String(c.lead); sub.classList.remove('show'); }
+  else { sel.value = 'custom'; sub.classList.add('show'); }
+  num.value = c.lead;
 }
 function setAlarmRow(type, on) {
   const row = document.getElementById('alarm-row-' + type);
@@ -6356,7 +6480,7 @@ function updateAfterNote() {
   const c = alarmSettings.custom;
   if (c.on && c.mode === 'after' && c.fireAt) {
     const target = new Date(kstNow().getTime() + (c.fireAt - Date.now()));
-    el.textContent = `약 ${_apad(target.getHours())}:${_apad(target.getMinutes())}에 울려요`;
+    el.textContent = `약 ${_apad(target.getHours())}:${_apad(target.getMinutes())}:${_apad(target.getSeconds())}에 울려요`;
   } else if (c.mode === 'after') {
     el.textContent = '켜면 지금부터 카운트가 시작돼요';
   } else { el.textContent = ''; }
@@ -6370,19 +6494,92 @@ function toggleAlarmType(type) {
   renderAlarmModal();
   armAndSchedule();
 }
+function _clampInt(v, min, max, dflt) {
+  let n = parseInt(v, 10);
+  if (isNaN(n)) n = dflt;
+  return Math.max(min, Math.min(max, n));
+}
+// 알림 시점 값 읽기 (드롭다운 선택 또는 직접 입력) v1.6.94
+function readLead(type) {
+  const sel = document.getElementById(`alarm-${type}-leadsel`);
+  const num = document.getElementById(`alarm-${type}-leadnum`);
+  const prev = alarmSettings[type].lead || 5;
+  const v = sel ? sel.value : '0';
+  if (v === '0') return { leadOn: false, lead: prev };
+  if (v === 'custom') return { leadOn: true, lead: _clampInt(num.value, 1, 600, prev) };
+  return { leadOn: true, lead: +v };
+}
+function onLeadSelChange(type) {
+  const sel = document.getElementById(`alarm-${type}-leadsel`);
+  const sub = document.getElementById(`alarm-${type}-leadcustom`);
+  const num = document.getElementById(`alarm-${type}-leadnum`);
+  if (sel.value === 'custom') {
+    sub.classList.add('show');
+    if (!num.value) num.value = alarmSettings[type].lead || 5;
+    num.focus(); num.select && num.select();
+  } else {
+    sub.classList.remove('show');
+  }
+  updateAlarmFromUI();
+}
+function onLeadNumInput(type) { updateAlarmFromUI(); }   // 입력 중 재렌더 없이 값만 반영
 function updateAlarmFromUI() {
   const s = alarmSettings;
-  s.sugo.lead = +document.getElementById('alarm-sugo-lead').value;
-  s.chimgong.lead = +document.getElementById('alarm-chimgong-lead').value;
+  ['sugo', 'chimgong', 'custom'].forEach(t => { const r = readLead(t); s[t].leadOn = r.leadOn; s[t].lead = r.lead; });
   s.custom.mode = document.getElementById('alarm-custom-mode').value;
   s.custom.hour = +document.getElementById('alarm-custom-hour').value;
   s.custom.minute = +document.getElementById('alarm-custom-min').value;
-  s.custom.lead = +document.getElementById('alarm-custom-lead').value;
-  s.custom.afterMin = +document.getElementById('alarm-custom-after-min').value;
+  s.custom.second = +document.getElementById('alarm-custom-sec').value;
+  s.custom.afterH = _clampInt(document.getElementById('alarm-custom-after-h').value, 0, 999, 0);
+  s.custom.afterMin = _clampInt(document.getElementById('alarm-custom-after-m').value, 0, 59, 0);
+  s.custom.afterSec = _clampInt(document.getElementById('alarm-custom-after-s').value, 0, 59, 0);
   syncCustomFireAt();
   saveAlarmSettings();
-  renderAlarmModal();
+  // 입력 필드를 건드리지 않도록 전체 재렌더 대신 필요한 부분만 갱신 (직접 입력 중 포커스 유지)
+  document.getElementById('alarm-custom-time').style.display = s.custom.mode === 'time' ? '' : 'none';
+  document.getElementById('alarm-custom-after').style.display = s.custom.mode === 'after' ? '' : 'none';
+  updateAfterNote();
+  updateAlarmBadge();
   armAndSchedule();
+}
+// ── 수면 모드 UI v1.6.94 ──
+function renderSleepMode() {
+  const cfg = loadSleepCfg();
+  const row = document.getElementById('alarm-row-sleep');
+  if (!row) return;
+  const btn = row.querySelector('.alarm-toggle');
+  row.classList.toggle('on', cfg.on);
+  btn.classList.toggle('on', cfg.on);
+  btn.textContent = cfg.on ? '켜짐' : '꺼짐';
+  document.getElementById('alarm-sleep-start-h').value = cfg.startH;
+  document.getElementById('alarm-sleep-start-m').value = cfg.startM;
+  document.getElementById('alarm-sleep-end-h').value = cfg.endH;
+  document.getElementById('alarm-sleep-end-m').value = cfg.endM;
+  document.getElementById('alarm-sleep-note').textContent = _sleepNoteText(cfg);
+}
+function _sleepNoteText(cfg) {
+  const a = `${_apad(cfg.startH)}:${_apad(cfg.startM)}`, b = `${_apad(cfg.endH)}:${_apad(cfg.endM)}`;
+  if (cfg.startH === cfg.endH && cfg.startM === cfg.endM) return '시작·종료가 같으면 적용되지 않아요';
+  const wrap = (cfg.startH * 60 + cfg.startM) > (cfg.endH * 60 + cfg.endM) ? ' (자정 넘김)' : '';
+  const who = (typeof currentActor !== 'undefined' && currentActor && currentActor !== 'guest') ? currentActor : '게스트';
+  return `한국시간 ${a} ~ ${b}${wrap} · ${who} 전용 · 이 시간엔 알림이 안 떠요`;
+}
+function toggleSleepMode() {
+  const cfg = loadSleepCfg();
+  cfg.on = !cfg.on;
+  saveSleepCfg(cfg);
+  renderSleepMode();
+  if (_alarmCtx) rescheduleAlarms();
+}
+function updateSleepFromUI() {
+  const cfg = loadSleepCfg();
+  cfg.startH = +document.getElementById('alarm-sleep-start-h').value;
+  cfg.startM = +document.getElementById('alarm-sleep-start-m').value;
+  cfg.endH = +document.getElementById('alarm-sleep-end-h').value;
+  cfg.endM = +document.getElementById('alarm-sleep-end-m').value;
+  saveSleepCfg(cfg);
+  renderSleepMode();
+  if (_alarmCtx) rescheduleAlarms();
 }
 function updateAlarmVolume(v) {
   alarmSettings.volume = Math.max(0, Math.min(1, (+v) / 100));
@@ -6392,8 +6589,11 @@ function updateAlarmVolume(v) {
 }
 function syncCustomFireAt() {
   const c = alarmSettings.custom;
-  if (c.on && c.mode === 'after') c.fireAt = Date.now() + c.afterMin * 60000;
-  else c.fireAt = null;
+  if (c.on && c.mode === 'after') {
+    const ms = ((c.afterH || 0) * 3600 + (c.afterMin || 0) * 60 + (c.afterSec || 0)) * 1000;
+    // 지속시간이 바뀐 경우에만 카운트다운 리셋 (다른 알람 토글 시 불필요한 리셋 방지)
+    if (!c.fireAt || c._afterMs !== ms) { c.fireAt = Date.now() + ms; c._afterMs = ms; }
+  } else { c.fireAt = null; c._afterMs = undefined; }
 }
 function requestAllPerms() {
   primeAudio(); // 사용자 동작으로 알림음 자동재생 잠금 해제
@@ -6421,28 +6621,41 @@ function startAlarmScheduler() {
 function alarmTick() {
   const s = alarmSettings;
   const k = kstNow();
-  const H = k.getHours(), M = k.getMinutes();
+  const H = k.getHours(), M = k.getMinutes(), S = k.getSeconds();
+  // 수면 모드: 알림 완전 차단 (꺼놓은 것과 동일하게 동작) v1.6.94
+  if (isSleepNow(k)) {
+    // 1회성 카운트다운이 이 시간대에 만료되면 조용히 소비 (수면 끝난 뒤 뒤늦게 울리지 않게)
+    if (s.custom.on && s.custom.mode === 'after' && s.custom.fireAt && Date.now() >= s.custom.fireAt) {
+      s.custom.on = false; s.custom.fireAt = null; s.custom._afterMs = undefined; saveAlarmSettings();
+      updateAlarmBadge();
+      const ov = document.getElementById('alarm-overlay'); if (ov && ov.classList.contains('show')) renderAlarmModal();
+    }
+    return;
+  }
   const stamp = `${k.getFullYear()}${k.getMonth()}${k.getDate()}${H}${M}`;
   const fire = (key, label) => { const gk = key + '|' + stamp; if (_alarmFired[gk]) return; _alarmFired[gk] = true; triggerAlarm(label); };
   if (s.sugo.on) {
-    const fm = (60 - s.sugo.lead) % 60;
-    if (M === fm) fire('sugo-lead', `슈고 정각 ${s.sugo.lead}분 전이에요`);
+    if (s.sugo.leadOn) { const fm = (60 - s.sugo.lead + 60) % 60; if (M === fm) fire('sugo-lead', `슈고 정각 ${s.sugo.lead}분 전이에요`); }
     if (M === 0) fire('sugo-now', '슈고 정각이에요');
   }
   if (s.chimgong.on) {
-    const fm = (30 - s.chimgong.lead + 60) % 60;
-    if (M === fm) fire('chimgong-lead', `침공 30분 ${s.chimgong.lead}분 전이에요`);
+    if (s.chimgong.leadOn) { const fm = (30 - s.chimgong.lead + 60) % 60; if (M === fm) fire('chimgong-lead', `침공 30분 ${s.chimgong.lead}분 전이에요`); }
     if (M === 30) fire('chimgong-now', '침공 30분이에요');
   }
   if (s.custom.on) {
     if (s.custom.mode === 'time') {
-      let fm = s.custom.minute - s.custom.lead, fh = s.custom.hour;
-      while (fm < 0) { fm += 60; fh = (fh + 23) % 24; }
-      if (H === fh && M === fm) fire('custom-lead', `${_apad(s.custom.hour)}:${_apad(s.custom.minute)} ${s.custom.lead}분 전이에요`);
-      if (H === s.custom.hour && M === s.custom.minute) fire('custom-now', `${_apad(s.custom.hour)}:${_apad(s.custom.minute)}이 됐어요`);
+      const sStamp = stamp + '|' + S;   // 초 단위 식별 v1.6.94
+      const fireS = (key, label) => { const gk = key + '|' + sStamp; if (_alarmFired[gk]) return; _alarmFired[gk] = true; triggerAlarm(label); };
+      const tLabel = `${_apad(s.custom.hour)}:${_apad(s.custom.minute)}:${_apad(s.custom.second)}`;
+      if (s.custom.leadOn) {
+        let fm = s.custom.minute - s.custom.lead, fh = s.custom.hour;
+        while (fm < 0) { fm += 60; fh = (fh + 23) % 24; }
+        if (H === fh && M === fm && S === s.custom.second) fireS('custom-lead', `${tLabel} ${s.custom.lead}분 전이에요`);
+      }
+      if (H === s.custom.hour && M === s.custom.minute && S === s.custom.second) fireS('custom-now', `${tLabel}이 됐어요`);
     } else if (s.custom.fireAt && Date.now() >= s.custom.fireAt) {
       triggerAlarm('설정한 시간이 됐어요');
-      s.custom.on = false; s.custom.fireAt = null; saveAlarmSettings();
+      s.custom.on = false; s.custom.fireAt = null; s.custom._afterMs = undefined; saveAlarmSettings();
       updateAlarmBadge();
       rescheduleAlarms();
       const ov = document.getElementById('alarm-overlay'); if (ov && ov.classList.contains('show')) renderAlarmModal();
@@ -6491,10 +6704,10 @@ function _eventEpochs(start, end, minuteOfHour) {
   for (; ev <= end; ev += 3600000) res.push(ev);
   return res;
 }
-function _dailyEpochs(start, end, H, M) {
+function _dailyEpochs(start, end, H, M, S) {
   const res = [];
   const d = new Date(start + 9 * 3600000);
-  let ev = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), H, M) - 9 * 3600000;
+  let ev = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), H, M, S || 0) - 9 * 3600000;
   while (ev < start) ev += 86400000;
   for (; ev <= end; ev += 86400000) res.push(ev);
   return res;
@@ -6535,13 +6748,14 @@ function rescheduleAlarms() {
   const nowEpoch = Date.now() + _timeOffset;
   const end = nowEpoch + 12 * 3600000;
   const fires = [];
-  if (s.sugo.on) _eventEpochs(nowEpoch, end, 0).forEach(ev => { fires.push(ev - s.sugo.lead * 60000, ev); });
-  if (s.chimgong.on) _eventEpochs(nowEpoch, end, 30).forEach(ev => { fires.push(ev - s.chimgong.lead * 60000, ev); });
+  if (s.sugo.on) _eventEpochs(nowEpoch, end, 0).forEach(ev => { fires.push(ev); if (s.sugo.leadOn) fires.push(ev - s.sugo.lead * 60000); });
+  if (s.chimgong.on) _eventEpochs(nowEpoch, end, 30).forEach(ev => { fires.push(ev); if (s.chimgong.leadOn) fires.push(ev - s.chimgong.lead * 60000); });
   if (s.custom.on) {
-    if (s.custom.mode === 'time') _dailyEpochs(nowEpoch, end, s.custom.hour, s.custom.minute).forEach(ev => { fires.push(ev - s.custom.lead * 60000, ev); });
+    if (s.custom.mode === 'time') _dailyEpochs(nowEpoch, end, s.custom.hour, s.custom.minute, s.custom.second).forEach(ev => { fires.push(ev); if (s.custom.leadOn) fires.push(ev - s.custom.lead * 60000); });
     else if (s.custom.fireAt) fires.push(s.custom.fireAt + _timeOffset);
   }
-  fires.filter(f => f > nowEpoch + 50).sort((a, b) => a - b).forEach(_scheduleSoundAt);
+  // 수면 모드 구간에 드는 예약음은 제외 (소리도 안 울리게) v1.6.94
+  fires.filter(f => f > nowEpoch + 50 && !_isSleepEpoch(f)).sort((a, b) => a - b).forEach(_scheduleSoundAt);
 }
 async function armAndSchedule() {
   getCtx();
@@ -9346,6 +9560,8 @@ function setActor(name) {
   updateActorIndicator();
   // 사용자별 메뉴 표시 설정 적용
   try { applyMenuVisibility(); } catch (e) {}
+  // 사용자별 수면 모드 재적용 (예약음 재필터 + 모달 열려있으면 갱신) v1.6.94
+  try { if (_alarmCtx) rescheduleAlarms(); const ov = document.getElementById('alarm-overlay'); if (ov && ov.classList.contains('show')) renderAlarmModal(); } catch (e) {}
 }
 
 function updateActorIndicator() {
@@ -9371,6 +9587,8 @@ function logout() {
   document.getElementById('actor-step1').style.display = 'block';
   document.getElementById('actor-step2').style.display = 'none';
   document.getElementById('user-modal-overlay').style.display = 'flex';
+  // 로그아웃(게스트) 수면 모드로 전환 → 예약음 재필터 v1.6.94
+  try { if (_alarmCtx) rescheduleAlarms(); const ov = document.getElementById('alarm-overlay'); if (ov && ov.classList.contains('show')) renderAlarmModal(); } catch (e) {}
 }
 
 function checkActor() {
