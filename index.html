@@ -9720,14 +9720,27 @@ async function renderGrowthPage() {
   const el = document.getElementById('growth-content');
   if (!el) return;
 
-  // 모든 캐릭터의 성장 로그를 한 번에 가져옴
-  const { data: growthRows, error } = await sb
-    .from('char_growth_log')
-    .select('*')
-    .order('log_date', { ascending: true });
-  if (error) { console.error(error); return; }
+  // 성장 로그 전체를 페이지네이션으로 끝까지 가져옴
+  //   단일 select는 PostgREST 기본 행 상한(약 1000행)에 잘려서, 캐릭/날짜가 쌓이면
+  //   ascending 정렬 특성상 "최근 날짜"부터 누락됨(성장탭만 옛 날짜에서 멈추던 버그).
+  //   캐릭 상세는 character_id로 한 캐릭만 받으므로 영향 없었음.
+  //   log_date + id(유니크) 정렬로 페이지 경계 안정성 확보.
+  let growthRows = [];
+  const PAGE = 1000;
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await sb
+      .from('char_growth_log')
+      .select('*')
+      .order('log_date', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error) { console.error(error); break; }
+    if (!data || data.length === 0) break;
+    growthRows = growthRows.concat(data);
+    if (data.length < PAGE) break;
+  }
 
-  _buildGrowthPage(el, growthRows || [], _gpRange);
+  _buildGrowthPage(el, growthRows, _gpRange);
 }
 
 function _buildGrowthPage(el, allRows, rangeDays) {
