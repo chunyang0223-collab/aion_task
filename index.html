@@ -7797,16 +7797,33 @@ async function logGrowth(charId) {
   const ilvl = char.item_level || 0;
   const cp = char.combat_power || 0;
 
+  // ── 우상향 고정(high-water-mark) ──
+  //   직전 기록값을 바닥으로 삼아, 장비 탈착 등 일시 하락은 그래프에 반영하지 않음.
+  //   실시간 값(characters)은 그대로 두고 기록(char_growth_log)만 클램프한다.
+  const { data: prevRows } = await sb.from('char_growth_log')
+    .select('item_level, combat_power, log_date')
+    .eq('character_id', charId)
+    .lt('log_date', today)
+    .order('log_date', { ascending: false })
+    .limit(1);
+  const prev = prevRows && prevRows[0];
+  const floorIlvl = prev ? (prev.item_level || 0) : 0;
+  const floorCp   = prev ? (prev.combat_power || 0) : 0;
+
   const { data: existing } = await sb.from('char_growth_log')
     .select('*')
     .eq('character_id', charId)
     .eq('log_date', today)
     .maybeSingle();
 
+  const baseIlvl = existing ? (existing.item_level || 0) : 0;
+  const baseCp   = existing ? (existing.combat_power || 0) : 0;
+  // 저장값 = max(실시간, 오늘 기존값, 직전 기록값) → 절대 하락하지 않음
+  const newIlvl = Math.max(ilvl, baseIlvl, floorIlvl);
+  const newCp   = Math.max(cp,   baseCp,   floorCp);
+
   if (existing) {
-    const newIlvl = Math.max(existing.item_level || 0, ilvl);
-    const newCp = Math.max(existing.combat_power || 0, cp);
-    if (newIlvl === (existing.item_level || 0) && newCp === (existing.combat_power || 0)) return;
+    if (newIlvl === baseIlvl && newCp === baseCp) return;
     await sb.from('char_growth_log')
       .update({ item_level: newIlvl, combat_power: newCp })
       .eq('id', existing.id);
@@ -7814,8 +7831,8 @@ async function logGrowth(charId) {
     await sb.from('char_growth_log').insert({
       character_id: charId,
       log_date: today,
-      item_level: ilvl,
-      combat_power: cp,
+      item_level: newIlvl,
+      combat_power: newCp,
     });
   }
 }
@@ -8377,7 +8394,7 @@ async function fetchFromPlaync(charId) {
     await sb.from('characters').update(updates).eq('id', charId);
     Object.assign(char, updates);
     renderDetail(char);
-    if (updates.item_level) logGrowth(charId);
+    logGrowth(charId); // CP만 갱신돼도 기록 (이전엔 템레벨 바뀔 때만 기록되던 버그)
     const cpDisplay = data.combatPower != null ? (Math.floor(data.combatPower / 100) / 10).toFixed(1) + 'k' : '-';
     showToast(`템 ${data.itemLevel?.toLocaleString() ?? '-'} · ${cpDisplay} 적용됨`);
   } catch (e) {
