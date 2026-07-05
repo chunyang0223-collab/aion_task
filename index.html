@@ -1656,6 +1656,28 @@ html.skin-glc .alarm-row.on { background: #FBF2F6; border-color: #ecd2d2; }
 /* 조건부 노출 보조 행 (알림 시점 직접입력 등) */
 .alarm-subfield { display: none; }
 .alarm-subfield.show { display: flex; }
+/* ── 커스텀 'N분 뒤' 확인 후 시작 (v1.6.97) ── */
+#alarm-row-custom .alarm-row-body { display: flex; }  /* 꺼져 있어도 항상 열림 — 켜야만 입력 가능하던 함정 제거 */
+.alarm-after-preview {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 10px 12px; border-radius: var(--radius-xs);
+  background: var(--surface2); border: 1px dashed var(--border);
+}
+.alarm-after-time { font-size: 0.78rem; color: var(--text); }
+.alarm-after-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.alarm-start-btn {
+  flex: none; padding: 6px 16px; border-radius: 20px;
+  border: 1px solid #ecd2d2; background: #f7e2e2; color: #7a5a5a;
+  font-family: 'Gowun Dodum', sans-serif; font-size: 0.74rem;
+  cursor: pointer; transition: all .15s;
+}
+.alarm-start-btn:hover:not(:disabled) { background: #f3d6d6; border-color: #e3c1c1; }
+.alarm-start-btn:active:not(:disabled) { transform: scale(0.96); }
+.alarm-start-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.alarm-start-btn.ghost { background: var(--surface2); border-color: var(--border); color: var(--text-sub); }
+.alarm-start-btn.ghost:hover:not(:disabled) { background: var(--hover); color: var(--text); }
+@keyframes alarmPulse { 0% { transform: scale(1); } 30% { transform: scale(1.1); } 100% { transform: scale(1); } }
+.alarm-start-btn.pulse { animation: alarmPulse .45s ease 2; }
 .reset-trigger {
   display: inline-flex;
   align-items: center;
@@ -5074,15 +5096,23 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
           <div class="alarm-field">
             <span class="alarm-field-label">지금부터</span>
             <div class="alarm-inline">
-              <input type="number" class="alarm-num" id="alarm-custom-after-h" min="0" max="999" inputmode="numeric" oninput="updateAlarmFromUI()">
+              <input type="number" class="alarm-num" id="alarm-custom-after-h" min="0" max="999" inputmode="numeric" oninput="updateAlarmFromUI()" onchange="renderAfterInputs()">
               <span class="alarm-field-label">시간</span>
-              <input type="number" class="alarm-num" id="alarm-custom-after-m" min="0" max="59" inputmode="numeric" oninput="updateAlarmFromUI()">
+              <input type="number" class="alarm-num" id="alarm-custom-after-m" min="0" max="59" inputmode="numeric" oninput="updateAlarmFromUI()" onchange="renderAfterInputs()">
               <span class="alarm-field-label">분</span>
-              <input type="number" class="alarm-num" id="alarm-custom-after-s" min="0" max="59" inputmode="numeric" oninput="updateAlarmFromUI()">
+              <input type="number" class="alarm-num" id="alarm-custom-after-s" min="0" max="59" inputmode="numeric" oninput="updateAlarmFromUI()" onchange="renderAfterInputs()">
               <span class="alarm-field-label">초 뒤</span>
             </div>
           </div>
-          <div class="alarm-after-note" id="alarm-after-note"></div>
+          <!-- 입력은 알람을 시작하지 않음 — 울릴 시각 확인 후 [시작]을 눌러야 시작 (v1.6.97) -->
+          <div class="alarm-after-preview">
+            <div class="alarm-after-time" id="alarm-after-time">시간을 입력하면 울릴 시각이 나와요</div>
+            <div class="alarm-after-note" id="alarm-after-note"></div>
+          </div>
+          <div class="alarm-after-actions">
+            <button class="alarm-start-btn ghost" id="alarm-after-cancel" onclick="cancelCustomAfter()" style="display:none">취소</button>
+            <button class="alarm-start-btn" id="alarm-after-start" onclick="startCustomAfter()">시작</button>
+          </div>
         </div>
       </div>
     </div>
@@ -6339,6 +6369,7 @@ function loadAlarmSettings() {
   if (s.chimgong) Object.assign(m.chimgong, s.chimgong);
   if (s.custom) Object.assign(m.custom, s.custom);
   if (typeof s.volume === 'number') m.volume = s.volume;
+  delete m.custom._afterMs;   // 구버전(자동 시작 방식) 잔재 제거 v1.6.97
   if (m.custom.on && m.custom.mode === 'after' && (!m.custom.fireAt || m.custom.fireAt <= Date.now())) {
     m.custom.on = false; m.custom.fireAt = null;
   }
@@ -6452,7 +6483,7 @@ function renderAlarmModal() {
   document.getElementById('alarm-volume').value = vol;
   document.getElementById('alarm-volume-val').textContent = vol + '%';
   renderSleepMode();
-  updateAfterNote();
+  renderCustomAfterUI();
   updateAlarmBadge();
 }
 // 알림 시점 컨트롤 렌더: leadOn=false→"없음", 프리셋이면 그 값, 아니면 "직접 입력" v1.6.94
@@ -6474,22 +6505,111 @@ function setAlarmRow(type, on) {
   btn.classList.toggle('on', on);
   btn.textContent = on ? '켜짐' : '꺼짐';
 }
-function updateAfterNote() {
-  const el = document.getElementById('alarm-after-note');
-  if (!el) return;
+// ── 커스텀 'N분 뒤': 확인 후 시작 (v1.6.97) ──
+// 규칙: 입력·토글·방식전환은 절대 fireAt을 만들지 않는다. startCustomAfter()만이 유일한 시작 경로.
+function _afterDurationMs() {
   const c = alarmSettings.custom;
-  if (c.on && c.mode === 'after' && c.fireAt) {
-    const target = new Date(kstNow().getTime() + (c.fireAt - Date.now()));
-    el.textContent = `약 ${_apad(target.getHours())}:${_apad(target.getMinutes())}:${_apad(target.getSeconds())}에 울려요`;
-  } else if (c.mode === 'after') {
-    el.textContent = '켜면 지금부터 카운트가 시작돼요';
-  } else { el.textContent = ''; }
+  return ((c.afterH || 0) * 3600 + (c.afterMin || 0) * 60 + (c.afterSec || 0)) * 1000;
+}
+function _kstPartsAt(localEpoch) {   // 이 PC epoch → 보정된 한국시간 벽시계 부품
+  const d = new Date(localEpoch + _timeOffset + 9 * 3600000);
+  return { y: d.getUTCFullYear(), mo: d.getUTCMonth() + 1, d: d.getUTCDate(), h: d.getUTCHours(), m: d.getUTCMinutes(), s: d.getUTCSeconds() };
+}
+function _fmtKorTime(p) {
+  const half = p.h < 12 ? '오전' : '오후';
+  const h12 = p.h % 12 === 0 ? 12 : p.h % 12;
+  return `${half} ${h12}시 ${p.m}분` + (p.s ? ` ${p.s}초` : '');
+}
+function _dayLabel(localEpoch) {
+  const t = _kstPartsAt(localEpoch), n = _kstPartsAt(Date.now());
+  const diff = Math.round((Date.UTC(t.y, t.mo - 1, t.d) - Date.UTC(n.y, n.mo - 1, n.d)) / 86400000);
+  return diff === 0 ? '오늘' : diff === 1 ? '내일' : diff === 2 ? '모레' : `${t.mo}월 ${t.d}일`;
+}
+function _fmtRemain(ms) {
+  let sec = Math.max(0, Math.ceil(ms / 1000));
+  const h = Math.floor(sec / 3600); sec -= h * 3600;
+  const m = Math.floor(sec / 60); sec -= m * 60;
+  return (h ? h + '시간 ' : '') + (m ? m + '분 ' : '') + sec + '초';
+}
+function renderAfterInputs() {   // 입력칸 표시값을 저장된(클램프된) 값으로 정돈 — blur 시점에만 호출, 타이핑 중엔 안 건드림
+  const c = alarmSettings.custom;
+  const eh = document.getElementById('alarm-custom-after-h');
+  if (!eh) return;
+  eh.value = c.afterH;
+  document.getElementById('alarm-custom-after-m').value = c.afterMin;
+  document.getElementById('alarm-custom-after-s').value = c.afterSec;
+  renderCustomAfterUI();
+}
+function renderCustomAfterUI() {   // 미리보기·버튼·토글만 갱신 (입력칸은 절대 안 건드림 → 포커스 안전)
+  const c = alarmSettings.custom;
+  const timeEl = document.getElementById('alarm-after-time');
+  if (!timeEl) return;
+  const noteEl = document.getElementById('alarm-after-note');
+  const startBtn = document.getElementById('alarm-after-start');
+  const cancelBtn = document.getElementById('alarm-after-cancel');
+  const armed = !!(c.on && c.mode === 'after' && c.fireAt);
+  const ms = _afterDurationMs();
+  if (armed) {
+    timeEl.textContent = `⏰ ${_dayLabel(c.fireAt)} ${_fmtKorTime(_kstPartsAt(c.fireAt))}에 울려요`;
+    const warn = _isSleepEpoch(c.fireAt + _timeOffset) ? ' · 이 시각은 수면 모드라 조용히 넘어가요!' : '';
+    noteEl.textContent = `남은 시간 ${_fmtRemain(c.fireAt - Date.now())}${warn}`;
+    startBtn.textContent = '다시 시작';
+    startBtn.disabled = ms < 1000;
+    cancelBtn.style.display = '';
+  } else {
+    if (ms >= 1000) {
+      const target = Date.now() + ms;
+      timeEl.textContent = `지금 시작하면 ${_dayLabel(target)} ${_fmtKorTime(_kstPartsAt(target))}에 울려요`;
+      noteEl.textContent = _isSleepEpoch(target + _timeOffset)
+        ? '이 시각은 수면 모드 구간이라 알림이 울리지 않아요!'
+        : '시각을 확인했으면 [시작]을 눌러줘';
+      startBtn.disabled = false;
+    } else {
+      timeEl.textContent = '시간을 입력하면 울릴 시각이 나와요';
+      noteEl.textContent = '';
+      startBtn.disabled = true;
+    }
+    startBtn.textContent = '시작';
+    cancelBtn.style.display = 'none';
+  }
+  if (c.mode === 'after') setAlarmRow('custom', c.on);
+  updateAlarmBadge();
+}
+function startCustomAfter() {   // [시작] / [다시 시작] — 유일한 시작 경로
+  const c = alarmSettings.custom;
+  const ms = _afterDurationMs();
+  if (ms < 1000) { showToast('울릴 시간을 먼저 입력해줘 (최소 1초)'); return; }
+  primeAudio();
+  c.mode = 'after';
+  c.on = true;
+  c.fireAt = Date.now() + ms;
+  saveAlarmSettings();
+  renderAfterInputs();
+  armAndSchedule();
+  showToast(`${_dayLabel(c.fireAt)} ${_fmtKorTime(_kstPartsAt(c.fireAt))}에 울려요`);
+}
+function cancelCustomAfter() {
+  const c = alarmSettings.custom;
+  c.on = false; c.fireAt = null;
+  saveAlarmSettings();
+  renderCustomAfterUI();
+  if (_alarmCtx) rescheduleAlarms();   // 예약해 둔 소리도 제거
 }
 
 function toggleAlarmType(type) {
+  // 커스텀 'N분 뒤': 토글로는 시작 불가 — [시작] 버튼만 유일한 시작 경로 (v1.6.97)
+  if (type === 'custom' && alarmSettings.custom.mode === 'after') {
+    if (alarmSettings.custom.on) { cancelCustomAfter(); }
+    else {
+      showToast('울릴 시각을 확인하고 [시작] 버튼으로 시작해줘');
+      const b = document.getElementById('alarm-after-start');
+      if (b) { b.classList.remove('pulse'); void b.offsetWidth; b.classList.add('pulse'); }
+    }
+    return;
+  }
   alarmSettings[type].on = !alarmSettings[type].on;
   if (alarmSettings[type].on) primeAudio();
-  syncCustomFireAt();
+  if (type === 'custom') alarmSettings.custom.fireAt = null;   // '특정 시각' 모드 위생: 카운트다운 잔재 제거
   saveAlarmSettings();
   renderAlarmModal();
   armAndSchedule();
@@ -6526,6 +6646,7 @@ function onLeadNumInput(type) { updateAlarmFromUI(); }   // 입력 중 재렌더
 function updateAlarmFromUI() {
   const s = alarmSettings;
   ['sugo', 'chimgong', 'custom'].forEach(t => { const r = readLead(t); s[t].leadOn = r.leadOn; s[t].lead = r.lead; });
+  const prevMode = s.custom.mode;
   s.custom.mode = document.getElementById('alarm-custom-mode').value;
   s.custom.hour = +document.getElementById('alarm-custom-hour').value;
   s.custom.minute = +document.getElementById('alarm-custom-min').value;
@@ -6533,12 +6654,19 @@ function updateAlarmFromUI() {
   s.custom.afterH = _clampInt(document.getElementById('alarm-custom-after-h').value, 0, 999, 0);
   s.custom.afterMin = _clampInt(document.getElementById('alarm-custom-after-m').value, 0, 59, 0);
   s.custom.afterSec = _clampInt(document.getElementById('alarm-custom-after-s').value, 0, 59, 0);
-  syncCustomFireAt();
+  // 방식 전환 시 켜져 있던 알람은 끔 — 몰래 이어가거나 즉시 울리는 일 방지 (v1.6.97)
+  if (prevMode !== s.custom.mode && s.custom.on) {
+    s.custom.on = false; s.custom.fireAt = null;
+    setAlarmRow('custom', false);
+    showToast('방식이 바뀌어서 알람을 꺼뒀어요');
+  }
+  if (s.custom.mode !== 'after') s.custom.fireAt = null;
+  // ※ 여기서는 절대 fireAt을 만들지/리셋하지 않는다 — 입력은 미리보기만 바꾼다 (v1.6.97)
   saveAlarmSettings();
   // 입력 필드를 건드리지 않도록 전체 재렌더 대신 필요한 부분만 갱신 (직접 입력 중 포커스 유지)
   document.getElementById('alarm-custom-time').style.display = s.custom.mode === 'time' ? '' : 'none';
   document.getElementById('alarm-custom-after').style.display = s.custom.mode === 'after' ? '' : 'none';
-  updateAfterNote();
+  renderCustomAfterUI();
   updateAlarmBadge();
   armAndSchedule();
 }
@@ -6587,14 +6715,8 @@ function updateAlarmVolume(v) {
   saveAlarmSettings();
   if (_alarmCtx) rescheduleAlarms();
 }
-function syncCustomFireAt() {
-  const c = alarmSettings.custom;
-  if (c.on && c.mode === 'after') {
-    const ms = ((c.afterH || 0) * 3600 + (c.afterMin || 0) * 60 + (c.afterSec || 0)) * 1000;
-    // 지속시간이 바뀐 경우에만 카운트다운 리셋 (다른 알람 토글 시 불필요한 리셋 방지)
-    if (!c.fireAt || c._afterMs !== ms) { c.fireAt = Date.now() + ms; c._afterMs = ms; }
-  } else { c.fireAt = null; c._afterMs = undefined; }
-}
+// (v1.6.97) syncCustomFireAt 삭제 — 입력/토글이 fireAt을 자동 생성·리셋하던 무한 알람의 진원지.
+// 이제 fireAt은 startCustomAfter()에서만 만들어지고, 취소/발동/만료 시에만 지워진다.
 function requestAllPerms() {
   primeAudio(); // 사용자 동작으로 알림음 자동재생 잠금 해제
   if (!('Notification' in window)) { showToast('이 브라우저는 알림을 지원하지 않아요'); return; }
@@ -6622,13 +6744,15 @@ function alarmTick() {
   const s = alarmSettings;
   const k = kstNow();
   const H = k.getHours(), M = k.getMinutes(), S = k.getSeconds();
+  // 모달이 열려 있으면 'N분 뒤' 미리보기·남은 시간 매초 갱신 (입력칸은 안 건드림) v1.6.97
+  const _aov = document.getElementById('alarm-overlay');
+  if (_aov && _aov.classList.contains('show') && s.custom.mode === 'after') renderCustomAfterUI();
   // 수면 모드: 알림 완전 차단 (꺼놓은 것과 동일하게 동작) v1.6.94
   if (isSleepNow(k)) {
     // 1회성 카운트다운이 이 시간대에 만료되면 조용히 소비 (수면 끝난 뒤 뒤늦게 울리지 않게)
     if (s.custom.on && s.custom.mode === 'after' && s.custom.fireAt && Date.now() >= s.custom.fireAt) {
-      s.custom.on = false; s.custom.fireAt = null; s.custom._afterMs = undefined; saveAlarmSettings();
-      updateAlarmBadge();
-      const ov = document.getElementById('alarm-overlay'); if (ov && ov.classList.contains('show')) renderAlarmModal();
+      s.custom.on = false; s.custom.fireAt = null; saveAlarmSettings();
+      renderCustomAfterUI();   // 배지·토글·버튼 복구 (입력값 유지)
     }
     return;
   }
@@ -6653,12 +6777,17 @@ function alarmTick() {
         if (H === fh && M === fm && S === s.custom.second) fireS('custom-lead', `${tLabel} ${s.custom.lead}분 전이에요`);
       }
       if (H === s.custom.hour && M === s.custom.minute && S === s.custom.second) fireS('custom-now', `${tLabel}이 됐어요`);
-    } else if (s.custom.fireAt && Date.now() >= s.custom.fireAt) {
-      triggerAlarm('설정한 시간이 됐어요');
-      s.custom.on = false; s.custom.fireAt = null; s.custom._afterMs = undefined; saveAlarmSettings();
-      updateAlarmBadge();
-      rescheduleAlarms();
-      const ov = document.getElementById('alarm-overlay'); if (ov && ov.classList.contains('show')) renderAlarmModal();
+    } else if (s.custom.fireAt) {
+      if (Date.now() >= s.custom.fireAt) {
+        triggerAlarm('설정한 시간이 됐어요');
+        s.custom.on = false; s.custom.fireAt = null; saveAlarmSettings();
+        rescheduleAlarms();
+        renderCustomAfterUI();   // 꺼짐으로 복구 — 입력값은 남아 있어 [시작]만 누르면 바로 재사용 (v1.6.97)
+      }
+    } else {
+      // on인데 fireAt이 없는 비정상 상태(구버전 잔재 등) → 조용히 꺼서 정합성 회복 (v1.6.97)
+      s.custom.on = false; saveAlarmSettings();
+      renderCustomAfterUI();
     }
   }
 }
