@@ -1175,6 +1175,11 @@ body.guest-mode .odd-batch-btn { display: none; }
 #acc-modal .am-sk-row2 .tm-num-sm { min-width: 0; text-align: right; white-space: nowrap; }
 #acc-modal .am-step-pm .am-step-btn + .am-step-btn { border-left: 1px solid var(--border); }
 #acc-modal .tm-slider[data-kind="shugo_charge"] .tm-fill { background: var(--sky); }
+/* ── 침공 열쇠 (v1.6.98) ── */
+#acc-modal .tm-slider[data-kind="invasion"] .tm-fill { background: var(--lavender); }
+/* 계정 카드: 슈고열쇠(왼쪽) · 침공열쇠(오른쪽) 한 줄 배치 */
+.stat-duo { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 3px 0; }
+.stat-duo-cell { display: inline-flex; align-items: baseline; gap: 8px; min-width: 0; white-space: nowrap; }
 
 /* 일일던전 드롭다운 헤더 — hover 시 살짝 강조 (레이아웃 유지) */
 .dungeon-toggle-row {
@@ -7308,9 +7313,16 @@ function renderOverview() {
       && shopAccCnt >= 16;
     html += `<div class="account-card" style="cursor:pointer" onclick="openAccountModal('${owner}')">
       <div class="account-card-title">${owner} 계정 <span style="float:right;font-size:0.7rem;color:var(--text-sub)">✎</span></div>
-      <div class="stat-row" style="padding:3px 0;border:none">
-        <span class="stat-label" style="font-size:0.78rem">슈고열쇠</span>
-        <span style="font-size:0.78rem;color:var(--text)">${acc.shugo_key_base||0} <span style="color:var(--text-sub)">+${acc.shugo_key_charged||0}</span></span>
+      <!-- 슈고열쇠(왼쪽) · 침공열쇠(오른쪽) 한 줄 (v1.6.98) -->
+      <div class="stat-duo">
+        <span class="stat-duo-cell">
+          <span class="stat-label" style="font-size:0.78rem">슈고열쇠</span>
+          <span style="font-size:0.78rem;color:var(--text)">${acc.shugo_key_base||0} <span style="color:var(--text-sub)">+${acc.shugo_key_charged||0}</span></span>
+        </span>
+        <span class="stat-duo-cell">
+          <span class="stat-label" style="font-size:0.78rem">침공열쇠</span>
+          <span style="font-size:0.78rem;color:var(--text)">${Math.min(7, acc.invasion_key||0)} <span style="color:var(--text-sub)">/ 7</span></span>
+        </span>
       </div>
       <div class="stat-row" style="padding:3px 0;border:none">
         <span class="stat-label" style="font-size:0.78rem">일일던전</span>
@@ -8907,6 +8919,8 @@ function initTmSliders() {
       setShugoVal(owner, 'shugo_key_base', val, 14);
     } else if (kind === 'shugo_charge') {
       setShugoVal(owner, 'shugo_key_charged', val, 30);
+    } else if (kind === 'invasion') {
+      setInvasionVal(owner, val);
     } else if (kind === 'shop') {
       if (tm === 'acc') setAccountShopVal(owner, val);
       else setCharShopVal(owner, charId, val);
@@ -8950,6 +8964,34 @@ function stepShugo(owner, which, delta) {
     const num = sl.nextElementSibling; const n = num && num.querySelector('.tm-n'); if (n) n.textContent = v;
   }
   setShugoVal(owner, field, v, max);
+}
+
+// ── 침공 열쇠 (계정 공유 · 0~7) v1.6.98 — 매일 05시 KST +1은 DB cron(invasion-key-daily) 담당 ──
+async function setInvasionVal(owner, val) {
+  if (currentActor === 'guest') return;
+  val = Math.max(0, Math.min(7, val));
+  const acc = accountData[owner]; if (!acc) return;
+  const prev = Math.min(7, acc.invasion_key || 0);
+  if (prev === val) return;
+  acc.invasion_key = val;
+  renderOverview();
+  writeLog(owner, null, `침공 열쇠 ${val > prev ? '+' : ''}${val - prev} (${prev}→${val})`, null, null);
+  markSelfChange('account_data', owner);
+  const { error } = await sb.from('account_data').update({ invasion_key: val }).eq('owner', owner);
+  if (error) { showToast('저장 실패: ' + (error.message || error.code || '')); return; }
+}
+// 침공 −/+ 버튼: 슬라이더/숫자 즉시 반영 + 저장 (stepShugo와 동일 패턴)
+function stepInvasion(owner, delta) {
+  const acc = accountData[owner] || {};
+  const v = Math.max(0, Math.min(7, Math.min(7, acc.invasion_key || 0) + delta));
+  const sl = document.querySelector(`#acc-modal .tm-slider[data-kind="invasion"]`);
+  if (sl) {
+    const p = v / 7 * 100;
+    const f = sl.querySelector('.tm-fill'); if (f) f.style.width = p + '%';
+    const k = sl.querySelector('.tm-knob'); if (k) k.style.left = p + '%';
+    const num = sl.nextElementSibling; const n = num && num.querySelector('.tm-n'); if (n) n.textContent = v;
+  }
+  setInvasionVal(owner, v);
 }
 
 // 카드 겉 버튼: 전체 완료/해제 ↔ 모달 내부(캐릭별 4 + 계정 통합 16) 연동
@@ -9083,6 +9125,9 @@ function openAccountModal(owner) {
 
   const skWarn = (acc.shugo_key_base||0) > 12;
 
+  // 침공 열쇠 (v1.6.98): 계정 공유 · 최대 7 · 매일 05시 KST +1(DB cron)
+  const invKey = Math.min(7, acc.invasion_key || 0);
+
   // 캐릭별 일일던전 충전권 (슬롯 순서로 정렬)
   const ownerChars = allChars
     .filter(c => c.owner === owner)
@@ -9115,6 +9160,21 @@ function openAccountModal(owner) {
             ${tmSliderHtml(owner, acc.shugo_key_charged||0, 30, 'acc', null, 'shugo_charge')}
             <span class="tm-num tm-num-sm"><span class="tm-n">${acc.shugo_key_charged||0}</span><span class="tm-unit"> / 30</span></span>
             <span class="am-step am-step-pm"><button class="am-step-btn" onclick="stepShugo('${owner}','charge',-1)">−</button><button class="am-step-btn" onclick="stepShugo('${owner}','charge',1)">+</button></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 침공 열쇠 (v1.6.98) -->
+      <div class="am-sec">
+        <div class="am-sec-head">
+          <span class="am-sec-title">침공 열쇠 <small>계정 공유 · 매일 05시 +1 · 최대 7</small></span>
+        </div>
+        <div class="am-sk">
+          <div class="am-sk-row2">
+            <span class="am-sk-label"><i style="background:var(--lavender)"></i>보유</span>
+            ${tmSliderHtml(owner, invKey, 7, 'acc', null, 'invasion')}
+            <span class="tm-num tm-num-sm"><span class="tm-n">${invKey}</span><span class="tm-unit"> / 7</span></span>
+            <span class="am-step am-step-pm"><button class="am-step-btn" onclick="stepInvasion('${owner}',-1)">−</button><button class="am-step-btn" onclick="stepInvasion('${owner}',1)">+</button></span>
           </div>
         </div>
       </div>
