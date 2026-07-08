@@ -7514,7 +7514,7 @@ function renderRepCard(char, owner) {
   const awakeDot = `<div class="mini-dot ${aw >= 3 ? 'done-weekly' : ''}" title="각성 ${aw}/3"></div>`;
   const nmDot = `<div class="mini-dot ${nm <= 12 ? 'done' : 'partial'}" title="악몽 ${nm}장${nm > 12 ? ' (주의)' : ''}"></div>`;
   const dotsHtml = isResting ? '' : `<div class="char-wide-dots">
-    <div class="cw-group">${sanct}</div>
+    <div class="cw-group"><span class="cw-lbl">성역</span>${sanct}</div>
     <div class="cw-group"><span class="cw-lbl">각성</span>${awakeDot}</div>
     <div class="cw-group"><span class="cw-lbl">악몽</span>${nmDot}</div>
   </div>`;
@@ -14413,3 +14413,4 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
 
 </body>
 </html>
+        
