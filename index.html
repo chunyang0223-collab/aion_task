@@ -1451,6 +1451,105 @@ body.guest-mode .page .tm-knob { display: none; }
   color: #5a7a42;
 }
 
+/* ── 제작 레벨 (crafting) ── */
+.craft-head-btn { font-size: 0.72rem; }
+
+/* 평소 표시 — 깔끔한 칩 나열 */
+.craft-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 0 2px;
+}
+.craft-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 5px;
+  border-radius: 20px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+}
+.craft-chip .craft-name { font-size: 0.8rem; color: var(--text); }
+.craft-chip .craft-lv { font-size: 0.78rem; color: var(--text-sub); }
+.craft-display-empty { font-size: 0.78rem; color: var(--text-sub); padding: 8px 0 2px; }
+
+/* 등급 뱃지 — 일반: 아이보리 / 전문: 초록 */
+.craft-badge {
+  padding: 1px 7px;
+  border-radius: 8px;
+  font-size: 0.68rem;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.craft-badge.normal {
+  background: var(--surface);
+  color: var(--text-sub);
+  border: 1px solid var(--border);
+}
+.craft-badge.expert {
+  background: var(--sage);
+  color: #fff;
+  border: 1px solid var(--sage);
+}
+
+/* 수정 모드 — 등급 선택 + 레벨 입력 */
+.craft-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0 2px;
+}
+.craft-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.craft-edit-row .craft-name {
+  width: 42px;
+  flex-shrink: 0;
+  font-size: 0.82rem;
+  color: var(--text);
+}
+.craft-grade-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--surface2);
+}
+.cg-btn {
+  padding: 3px 12px;
+  font-size: 0.74rem;
+  background: transparent;
+  border: none;
+  color: var(--text-sub);
+  cursor: pointer;
+  font-family: 'Gowun Dodum', sans-serif;
+  transition: background 0.15s, color 0.15s;
+}
+.cg-btn[data-grade="normal"].active { background: var(--text-sub); color: #fff; }
+.cg-btn[data-grade="expert"].active { background: var(--sage); color: #fff; }
+.craft-lv-wrap { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
+.craft-lv-wrap .craft-lv-tag { font-size: 0.72rem; color: var(--text-sub); }
+.craft-lv-input {
+  width: 56px;
+  text-align: center;
+  font-size: 0.8rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--surface2);
+  color: var(--text);
+  padding: 3px 4px;
+  outline: none;
+  -moz-appearance: textfield;
+}
+.craft-lv-input:focus { border-color: var(--sage); }
+.craft-lv-input::-webkit-outer-spin-button,
+.craft-lv-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.craft-edit-actions { display: flex; justify-content: flex-end; padding-top: 2px; }
+
 /* ── TOAST ── */
 .toast {
   position: fixed;
@@ -7890,6 +7989,13 @@ function renderDetail(char) {
       <button class="toggle-btn done" style="font-size:0.72rem;padding:4px 10px"
         onclick="applyOddEstimate('${char.id}')" ${char.odd_recorded_at?'':'disabled'}>적용</button>
     </div>
+    <div class="stat-row">
+      <span class="stat-label">제작 레벨</span>
+      <button class="toggle-btn craft-head-btn" id="craft-editbtn-${char.id}"
+        onclick="toggleCraftEdit('${char.id}', true)">수정</button>
+    </div>
+    <div class="craft-display" id="craft-disp-${char.id}">${renderCraftDisplay(char)}</div>
+    <div class="craft-edit" id="craft-edit-${char.id}" style="display:none">${renderCraftEdit(char)}</div>
   </div>`;
 
   // ── 원정 ──
@@ -8591,6 +8697,116 @@ async function updateCharField(charId, field, value) {
   showToast('저장 완료');
   lazyRenderOverview();
   if (field === 'item_level') logGrowth(charId);
+}
+
+// ── 제작 레벨 ──
+const CRAFT_TYPES = [
+  { key: 'daejang',  name: '대장' },
+  { key: 'gapot',    name: '갑옷' },
+  { key: 'segong',   name: '세공' },
+  { key: 'yeongeum', name: '연금' },
+  { key: 'yori',     name: '요리' },
+];
+
+// char.craft_levels = { daejang:{grade:'normal'|'expert', level:0}, ... }
+function getCraftEntry(char, key) {
+  const cl = (char && char.craft_levels) || {};
+  const e = cl[key] || {};
+  const grade = e.grade === 'expert' ? 'expert' : 'normal';
+  const level = Math.max(0, Math.min(999, parseInt(e.level) || 0));
+  return { grade, level };
+}
+
+// 평소 표시(칩)
+function renderCraftDisplay(char) {
+  return CRAFT_TYPES.map(t => {
+    const { grade, level } = getCraftEntry(char, t.key);
+    const gLabel = grade === 'expert' ? '전문' : '일반';
+    return `<span class="craft-chip">
+      <span class="craft-badge ${grade}">${gLabel}</span>
+      <span class="craft-name">${t.name}</span>
+      <span class="craft-lv">Lv.${level}</span>
+    </span>`;
+  }).join('');
+}
+
+// 수정 모드(등급 토글 + 레벨 입력)
+function renderCraftEdit(char) {
+  const rows = CRAFT_TYPES.map(t => {
+    const { grade, level } = getCraftEntry(char, t.key);
+    const id = `${char.id}-${t.key}`;
+    return `<div class="craft-edit-row">
+      <span class="craft-name">${t.name}</span>
+      <div class="craft-grade-toggle" id="cg-${id}" data-grade="${grade}">
+        <button class="cg-btn ${grade==='normal'?'active':''}" data-grade="normal"
+          onclick="setCraftGrade('${char.id}','${t.key}','normal')">일반</button>
+        <button class="cg-btn ${grade==='expert'?'active':''}" data-grade="expert"
+          onclick="setCraftGrade('${char.id}','${t.key}','expert')">전문</button>
+      </div>
+      <span class="craft-lv-wrap">
+        <span class="craft-lv-tag">Lv.</span>
+        <input class="craft-lv-input" id="clv-${id}" type="number" min="0" max="999" value="${level}"
+          autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+          onfocus="this.select()">
+      </span>
+    </div>`;
+  }).join('');
+  return `${rows}
+    <div class="craft-edit-actions">
+      <button class="toggle-btn done" style="font-size:0.72rem;padding:4px 14px"
+        onclick="saveCraftLevels('${char.id}')">완료</button>
+    </div>`;
+}
+
+// 등급 선택 (편집 중 임시 상태는 DOM에 보관)
+function setCraftGrade(charId, key, grade) {
+  const wrap = document.getElementById(`cg-${charId}-${key}`);
+  if (!wrap) return;
+  wrap.dataset.grade = grade;
+  wrap.querySelectorAll('.cg-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.grade === grade));
+}
+
+// 표시 ↔ 수정 전환
+function toggleCraftEdit(charId, editing) {
+  const disp = document.getElementById(`craft-disp-${charId}`);
+  const edit = document.getElementById(`craft-edit-${charId}`);
+  const btn  = document.getElementById(`craft-editbtn-${charId}`);
+  if (!disp || !edit) return;
+  const char = allChars.find(c => c.id === charId);
+  if (editing) {
+    edit.innerHTML = renderCraftEdit(char);
+    disp.style.display = 'none';
+    edit.style.display = '';
+    if (btn) btn.style.display = 'none';
+  } else {
+    disp.innerHTML = renderCraftDisplay(char);
+    disp.style.display = '';
+    edit.style.display = 'none';
+    if (btn) btn.style.display = '';
+  }
+}
+
+// 저장
+async function saveCraftLevels(charId) {
+  const char = allChars.find(c => c.id === charId);
+  const obj = {};
+  CRAFT_TYPES.forEach(t => {
+    const wrap = document.getElementById(`cg-${charId}-${t.key}`);
+    const inp  = document.getElementById(`clv-${charId}-${t.key}`);
+    const grade = (wrap && wrap.dataset.grade === 'expert') ? 'expert' : 'normal';
+    let lv = parseInt(inp && inp.value) || 0;
+    lv = Math.max(0, Math.min(999, lv));
+    obj[t.key] = { grade, level: lv };
+  });
+  if (currentActor !== 'guest') {
+    markSelfChange('characters', charId);
+    const { error } = await sb.from('characters').update({ craft_levels: obj }).eq('id', charId);
+    if (error) { showToast('저장 실패'); return; }
+  }
+  if (char) char.craft_levels = obj;
+  showToast('저장 완료');
+  toggleCraftEdit(charId, false);
 }
 
 // ── 플레이엔씨 연동 ──
