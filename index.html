@@ -5299,6 +5299,78 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
 
 /* skin toggle button — active (GLC on) state, shown in both skins */
 .skin-toggle-btn.on { background: var(--sage); color: #fff; border-color: var(--sage); }
+
+/* ════════════ 할일 페이지 (오늘/주간) v1.7.6 ════════════ */
+.todo-wrap { max-width: 860px; margin: 0 auto; }
+.todo-subtabs {
+  display: inline-flex; gap: 4px; padding: 4px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); margin-bottom: 18px;
+}
+.todo-subtab {
+  padding: 7px 22px; border: none; background: transparent;
+  border-radius: var(--radius-xs); cursor: pointer;
+  font-family: var(--font-head); font-size: 0.9rem; color: var(--text-sub);
+  transition: background .15s, color .15s, box-shadow .15s;
+}
+.todo-subtab:hover { color: var(--text); }
+.todo-subtab.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+
+/* 완료(할 일 없음) 상태 */
+.todo-empty {
+  text-align: center; padding: 56px 20px; color: var(--text-sub);
+}
+.todo-empty-emoji { font-size: 2.4rem; display: block; margin-bottom: 12px; }
+.todo-empty-title { font-family: var(--font-head); font-size: 1.05rem; color: var(--text); margin-bottom: 4px; }
+.todo-empty-sub { font-size: 0.82rem; }
+
+/* 섹션 카드 */
+.todo-sec {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-sm);
+  padding: 16px 18px; margin-bottom: 14px;
+}
+.todo-sec-head {
+  display: flex; align-items: center; gap: 9px; margin-bottom: 12px;
+}
+.todo-sec-icon {
+  width: 26px; height: 26px; border-radius: var(--radius-xs);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.86rem; flex-shrink: 0;
+}
+.todo-sec-title { font-family: var(--font-head); font-size: 0.96rem; color: var(--text); }
+.todo-sec-count {
+  margin-left: auto; font-size: 0.74rem; color: var(--text-sub);
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 999px; padding: 2px 10px;
+}
+
+/* 개별 할일 행 */
+.todo-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 11px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--surface2);
+  cursor: pointer; transition: background .14s, transform .14s, border-color .14s;
+}
+.todo-item + .todo-item { margin-top: 7px; }
+.todo-item:hover { background: var(--hover); transform: translateX(2px); border-color: var(--sage); }
+.todo-item-owner {
+  font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+  flex-shrink: 0; min-width: 42px; text-align: center;
+}
+.todo-item-owner.설냥 { background: var(--sage-light); color: var(--color-owner-설냥, #5a8a42); }
+.todo-item-owner.츄츄 { background: var(--peach-light); color: var(--color-owner-츄츄, #b06040); }
+.todo-item-owner.계정 { background: var(--lavender-light); color: var(--lavender); }
+.todo-item-name { font-size: 0.86rem; color: var(--text); font-weight: 500; flex-shrink: 0; }
+.todo-item-desc { font-size: 0.8rem; color: var(--text-sub); }
+.todo-item-badge {
+  margin-left: auto; flex-shrink: 0; font-size: 0.72rem; font-weight: 600;
+  padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+}
+.todo-item-badge.full { background: var(--odd-full); color: #fff; }        /* 가득 — 낭비 위험 */
+.todo-item-badge.warn { background: var(--peach); color: #fff; }           /* 임박 */
+.todo-item-badge.todo { background: var(--surface); color: var(--text-sub); border: 1px solid var(--border); }
+.todo-item-badge.time { background: var(--sky-light); color: var(--sky); }
 </style>
 </head>
 <body>
@@ -5313,6 +5385,7 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
   </div>
   <div class="tab-pills">
     <button class="tab-pill active" id="tab-overview" onclick="showPage('overview')">전체</button>
+    <button class="tab-pill" id="tab-todo" onclick="showPage('todo-page')">할일</button>
     <button class="tab-pill" onclick="showPage('detail-page')" id="detail-tab" style="display:none">상세</button>
     <button class="tab-pill" id="tab-sanctuary" onclick="showPage('sanctuary-page')">성역</button>
     <button class="tab-pill" id="tab-expedition" onclick="showPage('expedition-page')">원정</button>
@@ -5671,6 +5744,19 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
   </div>
 </div>
 
+<!-- ═══════════════════════════════ TODO PAGE (할일) ═══════════════════════════════ -->
+<div id="todo-page" class="page">
+  <div class="todo-wrap">
+    <div class="todo-subtabs">
+      <button class="todo-subtab active" id="todo-subtab-today" onclick="setTodoTab('today')">오늘</button>
+      <button class="todo-subtab" id="todo-subtab-weekly" onclick="setTodoTab('weekly')">주간</button>
+    </div>
+    <div id="todo-content">
+      <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════ DETAIL PAGE ═══════════════════════════════ -->
 <div id="detail-page" class="page">
   <div id="detail-content"></div>
@@ -5998,6 +6084,7 @@ document.addEventListener('keydown', (e) => {
 /* ════════════ 메뉴 표시/숨김 설정 (로컬 저장, 사용자별) v1.6.92 ════════════ */
 const MENU_DEFS = [
   { key: 'overview',   tab: 'tab-overview',   page: 'overview',        label: '전체' },
+  { key: 'todo',       tab: 'tab-todo',       page: 'todo-page',       label: '할일' },
   { key: 'sanctuary',  tab: 'tab-sanctuary',  page: 'sanctuary-page',  label: '성역' },
   { key: 'expedition', tab: 'tab-expedition', page: 'expedition-page', label: '원정' },
   { key: 'supply',     tab: 'tab-supply',     page: 'supply-page',     label: '보급' },
@@ -7400,6 +7487,18 @@ function showPage(id) {
     document.getElementById('tab-overview').classList.add('active');
     if (_overviewDirty) { renderOverview(); _overviewDirty = false; }
   }
+  if (id === 'todo-page') {
+    document.getElementById('tab-todo').classList.add('active');
+    try {
+      renderTodoPage();
+    } catch (e) {
+      console.error('[할일 탭 에러]', e);
+      document.getElementById('todo-content').innerHTML =
+        `<div class="card" style="color:#b85050;font-size:0.85rem;white-space:pre-wrap">` +
+        `할일 탭 렌더 오류:\n${e.message}\n\n콘솔 로그를 확인해 주세요.` +
+        `</div>`;
+    }
+  }
   if (id === 'detail-page') document.getElementById('detail-tab').classList.add('active');
   if (id === 'sanctuary-page') {
     document.getElementById('tab-sanctuary').classList.add('active');
@@ -7654,11 +7753,21 @@ async function loadAll() {
     supplyProgress[`${p.slot_id}_${p.character_id}`] = p;
   });
 
-  // ── 카드 순서 잠금 상태 (app_config.card_lock, 전 사용자 공유) ──
+  // ── 카드 순서 잠금 상태 (계정별: app_config.card_lock_{owner}, 전 사용자 공유) v1.7.6 ──
+  //   구버전 단일 키(card_lock)는 최초 1회 양쪽 계정으로 이관.
   try {
-    const { data: lockCfg } = await sb.from('app_config').select('value').eq('key', 'card_lock').maybeSingle();
-    cardLocked = !!lockCfg && (lockCfg.value === '1' || lockCfg.value === 'true');
-  } catch (e) { cardLocked = false; }
+    const keys = OWNERS.map(o => `card_lock_${o}`).concat('card_lock');
+    const { data: lockRows } = await sb.from('app_config').select('key,value').in('key', keys);
+    const byKey = {};
+    (lockRows || []).forEach(r => { byKey[r.key] = r.value; });
+    const legacy = byKey['card_lock'];
+    const legacyOn = legacy === '1' || legacy === 'true';
+    OWNERS.forEach(o => {
+      const v = byKey[`card_lock_${o}`];
+      // 계정별 키가 있으면 그 값, 없으면 구버전 공유값을 승계
+      cardLocked[o] = (v === '1' || v === 'true') || (v === undefined && legacyOn);
+    });
+  } catch (e) { OWNERS.forEach(o => { cardLocked[o] = false; }); }
 
   // ── 시즌 데이터 (Supabase 공유 + 1회 로컬 이관) ──
   await seasonInitLoad();
@@ -7668,8 +7777,268 @@ async function loadAll() {
 //   물질변환·계정카드·오드 일괄·성역·시즌·보급 등 slot 순 정렬 전부 공용.
 function slotOrder(c) { const s = (c && c.slot) || 99; return s === 9 ? 0 : s; }
 
-// ── 카드 순서 잠금 (app_config.card_lock, 전 사용자 공유) ──
-let cardLocked = false;
+// ── 카드 순서 잠금 (계정별: app_config.card_lock_{owner}, 전 사용자 공유) v1.7.6 ──
+//   { 설냥: false, 츄츄: false } — 계정마다 독립. isCardLocked(owner)로 조회.
+let cardLocked = {};
+function isCardLocked(owner) { return !!cardLocked[owner]; }
+
+// ════════════════════════════════════════════════════════════════
+//  할일 페이지 (오늘/주간) v1.7.6
+//    - 오늘: 재충전 낭비 방지(악몽·슈고·침공·오드) + 사명 + 어비스(전쟁 24h 이내 미클리어)
+//    - 주간: 일일던전·각성·성역·물질변환·상점·지령서
+//    데이터는 모두 기존 상태(allChars / accountData / weeklyTasks / abyss*)에서 읽음.
+// ════════════════════════════════════════════════════════════════
+let _todoTab = 'today';   // 'today' | 'weekly'
+
+function setTodoTab(tab) {
+  _todoTab = tab;
+  const t = document.getElementById('todo-subtab-today');
+  const w = document.getElementById('todo-subtab-weekly');
+  if (t) t.classList.toggle('active', tab === 'today');
+  if (w) w.classList.toggle('active', tab === 'weekly');
+  renderTodoPage();
+}
+
+// 재충전 낭비 계산: 다음 일일 리셋 때 하루치(recharge)가 채워지면서 max를 넘기는 양.
+//   = 오늘 리셋 전까지 반드시 소진해야 하는 횟수. (cur + recharge - max, 최소 0)
+//   예) 슈고 13/14, +2 → 13+2-14 = 1회 / 12/14 → 0(안 넘침) / 14/14 → 2회
+function _todoOverflow(cur, max, recharge) {
+  return Math.max(0, (cur || 0) + recharge - max);
+}
+
+// 캐릭 정렬: 계정 순 → 슬롯 순 (대표=맨 앞)
+function _todoSortedChars() {
+  return allChars.slice().sort((a, b) => {
+    if (a.owner !== b.owner) return OWNERS.indexOf(a.owner) - OWNERS.indexOf(b.owner);
+    return slotOrder(a) - slotOrder(b);
+  });
+}
+
+// 어비스: 해당 캐릭이 자격 되는데 아직 못 깬 회랑 수
+function _todoAbyssUncleared(char) {
+  const acquired = abyssCorridors.filter(c => c.acquired);
+  let n = 0, names = [];
+  acquired.forEach(cor => {
+    const layer = (ZONES.find(z => z.name === cor.zone) || {}).layer || '';
+    const req = layer === '하층' ? 1000 : layer === '중층' ? 3000 : 0;
+    if ((char.item_level || 0) < req) return;
+    const cleared = (abyssClears[`${cor.id}_${char.id}`] || {}).cleared;
+    if (!cleared) { n++; names.push(cor.zone); }
+  });
+  return { n, names };
+}
+
+// 할일 행 한 줄
+function _todoRow(ownerTag, name, desc, badge, badgeCls, onclick) {
+  return `<div class="todo-item" onclick="${onclick}">
+    <span class="todo-item-owner ${ownerTag}">${ownerTag}</span>
+    <span class="todo-item-name">${escapeHtml(name)}</span>
+    ${desc ? `<span class="todo-item-desc">${desc}</span>` : ''}
+    ${badge ? `<span class="todo-item-badge ${badgeCls}">${badge}</span>` : ''}
+  </div>`;
+}
+
+// 섹션(카드) 렌더 — items 없으면 '' 반환
+function _todoSection(icon, iconBg, title, items) {
+  if (!items.length) return '';
+  return `<div class="todo-sec">
+    <div class="todo-sec-head">
+      <span class="todo-sec-icon" style="background:${iconBg}">${icon}</span>
+      <span class="todo-sec-title">${title}</span>
+      <span class="todo-sec-count">${items.length}건</span>
+    </div>
+    ${items.join('')}
+  </div>`;
+}
+
+function _todoEmpty(kind) {
+  return `<div class="todo-empty">
+    <span class="todo-empty-emoji">🎉</span>
+    <div class="todo-empty-title">${kind} 할 일이 없어요</div>
+    <div class="todo-empty-sub">낭비 없이 잘 챙기고 있어요.</div>
+  </div>`;
+}
+
+function _todoToday() {
+  const chars = _todoSortedChars().filter(c => !c.resting);
+  let html = '';
+
+  // 1) 오드에너지 — 840까지 24시간 이하 남았거나 이미 가득
+  const oddItems = [];
+  chars.forEach(c => {
+    const t = computeOddTimer(c);
+    if (t.full) {
+      oddItems.push(_todoRow(c.owner, c.name || '(이름없음)', '오드에너지 가득 — 매 충전 낭비 중',
+        '가득', 'full', `openDetail('${c.id}')`));
+    } else if (t.ms <= 24 * 3600000) {
+      oddItems.push(_todoRow(c.owner, c.name || '(이름없음)', '오드에너지 곧 가득',
+        _fmtOddDur(t.ms) + ' 후', t.ms < 6 * 3600000 ? 'warn' : 'time', `openDetail('${c.id}')`));
+    }
+  });
+  html += _todoSection('오', 'var(--sky-light)', '오드에너지 (24시간 이내)', oddItems);
+
+  // 2) 악몽 티켓 — 최대 14 · 매일 +2 충전 → 다음 리셋에 넘칠 만큼(=오늘 소진할 횟수)
+  //    (기존 UI가 "12 이하 양호 / 13~14 주의"로 처리 → 하루 충전 +2 근거)
+  const nmItems = [];
+  chars.forEach(c => {
+    const cur = c.nightmare_base || 0;
+    const need = _todoOverflow(cur, 14, 2);
+    if (need > 0) {
+      nmItems.push(_todoRow(c.owner, c.name || '(이름없음)', `${cur} / 14 · 매일 +2`,
+        `오늘 ${need}회`, 'full', `openDetail('${c.id}')`));
+    }
+  });
+  html += _todoSection('악', 'var(--peach-light)', '악몽 티켓', nmItems);
+
+  // 3) 슈고 열쇠 — 최대 14 · 매일 +2 충전 · 계정별
+  const shugoItems = [];
+  OWNERS.forEach(o => {
+    const acc = accountData[o] || {};
+    const cur = acc.shugo_key_base || 0;
+    const need = _todoOverflow(cur, 14, 2);
+    if (need > 0) {
+      shugoItems.push(_todoRow(o, '슈고 열쇠', `${cur} / 14 · 매일 +2`,
+        `오늘 ${need}회`, 'full', `openAccountModal('${o}')`));
+    }
+  });
+  html += _todoSection('슈', 'var(--sage-light)', '슈고 열쇠', shugoItems);
+
+  // 4) 침공 열쇠 — 최대 7 · 매일 +1 충전 · 계정별
+  const invItems = [];
+  OWNERS.forEach(o => {
+    const acc = accountData[o] || {};
+    const cur = Math.min(7, acc.invasion_key || 0);
+    const need = _todoOverflow(cur, 7, 1);
+    if (need > 0) {
+      invItems.push(_todoRow(o, '침공 열쇠', `${cur} / 7 · 매일 +1`,
+        `오늘 ${need}회`, 'full', `openAccountModal('${o}')`));
+    }
+  });
+  html += _todoSection('침', 'var(--lavender-light)', '침공 열쇠', invItems);
+
+  // 5) 사명 — 계정별 일일, 미완
+  const missionItems = [];
+  OWNERS.forEach(o => {
+    const acc = accountData[o] || {};
+    if (!acc.daily_mission) {
+      missionItems.push(_todoRow(o, '사명', '오늘 아직 안 함', '미완', 'todo', `openAccountModal('${o}')`));
+    }
+  });
+  html += _todoSection('사', 'var(--sky-light)', '사명 (일일)', missionItems);
+
+  // 6) 어비스 회랑 — 다음 전쟁까지 24시간 이내인데 미클리어
+  const nextWar = getNextWarTime();
+  const warMsLeft = nextWar ? (nextWar - new Date()) : Infinity;
+  if (warMsLeft <= 24 * 3600000) {
+    const abyssItems = [];
+    chars.forEach(c => {
+      const { n, names } = _todoAbyssUncleared(c);
+      if (n > 0) {
+        abyssItems.push(_todoRow(c.owner, c.name || '(이름없음)', names.join(' · '),
+          `미클리어 ${n}곳`, 'warn', `openDetail('${c.id}')`));
+      }
+    });
+    html += _todoSection('회', 'var(--peach-light)',
+      `어비스 회랑 (전쟁까지 ${_fmtOddDur(warMsLeft)})`, abyssItems);
+  }
+
+  return html || _todoEmpty('오늘');
+}
+
+function _todoWeekly() {
+  const chars = _todoSortedChars().filter(c => !c.resting);
+  let html = '';
+
+  // 1) 일일던전 — 계정별 주간, 남은 횟수
+  const dungeonItems = [];
+  OWNERS.forEach(o => {
+    const acc = accountData[o] || {};
+    const remain = acc.dungeon_remaining || 0;
+    if (remain > 0) {
+      dungeonItems.push(_todoRow(o, '일일던전', '이번 주 남은 입장',
+        `${remain}회 남음`, 'todo', `openAccountModal('${o}')`));
+    }
+  });
+  html += _todoSection('일', 'var(--sky-light)', '일일던전 (주간)', dungeonItems);
+
+  // 2) 각성 — 캐릭별, 3판 미만
+  const awItems = [];
+  chars.forEach(c => {
+    const aw = c.awakening_done || 0;
+    if (aw < 3) {
+      awItems.push(_todoRow(c.owner, c.name || '(이름없음)', '각성 미완',
+        `${aw} / 3`, 'todo', `openDetail('${c.id}')`));
+    }
+  });
+  html += _todoSection('각', 'var(--lavender-light)', '각성', awItems);
+
+  // 3) 성역 — 캐릭별, 자격 되는데 미완인 성역 나열
+  const sanctItems = [];
+  chars.forEach(c => {
+    const ilvl = c.item_level || 0;
+    const wt = weeklyTasks[c.id] || {};
+    const remain = [];
+    if (ilvl >= 2700 && !wt.ludra_done) remain.push('루드라');
+    if (ilvl >= 3500 && !wt.erosion_done) remain.push('침식');
+    if (ilvl >= 4300 && !wt.muspell_done) remain.push('무스펠');
+    if (remain.length) {
+      sanctItems.push(_todoRow(c.owner, c.name || '(이름없음)', remain.join(' · ') + ' 미완',
+        `${remain.length}곳`, 'todo', `openDetail('${c.id}')`));
+    }
+  });
+  html += _todoSection('성', 'var(--sage-light)', '성역', sanctItems);
+
+  // 4) 물질변환 — 계정별(캐릭 주4 / 계정 16)
+  const tmItems = [];
+  OWNERS.forEach(o => {
+    const acc = accountData[o] || {};
+    const oc = allChars.filter(c => c.owner === o);
+    const charSum = oc.reduce((s, c) => s + Math.min(4, c.transmutation_count || 0), 0);
+    const accCnt = Math.min(16, acc.transmutation_account_count || 0);
+    const allDone = oc.length > 0 && oc.every(c => (c.transmutation_count || 0) >= 4) && accCnt >= 16;
+    if (!allDone) {
+      tmItems.push(_todoRow(o, '물질변환', `캐릭 ${charSum}/${oc.length * 4} · 계정 ${accCnt}/16`,
+        '미완', 'todo', `openAccountModal('${o}')`));
+    }
+  });
+  html += _todoSection('물', 'var(--peach-light)', '물질변환 (주간)', tmItems);
+
+  // 5) 상점(오드구매) — 계정별(캐릭 주4 / 계정 16)
+  const shopItems = [];
+  OWNERS.forEach(o => {
+    const acc = accountData[o] || {};
+    const oc = allChars.filter(c => c.owner === o);
+    const charSum = oc.reduce((s, c) => s + Math.min(4, c.shop_purchase_count || 0), 0);
+    const accCnt = Math.min(16, acc.shop_purchase_account_count || 0);
+    const allDone = oc.length > 0 && oc.every(c => (c.shop_purchase_count || 0) >= 4) && accCnt >= 16;
+    if (!allDone) {
+      shopItems.push(_todoRow(o, '상점(오드구매)', `캐릭 ${charSum}/${oc.length * 4} · 계정 ${accCnt}/16`,
+        '미완', 'todo', `openAccountModal('${o}')`));
+    }
+  });
+  html += _todoSection('상', 'var(--sky-light)', '상점 오드구매 (주간)', shopItems);
+
+  // 6) 지령서 — 계정별, 미구매 나열 (하층·중층·알트가르드·모르헤임)
+  const orderDefs = [['order_lower', '하층'], ['order_middle', '중층'], ['order_town', '알트가르드'], ['order_morheim', '모르헤임']];
+  const orderItems = [];
+  OWNERS.forEach(o => {
+    const acc = accountData[o] || {};
+    const remain = orderDefs.filter(([k]) => !acc[k]).map(([, l]) => l);
+    if (remain.length) {
+      orderItems.push(_todoRow(o, '지령서', remain.join(' · ') + ' 미구매',
+        `${remain.length}종`, 'todo', `openAccountModal('${o}')`));
+    }
+  });
+  html += _todoSection('령', 'var(--lavender-light)', '지령서 (주간)', orderItems);
+
+  return html || _todoEmpty('주간');
+}
+
+function renderTodoPage() {
+  const el = document.getElementById('todo-content');
+  if (!el) return;
+  el.innerHTML = _todoTab === 'today' ? _todoToday() : _todoWeekly();
+}
 
 // ── OVERVIEW RENDER ──
 function renderOverview() {
@@ -7699,8 +8068,8 @@ function renderOverview() {
           <span class="owner-memo-text">${escapeHtml(memoPreview)}</span>
         </button>
         <span class="owner-divider"></span>
-        <button class="card-lock-btn ${cardLocked ? 'locked' : ''}" onclick="toggleCardLock(event)"
-          title="${cardLocked ? '카드 순서 잠금됨 · 클릭하면 해제' : '카드 순서 잠금 (드래그 이동 방지)'}">${cardLocked ? '🔒' : '🔓'}</button>
+        <button class="card-lock-btn ${isCardLocked(owner) ? 'locked' : ''}" onclick="toggleCardLock(event, '${owner}')"
+          title="${isCardLocked(owner) ? owner + ' 카드 순서 잠금됨 · 클릭하면 해제' : owner + ' 카드 순서 잠금 (드래그 이동 방지)'}">${isCardLocked(owner) ? '🔒' : '🔓'}</button>
         ${buildOddOwnerChip(owner)}
         <button class="odd-batch-btn" onclick="openOddBatchModal('${owner}')">오드 일괄 적용</button>
       </div>
@@ -7726,7 +8095,7 @@ function renderOverview() {
         const barHtml = isResting ? '' : `<div class="char-mini-bar" style="width:${pct}%"></div>`;
         const restBadge = isResting ? `<div class="char-mini-resting-badge">휴식</div>` : '';
         html += `<div class="char-mini ${isResting ? 'resting' : ''} ${char.is_favorite ? 'fav' : ''}"
-          draggable="${cardLocked ? 'false' : 'true'}"
+          draggable="${isCardLocked(owner) ? 'false' : 'true'}"
           data-char-id="${char.id}" data-owner="${owner}" data-slot="${slot}"
           ondragstart="dragStart(event, '${char.id}', '${owner}', ${slot})"
           ondragover="dragOver(event)"
@@ -7791,7 +8160,7 @@ function renderOverview() {
       <div class="account-bool-row">
         <span class="toggle-btn ${shopAllDone?'done':''}" style="font-size:0.72rem;padding:3px 8px" title="상점(오드구매) 캐릭 ${shopCharSum}/${tmChars.length*4} · 계정 ${shopAccCnt}/16 (주간)" onclick="event.stopPropagation();toggleAllShopPurchase('${owner}',${!shopAllDone})">상점</span>
         <span class="toggle-btn ${tmAllDone?'done':''}" style="font-size:0.72rem;padding:3px 8px" title="물질변환 캐릭 ${tmCharSum}/${tmChars.length*4} · 계정 ${tmAccCnt}/16 (주간)" onclick="event.stopPropagation();toggleAllTransmutation('${owner}',${!tmAllDone})">물질변환</span>
-        <span class="toggle-btn ${(acc.order_lower&&acc.order_middle&&acc.order_town)?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAllOrders('${owner}',${!(acc.order_lower&&acc.order_middle&&acc.order_town)})">지령서</span>
+        <span class="toggle-btn ${(acc.order_lower&&acc.order_middle&&acc.order_town&&acc.order_morheim)?'done':''}" style="font-size:0.72rem;padding:3px 8px" onclick="event.stopPropagation();toggleAllOrders('${owner}',${!(acc.order_lower&&acc.order_middle&&acc.order_town&&acc.order_morheim)})">지령서</span>
         <!-- 사명 (일일리셋, 계정 단위) — 위 3개(주간리셋)와 색상 구분 위해 done-sky -->
         <span class="toggle-btn ${acc.daily_mission?'done-sky':''}" style="font-size:0.72rem;padding:3px 8px;margin-left:auto" onclick="event.stopPropagation();toggleAccount('${owner}','daily_mission',${!acc.daily_mission})">사명</span>
       </div>
@@ -7851,7 +8220,7 @@ function renderRepCard(char, owner) {
   const barHtml = isResting ? '' : `<div class="char-wide-bar" style="width:${pct}%"></div>`;
 
   return `<div class="char-wide ${isResting ? 'resting' : ''} ${char.is_favorite ? 'fav' : ''}"
-    draggable="${cardLocked ? 'false' : 'true'}"
+    draggable="${isCardLocked(owner) ? 'false' : 'true'}"
     data-char-id="${char.id}" data-owner="${owner}" data-slot="9"
     ondragstart="dragStart(event, '${char.id}', '${owner}', 9)"
     ondragover="dragOver(event)"
@@ -10183,7 +10552,7 @@ function openAccountModal(owner) {
         </div>
         <div id="order-dropdown-${owner}" class="am-body-inner" style="display:${_orderDropdownExpanded?'block':'none'}">
           <div class="am-rows">
-            ${[['order_lower','하층'],['order_middle','중층'],['order_town','마을']].map(([key,label]) => `
+            ${[['order_lower','하층'],['order_middle','중층'],['order_town','알트가르드'],['order_morheim','모르헤임']].map(([key,label]) => `
             <div class="am-ord">
               <span class="am-ord-label">${label} 지령서</span>
               <button class="toggle-btn ${acc[key]?'done':''}" style="font-size:0.76rem;padding:4px 14px"
@@ -10206,12 +10575,13 @@ async function toggleAllOrders(owner, value) {
   const acc = accountData[owner];
   if (!acc) return;
   const { error } = await sb.from('account_data')
-    .update({ order_lower: value, order_middle: value, order_town: value })
+    .update({ order_lower: value, order_middle: value, order_town: value, order_morheim: value })
     .eq('owner', owner);
   if (error) { showToast('저장 실패'); return; }
   acc.order_lower = value;
   acc.order_middle = value;
   acc.order_town = value;
+  acc.order_morheim = value;
   renderOverview();
 }
 
@@ -10393,9 +10763,18 @@ function subscribeRealtime() {
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'app_config' }, (payload) => {
       const row = payload.new || {};
-      if (row.key === 'card_lock') {
-        cardLocked = (row.value === '1' || row.value === 'true');
-        renderOverview();     // 다른 사용자의 잠금/해제를 실시간 반영
+      // 계정별 잠금 키(card_lock_{owner}) 실시간 반영 v1.7.6
+      if (row.key && row.key.startsWith('card_lock_')) {
+        const o = row.key.slice('card_lock_'.length);
+        if (OWNERS.includes(o)) {
+          cardLocked[o] = (row.value === '1' || row.value === 'true');
+          renderOverview();   // 다른 사용자의 잠금/해제를 실시간 반영
+        }
+      } else if (row.key === 'card_lock') {
+        // 구버전 단일 키(하위호환) — 아직 계정별 키가 없는 계정에만 적용
+        const on = (row.value === '1' || row.value === 'true');
+        OWNERS.forEach(o => { cardLocked[o] = on; });
+        renderOverview();
       }
     })
     .subscribe(status => {
@@ -11720,26 +12099,27 @@ let _dragCharId = null;
 let _dragOwner = null;
 let _dragSlot = null;
 
-// ── 카드 순서 잠금 토글 (app_config.card_lock, 전 사용자 공유) ──
-async function toggleCardLock(e) {
+// ── 카드 순서 잠금 토글 (계정별: app_config.card_lock_{owner}, 전 사용자 공유) v1.7.6 ──
+async function toggleCardLock(e, owner) {
   if (e) e.stopPropagation();
   if (currentActor === 'guest') { showToast('게스트는 변경할 수 없어요'); return; }
-  const next = !cardLocked;
-  cardLocked = next;          // optimistic
+  if (!owner || !OWNERS.includes(owner)) return;
+  const next = !isCardLocked(owner);
+  cardLocked[owner] = next;   // optimistic
   renderOverview();           // 버튼/카드 draggable 즉시 반영
   const { error } = await sb.from('app_config')
-    .upsert({ key: 'card_lock', value: next ? '1' : '0' }, { onConflict: 'key' });
+    .upsert({ key: `card_lock_${owner}`, value: next ? '1' : '0' }, { onConflict: 'key' });
   if (error) {
-    cardLocked = !next;       // 롤백
+    cardLocked[owner] = !next; // 롤백
     renderOverview();
     showToast('저장 실패');
     return;
   }
-  showToast(next ? '카드 순서 잠금' : '잠금 해제');
+  showToast(next ? `${owner} 카드 순서 잠금` : `${owner} 잠금 해제`);
 }
 
 function dragStart(e, charId, owner, slot) {
-  if (cardLocked) { e.preventDefault(); return false; }  // 잠금 시 드래그 시작 차단
+  if (isCardLocked(owner)) { e.preventDefault(); return false; }  // 해당 계정 잠금 시 드래그 시작 차단
   _dragCharId = charId;
   _dragOwner = owner;
   _dragSlot = slot;
@@ -11748,7 +12128,9 @@ function dragStart(e, charId, owner, slot) {
 }
 
 function dragOver(e) {
-  if (cardLocked) return;     // 잠금 시 드롭 대상 하이라이트/허용 안 함
+  // 드래그 소스 계정이 잠겨 있으면 dragStart 단계에서 이미 차단됨.
+  // 여기서는 진행 중인 드래그(_dragOwner)가 없으면(=잠금 등으로 시작 안 됨) 무시.
+  if (_dragOwner && isCardLocked(_dragOwner)) return;
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
   e.currentTarget.classList.add('drag-over');
@@ -11761,7 +12143,7 @@ function dragEnd(e) {
 
 async function dropChar(e, targetOwner, targetSlot) {
   if (currentActor === 'guest') return;
-  if (cardLocked) return;     // 잠금 시 자리 이동 무시
+  if (isCardLocked(targetOwner)) return;     // 해당 계정 잠금 시 자리 이동 무시
 
   e.preventDefault();
   document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
@@ -14382,171 +14764,4 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
     --border: #E2D5CB;
     --hover: #EFE7DD;
     --sage: #6FBE7A;
-    --sage-light: #E6F7BD;
-    --peach: #F6953F;
-    --peach-light: #FBE2C8;
-    --lavender: #C9A6EA;
-    --lavender-light: #E4D2F5;
-    --sky: #5B8DEF;
-    --sky-light: #DCE7FB;
-    --shadow-sm: 0 1px 2px rgba(89,60,60,0.08);
-    --radius: 18px;
-    --radius-sm: 14px;
-    --radius-xs: 9px;
-  }
-  html.skin-glc .calc-title { font-family: var(--font-head); letter-spacing: 0.01em; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body {
-    height: 100%;
-    font-family: 'Gowun Dodum', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    -webkit-user-select: none;
-    user-select: none;
-  }
-  body { display: flex; flex-direction: column; overflow: hidden; }
-  .calc-header {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 8px;
-    padding: 9px 11px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface2);
-    flex-shrink: 0;
-  }
-  .calc-title {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 0.85rem; color: var(--text);
-    flex-shrink: 0;
-    font-weight: 500;
-  }
-  .calc-title .ct-emoji { font-size: 0.95rem; line-height: 1; }
-  .calc-title .ct-name  { color: var(--sage); }
-  .calc-title .ct-accent { color: var(--peach); }
-  .calc-tabs {
-    display: flex; gap: 3px;
-    background: var(--hover);
-    padding: 3px;
-    border-radius: 14px;
-    border: 1px solid var(--border);
-  }
-  .calc-tab {
-    padding: 4px 9px;
-    border: none; background: transparent;
-    color: var(--text-sub);
-    font-family: 'Gowun Dodum', sans-serif;
-    font-size: 0.72rem;
-    border-radius: 11px;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-    white-space: nowrap;
-  }
-  .calc-tab.active {
-    background: var(--surface);
-    color: var(--text);
-    box-shadow: var(--shadow-sm);
-  }
-  .calc-body {
-    flex: 1; padding: 12px;
-    overflow-y: auto;
-    display: flex; flex-direction: column;
-    min-height: 0;
-  }
-  .calc-display {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 12px 14px;
-    margin-bottom: 10px;
-    text-align: right;
-    min-height: 72px;
-    display: flex; flex-direction: column;
-    justify-content: flex-end;
-    gap: 4px;
-    flex-shrink: 0;
-  }
-  .calc-expr {
-    font-size: 0.78rem; color: var(--text-sub);
-    min-height: 1em; word-break: break-all; line-height: 1.4;
-  }
-  .calc-result {
-    font-size: clamp(1.4rem, 4vw, 1.8rem);
-    color: var(--text);
-    font-weight: 500; word-break: break-all; line-height: 1.2;
-  }
-  .calc-expr-input {
-    width: 100%;
-    background: transparent; border: none; outline: none;
-    color: var(--text);
-    font-family: 'Gowun Dodum', sans-serif;
-    font-size: clamp(0.95rem, 3vw, 1.1rem);
-    text-align: right; line-height: 1.4;
-    padding: 0; word-break: break-all;
-    -webkit-user-select: text; user-select: text;
-  }
-  .calc-expr-input::placeholder { color: var(--text-sub); opacity: 0.6; }
-  .calc-keys {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    flex: 1;
-    min-height: 240px;
-  }
-  .calc-keys.expr-keys { grid-template-columns: repeat(5, 1fr); }
-  .calc-btn {
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text);
-    font-family: 'Gowun Dodum', sans-serif;
-    font-size: clamp(0.85rem, 2.4vw, 1.05rem);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: background 0.12s, border-color 0.12s, transform 0.08s;
-    min-height: 36px;
-  }
-  .calc-btn:hover { background: var(--hover); border-color: var(--text-sub); }
-  .calc-btn:active { transform: scale(0.96); }
-  .calc-btn.func { background: var(--surface2); color: var(--text-sub); }
-  .calc-btn.op   { background: var(--peach-light); color: #8a5a3a; border-color: var(--peach); }
-  .calc-btn.op:hover { background: var(--peach); color: #fff; }
-  .calc-btn.eq   { background: var(--sage); color: #fff; border-color: var(--sage); }
-  .calc-btn.eq:hover { background: #8da078; border-color: #8da078; }
-  .calc-btn.clear{ background: var(--lavender-light); color: #5a4d80; border-color: var(--lavender); }
-  .calc-btn.clear:hover { background: var(--lavender); color: #fff; }
-  .calc-btn.zero { grid-column: span 2; }
-  .tape-input-row { display: flex; gap: 6px; margin-bottom: 10px; flex-shrink: 0; }
-  .tape-input {
-    flex: 1; padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--surface2);
-    color: var(--text);
-    font-family: 'Gowun Dodum', sans-serif;
-    font-size: 0.95rem;
-    outline: none;
-    transition: border-color 0.15s, background 0.15s;
-    -webkit-user-select: text; user-select: text;
-    min-width: 0;
-  }
-  .tape-input:focus { border-color: var(--sage); background: var(--surface); }
-  .tape-input::placeholder { color: var(--text-sub); opacity: 0.6; }
-  .tape-add-btn {
-    padding: 0 14px;
-    border: 1px solid var(--sage);
-    background: var(--sage); color: #fff;
-    border-radius: var(--radius-sm);
-    font-family: 'Gowun Dodum', sans-serif;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: background 0.12s, border-color 0.12s;
-    white-space: nowrap;
-  }
-  .tape-add-btn:hover { background: #8da078; border-color: #8da078; }
-  .tape-list {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    flex: 1; min-height: 100px;
-    overflow-y: auto;
-    padding: 4px; margin-bottom: 10px;
-  }
-  .tape-
+    --sage-light: #E6F
