@@ -476,6 +476,26 @@ body.guest-mode .odd-batch-btn { display: none; }
 .odd-owner-chip .ooc-time.warn { color: #b85050; }
 .odd-owner-chip .ooc-sep { color: var(--border); }
 
+/* ── 카드 순서 잠금 버튼 (남은시간 칩 왼쪽) v1.7.3 ── */
+.card-lock-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 27px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface2);
+  font-size: 0.78rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+.card-lock-btn:hover { background: var(--hover); }
+.card-lock-btn.locked { background: var(--sage-light); border-color: var(--sage); }
+
 /* ── 성장 목표 예측기 (성장 그래프 카드) v1.6.6 ── */
 .growth-eta {
   margin: 2px 2px 10px;
@@ -1493,24 +1513,37 @@ body.guest-mode .page .tm-knob { display: none; }
   border: 1px solid var(--sage);
 }
 
-/* 수정 모드 — 등급 선택 + 레벨 입력 */
+/* 수정 모드 — 5열(제작종류) × 3행(이름 / 등급 / 레벨) 매트릭스 */
 .craft-edit {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px 0 2px;
-}
-.craft-edit-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: center;
-  gap: 8px;
+  justify-items: center;
+  column-gap: 8px;
+  row-gap: 8px;
+  padding: 10px 0 2px;
+  overflow-x: auto;
 }
-.craft-edit-row .craft-name {
-  width: 42px;
-  flex-shrink: 0;
-  font-size: 0.82rem;
+.craft-edit .craft-name {
+  font-size: 0.8rem;
   color: var(--text);
+  text-align: center;
 }
+/* 등급: 클릭하면 입문 ↔ 전문 토글 (한 칸) */
+.craft-grade-cell {
+  width: 100%;
+  max-width: 62px;
+  padding: 3px 4px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface2);
+  color: var(--text-sub);
+  font-size: 0.74rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.craft-grade-cell.expert { background: var(--sage); color: #fff; border-color: var(--sage); }
 .craft-grade-toggle {
   display: inline-flex;
   border: 1px solid var(--border);
@@ -1530,10 +1563,10 @@ body.guest-mode .page .tm-knob { display: none; }
 }
 .cg-btn[data-grade="normal"].active { background: var(--text-sub); color: #fff; }
 .cg-btn[data-grade="expert"].active { background: var(--sage); color: #fff; }
-.craft-lv-wrap { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
-.craft-lv-wrap .craft-lv-tag { font-size: 0.72rem; color: var(--text-sub); }
+.craft-lv-wrap { display: inline-flex; align-items: center; justify-content: center; gap: 3px; }
+.craft-lv-wrap .craft-lv-tag { font-size: 0.7rem; color: var(--text-sub); }
 .craft-lv-input {
-  width: 56px;
+  width: 46px;
   text-align: center;
   font-size: 0.8rem;
   font-family: 'Gowun Dodum', sans-serif;
@@ -1548,7 +1581,168 @@ body.guest-mode .page .tm-knob { display: none; }
 .craft-lv-input:focus { border-color: var(--sage); }
 .craft-lv-input::-webkit-outer-spin-button,
 .craft-lv-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.craft-edit-actions { display: flex; justify-content: flex-end; padding-top: 2px; }
+.craft-edit-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; padding-top: 2px; }
+
+/* ══ 제작 페이지 (v1.7.4) ══ */
+.craftpage-wrap { max-width: 960px; margin: 0 auto; }
+.cp-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.cp-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cp-row-label { font-size: 0.72rem; color: var(--text-sub); min-width: 34px; }
+.cp-seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2px;
+}
+.cp-seg button {
+  border: none;
+  background: transparent;
+  padding: 4px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  color: var(--text-sub);
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 0.76rem;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.cp-seg button.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+.cp-seg button.active.expert { background: var(--sage); color: #fff; }
+.cp-range { display: inline-flex; align-items: center; gap: 6px; }
+.cp-range input {
+  width: 64px;
+  text-align: center;
+  font-size: 0.78rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--surface2);
+  color: var(--text);
+  padding: 4px 6px;
+  outline: none;
+  -moz-appearance: textfield;
+}
+.cp-range input:focus { border-color: var(--sage); }
+.cp-range input::-webkit-outer-spin-button,
+.cp-range input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.cp-range span { font-size: 0.74rem; color: var(--text-sub); }
+.cp-check { display: inline-flex; align-items: center; gap: 5px; font-size: 0.76rem; color: var(--text-sub); cursor: pointer; user-select: none; margin-left: 4px; }
+.cp-check input { accent-color: var(--sage); cursor: pointer; }
+
+/* 요약 통계 */
+.cp-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.cp-stat-card {
+  flex: 1;
+  min-width: 130px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 13px;
+}
+.cp-stat-name { font-size: 0.78rem; color: var(--text); font-weight: 600; margin-bottom: 5px; }
+.cp-stat-line { font-size: 0.72rem; color: var(--text-sub); line-height: 1.6; }
+.cp-stat-line b { color: var(--text); font-weight: 600; }
+
+/* 테이블 */
+.cp-count { font-size: 0.74rem; color: var(--text-sub); margin-bottom: 6px; text-align: right; }
+.cp-table-wrap {
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.cp-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.cp-table th, .cp-table td { padding: 9px 12px; text-align: center; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.cp-table tr:last-child td { border-bottom: none; }
+.cp-table th {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  font-weight: 600;
+  background: var(--surface2);
+}
+.cp-table th.sortable { cursor: pointer; user-select: none; }
+.cp-table th.sortable:hover { color: var(--text); }
+.cp-table th .sort-arrow { font-size: 0.62rem; }
+.cp-table td.cp-owner { color: var(--text-sub); font-size: 0.74rem; }
+.cp-table td.cp-name { text-align: left; color: var(--text); }
+.cp-table td.cp-name .cp-name-main { font-weight: 600; }
+.cp-table td.cp-name .cp-name-class { font-size: 0.68rem; color: var(--text-sub); margin-left: 5px; }
+.cp-table tbody tr:hover td { background: var(--hover); }
+.cp-lvl-cell { display: inline-flex; align-items: center; gap: 5px; }
+.cp-lvl-num { color: var(--text); }
+.cp-lvl-cell.is-max .cp-lvl-num { color: var(--sage); font-weight: 700; }
+.cp-total { font-weight: 700; color: var(--text); }
+.cp-rep-badge { font-size: 0.6rem; background: var(--sage-light); color: #5a7a42; border-radius: 6px; padding: 1px 5px; margin-left: 5px; }
+.cp-empty { text-align: center; color: var(--text-sub); font-size: 0.85rem; padding: 44px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+
+/* 계정 구분 밴드 */
+.cp-table .cp-group-row td {
+  background: var(--surface2);
+  color: var(--text);
+  font-weight: 700;
+  text-align: left;
+  font-size: 0.76rem;
+  padding: 6px 12px;
+}
+
+/* 편집 모드 버튼 (표 위, 우측) */
+.cp-tablebar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.cp-editmode-btn {
+  padding: 5px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-sub);
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.cp-editmode-btn:hover { background: var(--hover); color: var(--text); }
+.cp-editmode-btn.on { background: var(--sage); color: #fff; border-color: var(--sage); }
+
+/* 표 안 인라인 편집 셀 */
+.cp-edit-cell { display: inline-flex; align-items: center; gap: 5px; }
+.cp-grade-btn {
+  padding: 2px 9px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface2);
+  color: var(--text-sub);
+  font-size: 0.7rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.cp-grade-btn.expert { background: var(--sage); color: #fff; border-color: var(--sage); }
+.cp-lv-edit {
+  width: 50px;
+  text-align: center;
+  font-size: 0.76rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--surface2);
+  color: var(--text);
+  padding: 3px 4px;
+  outline: none;
+  -moz-appearance: textfield;
+}
+.cp-lv-edit:focus { border-color: var(--sage); }
+.cp-lv-edit::-webkit-outer-spin-button,
+.cp-lv-edit::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* ── TOAST ── */
 .toast {
@@ -5124,6 +5318,7 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
     <button class="tab-pill" id="tab-expedition" onclick="showPage('expedition-page')">원정</button>
     <button class="tab-pill" id="tab-supply" onclick="showPage('supply-page')">보급</button>
     <button class="tab-pill" id="tab-growth" onclick="showPage('growth-page')">성장</button>
+    <button class="tab-pill" id="tab-craft" onclick="showPage('craft-page')">제작</button>
     <button class="tab-pill" id="tab-season" onclick="showPage('season-page')">시즌</button>
     <button class="tab-pill" id="tab-log" onclick="showPage('log-page')">로그</button>
   </div>
@@ -5509,6 +5704,13 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
   </div>
 </div>
 
+<!-- ── 제작 페이지 (v1.7.4) ── -->
+<div id="craft-page" class="page">
+  <div id="craft-content">
+    <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
+  </div>
+</div>
+
 <!-- ── 시즌 페이지 (v1.6.92) ── -->
 <div id="season-page" class="page">
   <div id="season-content">
@@ -5800,6 +6002,7 @@ const MENU_DEFS = [
   { key: 'expedition', tab: 'tab-expedition', page: 'expedition-page', label: '원정' },
   { key: 'supply',     tab: 'tab-supply',     page: 'supply-page',     label: '보급' },
   { key: 'growth',     tab: 'tab-growth',     page: 'growth-page',     label: '성장' },
+  { key: 'craft',      tab: 'tab-craft',      page: 'craft-page',      label: '제작' },
   { key: 'season',     tab: 'tab-season',     page: 'season-page',     label: '시즌' },
   { key: 'log',        tab: 'tab-log',        page: 'log-page',        label: '로그' },
 ];
@@ -6477,7 +6680,7 @@ function renderSeasonPage() {
   // 정렬된 전체 목록 (계정 순 → 슬롯 순)
   const byOwner = OWNERS.map(owner => ({
     owner,
-    chars: allChars.filter(c => c.owner === owner).sort((a, b) => (a.slot || 0) - (b.slot || 0)),
+    chars: allChars.filter(c => c.owner === owner).sort((a, b) => slotOrder(a) - slotOrder(b)),
   }));
 
   // 선택 유효성 검사 — 없으면 첫 캐릭 자동 선택
@@ -7246,6 +7449,18 @@ function showPage(id) {
         `</div>`;
     }
   }
+  if (id === 'craft-page') {
+    document.getElementById('tab-craft').classList.add('active');
+    try {
+      renderCraftPage();
+    } catch (e) {
+      console.error('[제작 탭 에러]', e);
+      document.getElementById('craft-content').innerHTML =
+        `<div class="card" style="color:#b85050;font-size:0.85rem;white-space:pre-wrap">` +
+        `제작 탭 렌더 오류:\n${e.message}\n\n콘솔 로그를 확인해 주세요.` +
+        `</div>`;
+    }
+  }
   if (id === 'season-page') {
     document.getElementById('tab-season').classList.add('active');
     try {
@@ -7439,9 +7654,22 @@ async function loadAll() {
     supplyProgress[`${p.slot_id}_${p.character_id}`] = p;
   });
 
+  // ── 카드 순서 잠금 상태 (app_config.card_lock, 전 사용자 공유) ──
+  try {
+    const { data: lockCfg } = await sb.from('app_config').select('value').eq('key', 'card_lock').maybeSingle();
+    cardLocked = !!lockCfg && (lockCfg.value === '1' || lockCfg.value === 'true');
+  } catch (e) { cardLocked = false; }
+
   // ── 시즌 데이터 (Supabase 공유 + 1회 로컬 이관) ──
   await seasonInitLoad();
 }
+
+// 대표(9번 슬롯 = Main)는 목록에서 항상 맨 앞. 나머지는 슬롯 오름차순.
+//   물질변환·계정카드·오드 일괄·성역·시즌·보급 등 slot 순 정렬 전부 공용.
+function slotOrder(c) { const s = (c && c.slot) || 99; return s === 9 ? 0 : s; }
+
+// ── 카드 순서 잠금 (app_config.card_lock, 전 사용자 공유) ──
+let cardLocked = false;
 
 // ── OVERVIEW RENDER ──
 function renderOverview() {
@@ -7471,6 +7699,8 @@ function renderOverview() {
           <span class="owner-memo-text">${escapeHtml(memoPreview)}</span>
         </button>
         <span class="owner-divider"></span>
+        <button class="card-lock-btn ${cardLocked ? 'locked' : ''}" onclick="toggleCardLock(event)"
+          title="${cardLocked ? '카드 순서 잠금됨 · 클릭하면 해제' : '카드 순서 잠금 (드래그 이동 방지)'}">${cardLocked ? '🔒' : '🔓'}</button>
         ${buildOddOwnerChip(owner)}
         <button class="odd-batch-btn" onclick="openOddBatchModal('${owner}')">오드 일괄 적용</button>
       </div>
@@ -7496,7 +7726,7 @@ function renderOverview() {
         const barHtml = isResting ? '' : `<div class="char-mini-bar" style="width:${pct}%"></div>`;
         const restBadge = isResting ? `<div class="char-mini-resting-badge">휴식</div>` : '';
         html += `<div class="char-mini ${isResting ? 'resting' : ''} ${char.is_favorite ? 'fav' : ''}"
-          draggable="true"
+          draggable="${cardLocked ? 'false' : 'true'}"
           data-char-id="${char.id}" data-owner="${owner}" data-slot="${slot}"
           ondragstart="dragStart(event, '${char.id}', '${owner}', ${slot})"
           ondragover="dragOver(event)"
@@ -7621,7 +7851,7 @@ function renderRepCard(char, owner) {
   const barHtml = isResting ? '' : `<div class="char-wide-bar" style="width:${pct}%"></div>`;
 
   return `<div class="char-wide ${isResting ? 'resting' : ''} ${char.is_favorite ? 'fav' : ''}"
-    draggable="true"
+    draggable="${cardLocked ? 'false' : 'true'}"
     data-char-id="${char.id}" data-owner="${owner}" data-slot="9"
     ondragstart="dragStart(event, '${char.id}', '${owner}', 9)"
     ondragover="dragOver(event)"
@@ -7780,7 +8010,7 @@ function renderAbyssCharMatrix(acquiredZones, warDate) {
   // 설냥 먼저 → 츄츄
   eligibleChars.sort((a, b) => {
     if (a.owner !== b.owner) return a.owner === '설냥' ? -1 : 1;
-    return (a.slot || 0) - (b.slot || 0);
+    return slotOrder(a) - slotOrder(b);
   });
 
   // 그리드 컬럼: 이름 | zone1 | zone2 | ... (각 row와 헤더가 동일하게 사용)
@@ -8721,7 +8951,7 @@ function getCraftEntry(char, key) {
 function renderCraftDisplay(char) {
   return CRAFT_TYPES.map(t => {
     const { grade, level } = getCraftEntry(char, t.key);
-    const gLabel = grade === 'expert' ? '전문' : '일반';
+    const gLabel = grade === 'expert' ? '전문' : '입문';
     return `<span class="craft-chip">
       <span class="craft-badge ${grade}">${gLabel}</span>
       <span class="craft-name">${t.name}</span>
@@ -8732,42 +8962,38 @@ function renderCraftDisplay(char) {
 
 // 수정 모드(등급 토글 + 레벨 입력)
 function renderCraftEdit(char) {
-  const rows = CRAFT_TYPES.map(t => {
-    const { grade, level } = getCraftEntry(char, t.key);
+  // 5열(제작종류) × 3행(이름 / 등급 / 레벨) 매트릭스. 등급은 클릭 토글 한 칸.
+  const names = CRAFT_TYPES.map(t => `<span class="craft-name">${t.name}</span>`).join('');
+  const grades = CRAFT_TYPES.map(t => {
+    const { grade } = getCraftEntry(char, t.key);
     const id = `${char.id}-${t.key}`;
-    return `<div class="craft-edit-row">
-      <span class="craft-name">${t.name}</span>
-      <div class="craft-grade-toggle" id="cg-${id}" data-grade="${grade}">
-        <button class="cg-btn ${grade==='normal'?'active':''}" data-grade="normal"
-          onclick="setCraftGrade('${char.id}','${t.key}','normal')">일반</button>
-        <button class="cg-btn ${grade==='expert'?'active':''}" data-grade="expert"
-          onclick="setCraftGrade('${char.id}','${t.key}','expert')">전문</button>
-      </div>
-      <span class="craft-lv-wrap">
-        <span class="craft-lv-tag">Lv.</span>
-        <input class="craft-lv-input" id="clv-${id}" type="number" min="0" max="999" value="${level}"
-          autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
-          onfocus="this.select()">
-      </span>
-    </div>`;
+    return `<button class="craft-grade-cell ${grade === 'expert' ? 'expert' : ''}" id="cg-${id}" data-grade="${grade}"
+      title="클릭하면 입문 ↔ 전문 전환" onclick="cycleCraftGrade('${char.id}','${t.key}')">${grade === 'expert' ? '전문' : '입문'}</button>`;
   }).join('');
-  return `${rows}
-    <div class="craft-edit-actions">
-      <button class="toggle-btn done" style="font-size:0.72rem;padding:4px 14px"
-        onclick="saveCraftLevels('${char.id}')">완료</button>
-    </div>`;
+  const levels = CRAFT_TYPES.map(t => {
+    const { level } = getCraftEntry(char, t.key);
+    const id = `${char.id}-${t.key}`;
+    return `<span class="craft-lv-wrap">
+      <span class="craft-lv-tag">Lv.</span>
+      <input class="craft-lv-input" id="clv-${id}" type="number" min="0" max="999" value="${level}"
+        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+        onfocus="this.select()">
+    </span>`;
+  }).join('');
+  return names + grades + levels;
 }
 
-// 등급 선택 (편집 중 임시 상태는 DOM에 보관)
-function setCraftGrade(charId, key, grade) {
-  const wrap = document.getElementById(`cg-${charId}-${key}`);
-  if (!wrap) return;
-  wrap.dataset.grade = grade;
-  wrap.querySelectorAll('.cg-btn').forEach(b =>
-    b.classList.toggle('active', b.dataset.grade === grade));
+// 등급 한 칸 토글: 입문 ↔ 전문 (DOM에 임시 보관, 완료 시 저장)
+function cycleCraftGrade(charId, key) {
+  const btn = document.getElementById(`cg-${charId}-${key}`);
+  if (!btn) return;
+  const next = btn.dataset.grade === 'expert' ? 'normal' : 'expert';
+  btn.dataset.grade = next;
+  btn.classList.toggle('expert', next === 'expert');
+  btn.textContent = next === 'expert' ? '전문' : '입문';
 }
 
-// 표시 ↔ 수정 전환
+// 표시 ↔ 수정 전환 (완료 버튼은 '제작 레벨' 제목 줄의 버튼이 겸함)
 function toggleCraftEdit(charId, editing) {
   const disp = document.getElementById(`craft-disp-${charId}`);
   const edit = document.getElementById(`craft-edit-${charId}`);
@@ -8778,12 +9004,12 @@ function toggleCraftEdit(charId, editing) {
     edit.innerHTML = renderCraftEdit(char);
     disp.style.display = 'none';
     edit.style.display = '';
-    if (btn) btn.style.display = 'none';
+    if (btn) { btn.textContent = '완료'; btn.classList.add('done'); btn.onclick = () => saveCraftLevels(charId); }
   } else {
     disp.innerHTML = renderCraftDisplay(char);
     disp.style.display = '';
     edit.style.display = 'none';
-    if (btn) btn.style.display = '';
+    if (btn) { btn.textContent = '수정'; btn.classList.remove('done'); btn.onclick = () => toggleCraftEdit(charId, true); }
   }
 }
 
@@ -8807,6 +9033,292 @@ async function saveCraftLevels(charId) {
   if (char) char.craft_levels = obj;
   showToast('저장 완료');
   toggleCraftEdit(charId, false);
+}
+
+// ════════════ 제작 페이지 (v1.7.4) ════════════
+// 캐릭터별 제작 레벨을 한눈에 — 종류 필터 / 계정 / 등급 / 레벨 범위 / 다양한 정렬
+let _craftPageState = {
+  type: 'all',           // 'all' | 제작 key(daejang…)
+  owner: 'all',          // 'all' | '설냥' | '츄츄'
+  grade: 'all',          // 'all' | 'normal'(입문) | 'expert'(전문)  ← 개별 모드에서만
+  min: null, max: null,  // 레벨 이상/이하 (개별 모드)
+  sort: 'default',       // 'default' | 'lvl_desc' | 'lvl_asc' | 'name'
+  sortKey: 'total',      // 전체 모드에서 레벨 정렬 기준(제작 key 또는 'total')
+  includeResting: true,
+  editMode: false,       // 표에서 바로 레벨 수정 (상세페이지와 동일 DB 연동)
+};
+
+function _cpChars() {
+  return allChars.filter(c => c && c.name && OWNERS.includes(c.owner));
+}
+
+// 정렬/필터에 쓰는 대표 레벨값
+function _cpVal(char, s) {
+  if (s.type === 'all') {
+    const key = s.sortKey || 'total';
+    if (key === 'total') return CRAFT_TYPES.reduce((sum, t) => sum + getCraftEntry(char, t.key).level, 0);
+    return getCraftEntry(char, key).level;
+  }
+  return getCraftEntry(char, s.type).level;
+}
+
+function _cpFilter(chars, s) {
+  let list = chars.slice();
+  if (s.owner !== 'all') list = list.filter(c => c.owner === s.owner);
+  if (!s.includeResting) list = list.filter(c => !c.resting);
+  if (s.type !== 'all') {
+    list = list.filter(c => {
+      const e = getCraftEntry(c, s.type);
+      if (s.grade !== 'all' && e.grade !== s.grade) return false;
+      if (s.min != null && e.level < s.min) return false;
+      if (s.max != null && e.level > s.max) return false;
+      return true;
+    });
+  }
+  return list;
+}
+
+function _cpSort(list, s) {
+  const arr = list.slice();
+  // 계정(설냥→츄츄)은 항상 그룹으로 묶고, 그 안에서만 정렬 기준 적용.
+  // → 다른 계정이 중간에 섞이지 않음.
+  const within = (a, b) => {
+    if (s.sort === 'name') return (a.name || '').localeCompare(b.name || '', 'ko');
+    if (s.sort === 'lvl_desc') return _cpVal(b, s) - _cpVal(a, s) || slotOrder(a) - slotOrder(b);
+    if (s.sort === 'lvl_asc') return _cpVal(a, s) - _cpVal(b, s) || slotOrder(a) - slotOrder(b);
+    return slotOrder(a) - slotOrder(b); // 기본: 대표(9) 우선 슬롯 순
+  };
+  arr.sort((a, b) => {
+    if (a.owner !== b.owner) return OWNERS.indexOf(a.owner) - OWNERS.indexOf(b.owner);
+    return within(a, b);
+  });
+  return arr;
+}
+
+function _cpStat(chars, key) {
+  const levels = chars.map(c => getCraftEntry(c, key).level);
+  const experts = chars.filter(c => getCraftEntry(c, key).grade === 'expert').length;
+  const max = levels.length ? Math.max(...levels) : 0;
+  const avg = levels.length ? levels.reduce((a, b) => a + b, 0) / levels.length : 0;
+  return { max, avg, experts, count: chars.length };
+}
+
+// ── 컨트롤 이벤트 ──
+function setCraftType(t) { _craftPageState.type = t; renderCraftPage(); }
+function setCraftOwner(o) { _craftPageState.owner = o; renderCraftPage(); }
+function setCraftGradeFilter(g) { _craftPageState.grade = g; renderCraftPage(); }
+function setCraftSort(v) { _craftPageState.sort = v; renderCraftPage(); }
+function setCraftSortTotal(dir) { _craftPageState.sortKey = 'total'; _craftPageState.sort = dir === 'asc' ? 'lvl_asc' : 'lvl_desc'; renderCraftPage(); }
+function toggleCraftResting() { _craftPageState.includeResting = !_craftPageState.includeResting; renderCraftPage(); }
+function setCraftMin(v) { const n = parseInt(v); _craftPageState.min = isNaN(n) ? null : Math.max(0, n); renderCraftPage(); }
+function setCraftMax(v) { const n = parseInt(v); _craftPageState.max = isNaN(n) ? null : Math.max(0, n); renderCraftPage(); }
+function cpHeaderSort(key) {
+  const s = _craftPageState;
+  if (s.sortKey === key && s.sort === 'lvl_desc') s.sort = 'lvl_asc';
+  else s.sort = 'lvl_desc';
+  s.sortKey = key;
+  renderCraftPage();
+}
+
+// ── 컨트롤 HTML ──
+function _cpControlsHtml(s) {
+  const typeBtn = (k, label) => `<button class="${s.type === k ? 'active' : ''}" onclick="setCraftType('${k}')">${label}</button>`;
+  const typeSeg = `<div class="cp-seg">${typeBtn('all', '전체')}${CRAFT_TYPES.map(t => typeBtn(t.key, t.name)).join('')}</div>`;
+
+  const ownerBtn = (o, label) => `<button class="${s.owner === o ? 'active' : ''}" onclick="setCraftOwner('${o}')">${label}</button>`;
+  const ownerSeg = `<div class="cp-seg">${ownerBtn('all', '전체')}${OWNERS.map(o => ownerBtn(o, escapeHtml(o))).join('')}</div>`;
+
+  const sortBtn = (v, label) => `<button class="${s.sort === v ? 'active' : ''}" onclick="setCraftSort('${v}')">${label}</button>`;
+  let sortSeg;
+  if (s.type === 'all') {
+    const totalDescActive = s.sort === 'lvl_desc' && (s.sortKey || 'total') === 'total';
+    const totalAscActive = s.sort === 'lvl_asc' && (s.sortKey || 'total') === 'total';
+    sortSeg = `<div class="cp-seg">
+      ${sortBtn('default', '기본')}
+      <button class="${totalDescActive ? 'active' : ''}" onclick="setCraftSortTotal('desc')">합계 높은순</button>
+      <button class="${totalAscActive ? 'active' : ''}" onclick="setCraftSortTotal('asc')">합계 낮은순</button>
+      ${sortBtn('name', '이름순')}
+    </div>`;
+  } else {
+    sortSeg = `<div class="cp-seg">${sortBtn('default', '기본')}${sortBtn('lvl_desc', '레벨 높은순')}${sortBtn('lvl_asc', '레벨 낮은순')}${sortBtn('name', '이름순')}</div>`;
+  }
+
+  let single = '';
+  if (s.type !== 'all') {
+    const gBtn = (g, label, extra) => `<button class="${s.grade === g ? 'active' + (extra ? ' ' + extra : '') : ''}" onclick="setCraftGradeFilter('${g}')">${label}</button>`;
+    single = `
+      <div class="cp-row"><span class="cp-row-label">등급</span>
+        <div class="cp-seg">${gBtn('all', '전체')}${gBtn('normal', '입문')}${gBtn('expert', '전문', 'expert')}</div>
+      </div>
+      <div class="cp-row"><span class="cp-row-label">레벨</span>
+        <span class="cp-range">
+          <input type="number" min="0" max="999" placeholder="이상" value="${s.min ?? ''}"
+            autocomplete="off" data-lpignore="true" onchange="setCraftMin(this.value)">
+          <span>~</span>
+          <input type="number" min="0" max="999" placeholder="이하" value="${s.max ?? ''}"
+            autocomplete="off" data-lpignore="true" onchange="setCraftMax(this.value)">
+        </span>
+      </div>`;
+  }
+
+  const restingChk = `<label class="cp-check"><input type="checkbox" ${s.includeResting ? 'checked' : ''} onchange="toggleCraftResting()"> 휴식 캐릭 포함</label>`;
+
+  return `<div class="cp-controls">
+    <div class="cp-row"><span class="cp-row-label">제작</span>${typeSeg}</div>
+    <div class="cp-row"><span class="cp-row-label">계정</span>${ownerSeg}${restingChk}</div>
+    <div class="cp-row"><span class="cp-row-label">정렬</span>${sortSeg}</div>
+    ${single}
+  </div>`;
+}
+
+// ── 요약 통계 (grade/level 필터 전 모집단 기준: 전체 현황 파악용) ──
+function _cpStatsHtml(allC, s) {
+  let base = allC.slice();
+  if (s.owner !== 'all') base = base.filter(c => c.owner === s.owner);
+  if (!s.includeResting) base = base.filter(c => !c.resting);
+  const keys = s.type === 'all' ? CRAFT_TYPES.map(t => t.key) : [s.type];
+  return `<div class="cp-stats">${keys.map(k => {
+    const t = CRAFT_TYPES.find(x => x.key === k);
+    const st = _cpStat(base, k);
+    return `<div class="cp-stat-card">
+      <div class="cp-stat-name">${t.name}</div>
+      <div class="cp-stat-line">최고 <b>Lv.${st.max}</b> · 평균 <b>Lv.${st.avg.toFixed(1)}</b></div>
+      <div class="cp-stat-line">전문 <b>${st.experts}</b> / ${st.count}명</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function _cpNameCell(c) {
+  const rep = c.slot === 9 ? `<span class="cp-rep-badge">대표</span>` : '';
+  const rest = c.resting ? ` <span class="cp-name-class">💤휴식</span>` : '';
+  const cls = c.class ? `<span class="cp-name-class">${escapeHtml((c.class || '').toString())}</span>` : '';
+  return `<span class="cp-name-main">${escapeHtml(c.name || '(이름없음)')}</span>${cls}${rep}${rest}`;
+}
+
+// 계정 밴드 헤더를 끼워 넣으며 행 생성 (계정이 바뀔 때마다 구분 헤더)
+function _cpGroupedRows(list, cols, rowFn) {
+  let html = '', prev = null;
+  list.forEach(c => {
+    if (c.owner !== prev) {
+      html += `<tr class="cp-group-row"><td colspan="${cols}">${escapeHtml(c.owner)} 계정</td></tr>`;
+      prev = c.owner;
+    }
+    html += rowFn(c);
+  });
+  return html;
+}
+
+// 편집 모드 등급 버튼 / 레벨 입력 셀
+function _cpGradeEditBtn(c, key, grade) {
+  return `<button class="cp-grade-btn ${grade === 'expert' ? 'expert' : ''}"
+    onclick="cpEditGrade('${c.id}','${key}')" title="클릭 시 입문 ↔ 전문">${grade === 'expert' ? '전문' : '입문'}</button>`;
+}
+function _cpLvEditInput(c, key, level) {
+  return `<input class="cp-lv-edit" type="number" min="0" max="999" value="${level}"
+    autocomplete="off" data-lpignore="true" onfocus="this.select()"
+    onchange="cpEditLevel('${c.id}','${key}',this.value)">`;
+}
+
+// ── 전체 모드 테이블 (제작 5종 전부) ──
+function _cpTableAll(list, s) {
+  const cols = 1 + CRAFT_TYPES.length + 1; // 캐릭터 + 5제작 + 합계
+  const maxByKey = {};
+  CRAFT_TYPES.forEach(t => { maxByKey[t.key] = Math.max(0, ...list.map(c => getCraftEntry(c, t.key).level)); });
+  const arrow = key => (s.sortKey === key && (s.sort === 'lvl_asc' || s.sort === 'lvl_desc'))
+    ? `<span class="sort-arrow">${s.sort === 'lvl_asc' ? '▲' : '▼'}</span>` : '';
+  const head = `<tr>
+    <th style="text-align:left">캐릭터</th>
+    ${CRAFT_TYPES.map(t => `<th class="sortable" onclick="cpHeaderSort('${t.key}')">${t.name}${arrow(t.key)}</th>`).join('')}
+    <th class="sortable" onclick="cpHeaderSort('total')">합계${arrow('total')}</th>
+  </tr>`;
+  const rowFn = c => {
+    const total = CRAFT_TYPES.reduce((sum, t) => sum + getCraftEntry(c, t.key).level, 0);
+    return `<tr>
+      <td class="cp-name">${_cpNameCell(c)}</td>
+      ${CRAFT_TYPES.map(t => {
+        const e = getCraftEntry(c, t.key);
+        const isMax = e.level > 0 && e.level === maxByKey[t.key];
+        return `<td>${s.editMode
+          ? `<div class="cp-edit-cell">${_cpGradeEditBtn(c, t.key, e.grade)}${_cpLvEditInput(c, t.key, e.level)}</div>`
+          : `<span class="cp-lvl-cell ${isMax ? 'is-max' : ''}"><span class="craft-badge ${e.grade}">${e.grade === 'expert' ? '전문' : '입문'}</span><span class="cp-lvl-num">Lv.${e.level}</span></span>`}</td>`;
+      }).join('')}
+      <td><span class="cp-total">${total}</span></td>
+    </tr>`;
+  };
+  return `<div class="cp-table-wrap"><table class="cp-table"><thead>${head}</thead><tbody>${_cpGroupedRows(list, cols, rowFn)}</tbody></table></div>`;
+}
+
+// ── 개별 모드 테이블 (한 제작 집중) ──
+function _cpTableSingle(list, s) {
+  const cols = 3; // 캐릭터 + 등급 + 레벨
+  const maxLv = Math.max(0, ...list.map(c => getCraftEntry(c, s.type).level));
+  const arrow = (s.sort === 'lvl_asc' || s.sort === 'lvl_desc')
+    ? `<span class="sort-arrow">${s.sort === 'lvl_asc' ? '▲' : '▼'}</span>` : '';
+  const head = `<tr>
+    <th style="text-align:left">캐릭터</th><th>등급</th>
+    <th class="sortable" onclick="cpHeaderSort('${s.type}')">레벨${arrow}</th>
+  </tr>`;
+  const rowFn = c => {
+    const e = getCraftEntry(c, s.type);
+    const isMax = e.level > 0 && e.level === maxLv;
+    return `<tr>
+      <td class="cp-name">${_cpNameCell(c)}</td>
+      <td>${s.editMode ? _cpGradeEditBtn(c, s.type, e.grade)
+        : `<span class="craft-badge ${e.grade}">${e.grade === 'expert' ? '전문' : '입문'}</span>`}</td>
+      <td>${s.editMode ? _cpLvEditInput(c, s.type, e.level)
+        : `<span class="cp-lvl-cell ${isMax ? 'is-max' : ''}"><span class="cp-lvl-num">Lv.${e.level}</span></span>`}</td>
+    </tr>`;
+  };
+  return `<div class="cp-table-wrap"><table class="cp-table"><thead>${head}</thead><tbody>${_cpGroupedRows(list, cols, rowFn)}</tbody></table></div>`;
+}
+
+// ── 편집 모드 (표에서 바로 수정 → 상세페이지와 동일 DB) ──
+function toggleCraftEditMode() {
+  if (currentActor === 'guest') { showToast('게스트는 편집할 수 없어요'); return; }
+  _craftPageState.editMode = !_craftPageState.editMode;
+  renderCraftPage();
+}
+async function cpSaveCraft(charId, key, grade, level) {
+  const char = allChars.find(c => c.id === charId);
+  if (!char) return false;
+  const lv = Math.max(0, Math.min(999, parseInt(level) || 0));
+  const cl = Object.assign({}, char.craft_levels || {});
+  cl[key] = { grade: grade === 'expert' ? 'expert' : 'normal', level: lv };
+  if (currentActor !== 'guest') {
+    markSelfChange('characters', charId);
+    const { error } = await sb.from('characters').update({ craft_levels: cl }).eq('id', charId);
+    if (error) { showToast('저장 실패'); return false; }
+  }
+  char.craft_levels = cl;
+  return true;
+}
+async function cpEditGrade(charId, key) {
+  const cur = getCraftEntry(allChars.find(c => c.id === charId), key);
+  const next = cur.grade === 'expert' ? 'normal' : 'expert';
+  if (await cpSaveCraft(charId, key, next, cur.level)) { showToast('저장 완료'); renderCraftPage(); }
+}
+async function cpEditLevel(charId, key, val) {
+  const cur = getCraftEntry(allChars.find(c => c.id === charId), key);
+  if (await cpSaveCraft(charId, key, cur.grade, val)) { showToast('저장 완료'); renderCraftPage(); }
+}
+
+function renderCraftPage() {
+  const el = document.getElementById('craft-content');
+  if (!el) return;
+  const s = _craftPageState;
+  const allC = _cpChars();
+  const filtered = _cpSort(_cpFilter(allC, s), s);
+  const editBtn = (currentActor !== 'guest')
+    ? `<div class="cp-tablebar"><button class="cp-editmode-btn ${s.editMode ? 'on' : ''}" onclick="toggleCraftEditMode()">${s.editMode ? '✓ 편집 완료' : '편집 모드'}</button></div>`
+    : '';
+  el.innerHTML = `<div class="craftpage-wrap">
+    ${_cpControlsHtml(s)}
+    ${_cpStatsHtml(allC, s)}
+    ${editBtn}
+    ${filtered.length
+      ? (s.type === 'all' ? _cpTableAll(filtered, s) : _cpTableSingle(filtered, s))
+      : `<div class="cp-empty">조건에 맞는 캐릭터가 없어요</div>`}
+  </div>`;
 }
 
 // ── 플레이엔씨 연동 ──
@@ -9537,7 +10049,7 @@ function openAccountModal(owner) {
   const ownerChars = allChars
     .filter(c => c.owner === owner)
     .slice()
-    .sort((a, b) => (a.slot || 99) - (b.slot || 99));
+    .sort((a, b) => slotOrder(a) - slotOrder(b));
   const ticketSum = ownerChars.reduce((s, c) => s + (c.dungeon_tickets || 0), 0);
 
   // 물질변환 계정 통합 카운트 (v1.6.1)
@@ -9878,6 +10390,13 @@ function subscribeRealtime() {
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_log' }, async () => {
       if (document.getElementById('log-page').classList.contains('active')) renderLogPage();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'app_config' }, (payload) => {
+      const row = payload.new || {};
+      if (row.key === 'card_lock') {
+        cardLocked = (row.value === '1' || row.value === 'true');
+        renderOverview();     // 다른 사용자의 잠금/해제를 실시간 반영
+      }
     })
     .subscribe(status => {
       if (status === 'SUBSCRIBED') dot.classList.add('connected');
@@ -11026,7 +11545,7 @@ function openOddBatchModal(owner) {
   // 해당 owner 캐릭 전원 대상 (휴식 포함, slot 순)
   const chars = allChars
     .filter(c => c.owner === owner && c.name)
-    .sort((a, b) => (a.slot || 0) - (b.slot || 0));
+    .sort((a, b) => slotOrder(a) - slotOrder(b));
 
   _oddBatchPlan = chars.map(c => {
     const before = c.odd_energy_base || 0;
@@ -11201,7 +11720,26 @@ let _dragCharId = null;
 let _dragOwner = null;
 let _dragSlot = null;
 
+// ── 카드 순서 잠금 토글 (app_config.card_lock, 전 사용자 공유) ──
+async function toggleCardLock(e) {
+  if (e) e.stopPropagation();
+  if (currentActor === 'guest') { showToast('게스트는 변경할 수 없어요'); return; }
+  const next = !cardLocked;
+  cardLocked = next;          // optimistic
+  renderOverview();           // 버튼/카드 draggable 즉시 반영
+  const { error } = await sb.from('app_config')
+    .upsert({ key: 'card_lock', value: next ? '1' : '0' }, { onConflict: 'key' });
+  if (error) {
+    cardLocked = !next;       // 롤백
+    renderOverview();
+    showToast('저장 실패');
+    return;
+  }
+  showToast(next ? '카드 순서 잠금' : '잠금 해제');
+}
+
 function dragStart(e, charId, owner, slot) {
+  if (cardLocked) { e.preventDefault(); return false; }  // 잠금 시 드래그 시작 차단
   _dragCharId = charId;
   _dragOwner = owner;
   _dragSlot = slot;
@@ -11210,6 +11748,7 @@ function dragStart(e, charId, owner, slot) {
 }
 
 function dragOver(e) {
+  if (cardLocked) return;     // 잠금 시 드롭 대상 하이라이트/허용 안 함
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
   e.currentTarget.classList.add('drag-over');
@@ -11222,6 +11761,7 @@ function dragEnd(e) {
 
 async function dropChar(e, targetOwner, targetSlot) {
   if (currentActor === 'guest') return;
+  if (cardLocked) return;     // 잠금 시 자리 이동 무시
 
   e.preventDefault();
   document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
@@ -11535,7 +12075,7 @@ function renderSanctuaryPage() {
       .filter(c => c.owner === owner)
       .filter(c => (c.item_level || 0) >= 2700)
       .slice()
-      .sort((a, b) => (a.slot || 0) - (b.slot || 0));
+      .sort((a, b) => slotOrder(a) - slotOrder(b));
 
     // 진행도 집계 (자격 충족 + 휴식 제외)
     let total = 0, done = 0;
@@ -12301,7 +12841,7 @@ function getActiveCharsByOwner() {
   for (const owner of OWNERS) {
     map[owner] = allChars
       .filter(c => c.owner === owner && c.name && !c.resting)
-      .sort((a, b) => (a.slot || 0) - (b.slot || 0));
+      .sort((a, b) => slotOrder(a) - slotOrder(b));
   }
   return map;
 }
@@ -14009,624 +14549,4 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
     overflow-y: auto;
     padding: 4px; margin-bottom: 10px;
   }
-  .tape-empty { text-align: center; padding: 24px 12px; color: var(--text-sub); font-size: 0.78rem; }
-  .tape-item {
-    display: grid;
-    grid-template-columns: 20px 1fr auto auto;
-    align-items: center; gap: 8px;
-    padding: 7px 9px;
-    border-radius: var(--radius-xs);
-    transition: background 0.12s;
-  }
-  .tape-item:hover { background: var(--hover); }
-  .tape-item + .tape-item { border-top: 1px dashed var(--border); }
-  .tape-num { font-size: 0.7rem; color: var(--text-sub); text-align: center; }
-  .tape-expr { font-size: 0.85rem; color: var(--text); word-break: break-all; }
-  .tape-val  { font-size: 0.85rem; color: var(--text); font-weight: 500; text-align: right; min-width: 60px; }
-  .tape-del {
-    width: 22px; height: 22px;
-    border: none; background: transparent;
-    color: var(--text-sub);
-    font-size: 14px; border-radius: 50%;
-    cursor: pointer;
-    transition: background 0.12s, color 0.12s;
-  }
-  .tape-del:hover { background: var(--peach-light); color: #8a5a3a; }
-  .tape-total {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 14px;
-    background: var(--sage-light);
-    border: 1px solid var(--sage);
-    border-radius: var(--radius-sm);
-    margin-bottom: 10px;
-    flex-shrink: 0;
-  }
-  .tape-total-label { font-size: 0.78rem; color: #4a6030; }
-  .tape-total-val   { font-size: 1.2rem; color: #3a5020; font-weight: 500; word-break: break-all; }
-  .tape-actions { display: flex; gap: 6px; flex-shrink: 0; }
-  .tape-action-btn {
-    flex: 1; padding: 8px 0;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text-sub);
-    font-family: 'Gowun Dodum', sans-serif;
-    font-size: 0.78rem;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: background 0.12s, color 0.12s, border-color 0.12s;
-  }
-  .tape-action-btn:hover { background: var(--hover); color: var(--text); border-color: var(--text-sub); }
-  .tape-action-btn.danger:hover { background: var(--peach-light); color: #8a5a3a; border-color: var(--peach); }
-  .calc-history {
-    display: none; flex-direction: column; gap: 8px;
-    flex: 1; overflow-y: auto;
-    padding-right: 2px;
-  }
-  .calc-history.open { display: flex; }
-  .calc-history-empty { text-align: center; color: var(--text-sub); font-size: 0.78rem; padding: 32px 12px; }
-  .calc-history-item {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 9px 11px; cursor: pointer;
-    display: flex; flex-direction: column; gap: 2px;
-    transition: background 0.12s, border-color 0.12s;
-    flex-shrink: 0;
-  }
-  .calc-history-item:hover { background: var(--hover); border-color: var(--text-sub); }
-  .calc-history-meta {
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 0.68rem; color: var(--text-sub);
-  }
-  .calc-history-mode-badge {
-    padding: 1px 6px; border-radius: 6px;
-    background: var(--hover); color: var(--text-sub);
-    font-size: 0.65rem;
-  }
-  .calc-history-mode-badge.basic { background: var(--peach-light); color: #8a5a3a; }
-  .calc-history-mode-badge.expr  { background: var(--sky-light);   color: #3a6080; }
-  .calc-history-mode-badge.tape  { background: var(--sage-light);  color: #4a6030; }
-  .calc-history-expr   { font-size: 0.75rem; color: var(--text-sub); word-break: break-all; }
-  .calc-history-result { font-size: 0.95rem; color: var(--text); text-align: right; font-weight: 500; word-break: break-all; }
-  .calc-history-foot {
-    display: flex; justify-content: flex-end;
-    margin-top: 10px; padding-top: 10px;
-    border-top: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .calc-history-clear {
-    padding: 6px 12px;
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    background: transparent;
-    color: var(--text-sub);
-    font-family: 'Gowun Dodum', sans-serif;
-    font-size: 0.74rem;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-  }
-  .calc-history-clear:hover { background: var(--hover); color: var(--text); }
-  #calc-view-basic, #calc-view-expr, #calc-view-tape {
-    display: flex; flex-direction: column; flex: 1; min-height: 0;
-  }
-  .calc-history::-webkit-scrollbar,
-  .tape-list::-webkit-scrollbar,
-  .calc-body::-webkit-scrollbar { width: 6px; }
-  .calc-history::-webkit-scrollbar-track,
-  .tape-list::-webkit-scrollbar-track,
-  .calc-body::-webkit-scrollbar-track { background: transparent; }
-  .calc-history::-webkit-scrollbar-thumb,
-  .tape-list::-webkit-scrollbar-thumb,
-  .calc-body::-webkit-scrollbar-thumb {
-    background: var(--border); border-radius: 3px;
-  }
-  @media (max-width: 340px) {
-    .calc-tab { padding: 4px 6px; font-size: 0.68rem; }
-    .calc-title { display: none; }
-  }
-</style>
-</head>
-<body>
-
-<div class="calc-header">
-  <div class="calc-title"><span class="ct-emoji">  </span><span class="ct-name">츄<span class="ct-accent">냥</span>이 계산기</span></div>
-  <div class="calc-tabs" id="calc-tabs">
-    <button class="calc-tab active" data-view="basic"   onclick="switchCalcView('basic')">기본</button>
-    <button class="calc-tab"        data-view="expr"    onclick="switchCalcView('expr')">수식</button>
-    <button class="calc-tab"        data-view="tape"    onclick="switchCalcView('tape')">테이프</button>
-    <button class="calc-tab"        data-view="history" onclick="switchCalcView('history')">기록</button>
-  </div>
-</div>
-
-<div class="calc-body">
-
-  <div id="calc-view-basic">
-    <div class="calc-display">
-      <div class="calc-expr" id="calc-expr">&nbsp;</div>
-      <div class="calc-result" id="calc-result">0</div>
-    </div>
-    <div class="calc-keys">
-      <button class="calc-btn clear" onclick="calcAction('AC')">AC</button>
-      <button class="calc-btn func"  onclick="calcAction('SIGN')">±</button>
-      <button class="calc-btn func"  onclick="calcAction('PCT')">%</button>
-      <button class="calc-btn op"    onclick="calcAction('OP','÷')">÷</button>
-      <button class="calc-btn" onclick="calcAction('NUM','7')">7</button>
-      <button class="calc-btn" onclick="calcAction('NUM','8')">8</button>
-      <button class="calc-btn" onclick="calcAction('NUM','9')">9</button>
-      <button class="calc-btn op" onclick="calcAction('OP','×')">×</button>
-      <button class="calc-btn" onclick="calcAction('NUM','4')">4</button>
-      <button class="calc-btn" onclick="calcAction('NUM','5')">5</button>
-      <button class="calc-btn" onclick="calcAction('NUM','6')">6</button>
-      <button class="calc-btn op" onclick="calcAction('OP','-')">−</button>
-      <button class="calc-btn" onclick="calcAction('NUM','1')">1</button>
-      <button class="calc-btn" onclick="calcAction('NUM','2')">2</button>
-      <button class="calc-btn" onclick="calcAction('NUM','3')">3</button>
-      <button class="calc-btn op" onclick="calcAction('OP','+')">+</button>
-      <button class="calc-btn zero" onclick="calcAction('NUM','0')">0</button>
-      <button class="calc-btn" onclick="calcAction('DOT')">.</button>
-      <button class="calc-btn eq" onclick="calcAction('EQ')">=</button>
-    </div>
-  </div>
-
-  <div id="calc-view-expr" style="display:none">
-    <div class="calc-display">
-      <input type="text" id="calc-expr-input" class="calc-expr-input"
-             placeholder="예: 2*2 + 3*3 + 4*4"
-             autocomplete="off" spellcheck="false" oninput="onExprInput()" />
-      <div class="calc-result" id="calc-expr-result">0</div>
-    </div>
-    <div class="calc-keys expr-keys">
-      <button class="calc-btn clear" onclick="exprAC()">AC</button>
-      <button class="calc-btn func"  onclick="exprInsert('(')">(</button>
-      <button class="calc-btn func"  onclick="exprInsert(')')">)</button>
-      <button class="calc-btn func"  onclick="exprBack()">⌫</button>
-      <button class="calc-btn op"    onclick="exprInsert('÷')">÷</button>
-      <button class="calc-btn" onclick="exprInsert('7')">7</button>
-      <button class="calc-btn" onclick="exprInsert('8')">8</button>
-      <button class="calc-btn" onclick="exprInsert('9')">9</button>
-      <button class="calc-btn func" onclick="exprInsert('%')">%</button>
-      <button class="calc-btn op"   onclick="exprInsert('×')">×</button>
-      <button class="calc-btn" onclick="exprInsert('4')">4</button>
-      <button class="calc-btn" onclick="exprInsert('5')">5</button>
-      <button class="calc-btn" onclick="exprInsert('6')">6</button>
-      <button class="calc-btn func" onclick="exprInsert(',')"> ,</button>
-      <button class="calc-btn op"   onclick="exprInsert('-')">−</button>
-      <button class="calc-btn" onclick="exprInsert('1')">1</button>
-      <button class="calc-btn" onclick="exprInsert('2')">2</button>
-      <button class="calc-btn" onclick="exprInsert('3')">3</button>
-      <button class="calc-btn" onclick="exprInsert('.')">.</button>
-      <button class="calc-btn op"   onclick="exprInsert('+')">+</button>
-      <button class="calc-btn" style="grid-column: span 2" onclick="exprInsert('0')">0</button>
-      <button class="calc-btn" onclick="exprInsert('00')">00</button>
-      <button class="calc-btn eq" style="grid-column: span 2" onclick="exprEvaluate()">=</button>
-    </div>
-  </div>
-
-  <div id="calc-view-tape" style="display:none">
-    <div class="tape-input-row">
-      <input type="text" id="tape-input" class="tape-input"
-             placeholder="예: 2*2   또는   3*3"
-             autocomplete="off" spellcheck="false"
-             onkeydown="if(event.key==='Enter')tapeAdd()" />
-      <button class="tape-add-btn" onclick="tapeAdd()">＋ 추가</button>
-    </div>
-    <div class="tape-list" id="tape-list"></div>
-    <div class="tape-total">
-      <div class="tape-total-label">합계</div>
-      <div class="tape-total-val" id="tape-total">0</div>
-    </div>
-    <div class="tape-actions">
-      <button class="tape-action-btn" onclick="tapeSaveToHistory()">📌 기록에 저장</button>
-      <button class="tape-action-btn danger" onclick="tapeClear()">🗑 모두 지우기</button>
-    </div>
-  </div>
-
-  <div class="calc-history" id="calc-view-history">
-    <div id="calc-history-list" style="display:flex;flex-direction:column;gap:8px"></div>
-    <div class="calc-history-foot" id="calc-history-foot" style="display:none">
-      <button class="calc-history-clear" onclick="clearCalcHistory()">기록 모두 지우기</button>
-    </div>
-  </div>
-
-</div>
-
-<script>
-  var HISTORY_KEY = 'aion2_calc_history_v1';
-  var HISTORY_MAX = 50;
-
-  function fmt(n) {
-    if (n === null || n === undefined || Number.isNaN(n)) return '오류';
-    if (!Number.isFinite(n)) return '∞';
-    return Math.abs(n) >= 1e16 ? n.toExponential(6) : String(parseFloat(n.toPrecision(12)));
-  }
-  function loadHistory() {
-    try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) { return []; }
-  }
-  function saveHistory(list) {
-    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, HISTORY_MAX))); } catch(e) {}
-  }
-  function pushHistory(mode, expr, result) {
-    var list = loadHistory();
-    list.unshift({ mode: mode, expr: expr, result: result, t: Date.now() });
-    saveHistory(list);
-    renderHistory();
-  }
-  function evalExpression(raw) {
-    if (!raw || !raw.trim()) return null;
-    var s = raw.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-')
-               .replace(/\s+/g,'').replace(/,/g,'');
-    if (!/^[0-9+\-*/().% ]+$/.test(s)) throw new Error('허용되지 않은 문자');
-    s = s.replace(/(\d+(?:\.\d+)?)%/g, '($1/100)');
-    var fn = new Function('return (' + s + ')');
-    var v = fn();
-    if (typeof v !== 'number' || Number.isNaN(v)) throw new Error('계산 결과 없음');
-    return v;
-  }
-  function escapeHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
-                    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  // 기본 계산기
-  var calcState = { current:'0', previous:null, op:null, justEvaluated:false, expr:'', _awaitingNext:false };
-  function compute(a, op, b) {
-    switch(op) { case '+': return a+b; case '-': return a-b; case '×': return a*b; case '÷': return b===0?NaN:a/b; }
-    return b;
-  }
-  function refreshBasicDisplay() {
-    document.getElementById('calc-expr').innerHTML = calcState.expr || '&nbsp;';
-    document.getElementById('calc-result').textContent = calcState.current;
-  }
-  function calcAction(type, val) {
-    if ((type==='NUM' || type==='DOT') && calcState._awaitingNext) {
-      calcState.current = (type==='DOT') ? '0.' : val;
-      calcState._awaitingNext = false;
-      refreshBasicDisplay(); return;
-    }
-    switch(type) {
-      case 'NUM':
-        if (calcState.justEvaluated) { calcState.current = val; calcState.expr = ''; calcState.justEvaluated = false; }
-        else if (calcState.current === '0') calcState.current = val;
-        else if (calcState.current.length < 16) calcState.current += val;
-        break;
-      case 'DOT':
-        if (calcState.justEvaluated) { calcState.current = '0.'; calcState.expr = ''; calcState.justEvaluated = false; }
-        else if (!calcState.current.includes('.')) calcState.current += '.';
-        break;
-      case 'OP':
-        var num = parseFloat(calcState.current);
-        if (calcState.previous !== null && calcState.op && !calcState.justEvaluated) {
-          var r = compute(calcState.previous, calcState.op, num);
-          calcState.previous = r; calcState.current = fmt(r);
-        } else { calcState.previous = num; }
-        calcState.op = val;
-        calcState.expr = fmt(calcState.previous) + ' ' + val;
-        calcState.justEvaluated = false;
-        calcState._awaitingNext = true;
-        break;
-      case 'EQ':
-        if (calcState.op !== null && calcState.previous !== null) {
-          var a = calcState.previous;
-          var b = parseFloat(calcState.current);
-          var rr = compute(a, calcState.op, b);
-          var exprFull = fmt(a) + ' ' + calcState.op + ' ' + fmt(b);
-          calcState.expr = exprFull + ' =';
-          calcState.current = fmt(rr);
-          if (calcState.current !== '오류' && calcState.current !== '∞') {
-            pushHistory('basic', exprFull, calcState.current);
-          }
-          calcState.previous = null; calcState.op = null;
-          calcState.justEvaluated = true; calcState._awaitingNext = false;
-        }
-        break;
-      case 'AC':
-        calcState = { current:'0', previous:null, op:null, justEvaluated:false, expr:'', _awaitingNext:false };
-        break;
-      case 'SIGN':
-        if (calcState.current !== '0' && calcState.current !== '오류') {
-          calcState.current = calcState.current.indexOf('-') === 0
-            ? calcState.current.slice(1) : '-' + calcState.current;
-        }
-        break;
-      case 'PCT':
-        var n2 = parseFloat(calcState.current);
-        if (!Number.isNaN(n2)) calcState.current = fmt(n2 / 100);
-        break;
-      case 'BACK':
-        if (calcState.justEvaluated) break;
-        if (calcState.current.length <= 1 || (calcState.current.length === 2 && calcState.current.indexOf('-') === 0)) {
-          calcState.current = '0';
-        } else { calcState.current = calcState.current.slice(0, -1); }
-        break;
-    }
-    refreshBasicDisplay();
-  }
-
-  // 수식
-  function exprInsert(ch) {
-    var input = document.getElementById('calc-expr-input');
-    var start = input.selectionStart != null ? input.selectionStart : input.value.length;
-    var end   = input.selectionEnd   != null ? input.selectionEnd   : input.value.length;
-    var v = input.value;
-    input.value = v.slice(0, start) + ch + v.slice(end);
-    var pos = start + ch.length;
-    input.focus(); input.setSelectionRange(pos, pos);
-    onExprInput();
-  }
-  function exprBack() {
-    var input = document.getElementById('calc-expr-input');
-    var start = input.selectionStart != null ? input.selectionStart : input.value.length;
-    var end   = input.selectionEnd   != null ? input.selectionEnd   : input.value.length;
-    var v = input.value;
-    if (start === end && start > 0) {
-      input.value = v.slice(0, start - 1) + v.slice(end);
-      var pos = start - 1;
-      input.focus(); input.setSelectionRange(pos, pos);
-    } else if (start !== end) {
-      input.value = v.slice(0, start) + v.slice(end);
-      input.focus(); input.setSelectionRange(start, start);
-    }
-    onExprInput();
-  }
-  function exprAC() {
-    document.getElementById('calc-expr-input').value = '';
-    document.getElementById('calc-expr-result').textContent = '0';
-    document.getElementById('calc-expr-input').focus();
-  }
-  function onExprInput() {
-    var raw = document.getElementById('calc-expr-input').value;
-    var out = document.getElementById('calc-expr-result');
-    if (!raw.trim()) { out.textContent = '0'; out.style.color=''; return; }
-    try { out.textContent = fmt(evalExpression(raw)); out.style.color=''; }
-    catch(e) { out.textContent = '…'; out.style.color = 'var(--text-sub)'; }
-  }
-  function exprEvaluate() {
-    var raw = document.getElementById('calc-expr-input').value;
-    var out = document.getElementById('calc-expr-result');
-    if (!raw.trim()) return;
-    try {
-      var result = fmt(evalExpression(raw));
-      out.textContent = result; out.style.color = '';
-      pushHistory('expr', raw, result);
-    } catch(e) {
-      out.textContent = '오류'; out.style.color = 'var(--peach)';
-    }
-  }
-
-  // 테이프
-  var tapeItems = [];
-  function tapeAdd() {
-    var input = document.getElementById('tape-input');
-    var raw = input.value.trim();
-    if (!raw) return;
-    try {
-      var v = evalExpression(raw);
-      tapeItems.push({ expr: raw, val: v });
-      input.value = ''; renderTape(); input.focus();
-    } catch(e) {
-      input.style.borderColor = 'var(--peach)';
-      input.style.background = 'var(--peach-light)';
-      setTimeout(function(){ input.style.borderColor=''; input.style.background=''; }, 600);
-    }
-  }
-  function tapeRemove(idx) { tapeItems.splice(idx, 1); renderTape(); }
-  function tapeClear() { if (!tapeItems.length) return; tapeItems = []; renderTape(); }
-  function tapeTotal() {
-    return tapeItems.reduce(function(s, it){ return s + (typeof it.val === 'number' ? it.val : 0); }, 0);
-  }
-  function renderTape() {
-    var list = document.getElementById('tape-list');
-    var total = document.getElementById('tape-total');
-    if (tapeItems.length === 0) {
-      list.innerHTML = '<div class="tape-empty">항을 입력하고 ＋추가 (또는 Enter) 하세요</div>';
-    } else {
-      list.innerHTML = tapeItems.map(function(it, i){
-        return '<div class="tape-item">' +
-          '<div class="tape-num">' + (i+1) + '</div>' +
-          '<div class="tape-expr">' + escapeHtml(it.expr) + '</div>' +
-          '<div class="tape-val">= ' + fmt(it.val) + '</div>' +
-          '<button class="tape-del" onclick="tapeRemove(' + i + ')" title="삭제">✕</button>' +
-        '</div>';
-      }).join('');
-    }
-    total.textContent = fmt(tapeTotal());
-  }
-  function tapeSaveToHistory() {
-    if (!tapeItems.length) return;
-    var expr = tapeItems.map(function(it){ return '(' + it.expr + ')'; }).join(' + ');
-    var result = fmt(tapeTotal());
-    pushHistory('tape', expr, result);
-    var btn = event.currentTarget;
-    var original = btn.textContent;
-    btn.textContent = '✓ 저장됨'; btn.style.color = 'var(--sage)';
-    setTimeout(function(){ btn.textContent = original; btn.style.color = ''; }, 1200);
-  }
-
-  // 탭 전환
-  var currentView = 'basic';
-  function switchCalcView(view) {
-    currentView = view;
-    var tabs = document.querySelectorAll('.calc-tab');
-    for (var i = 0; i < tabs.length; i++) {
-      var t = tabs[i];
-      if (t.dataset.view === view) t.classList.add('active');
-      else t.classList.remove('active');
-    }
-    document.getElementById('calc-view-basic').style.display = (view==='basic') ? '' : 'none';
-    document.getElementById('calc-view-expr').style.display  = (view==='expr')  ? '' : 'none';
-    document.getElementById('calc-view-tape').style.display  = (view==='tape')  ? '' : 'none';
-    var hist = document.getElementById('calc-view-history');
-    if (view === 'history') hist.classList.add('open'); else hist.classList.remove('open');
-    if (view === 'expr')    setTimeout(function(){ document.getElementById('calc-expr-input').focus(); }, 30);
-    if (view === 'tape')    setTimeout(function(){ document.getElementById('tape-input').focus(); }, 30);
-    if (view === 'history') renderHistory();
-  }
-
-  // 히스토리
-  var MODE_LABEL = { basic: '기본', expr: '수식', tape: '테이프' };
-  function renderHistory() {
-    var list = loadHistory();
-    var wrap = document.getElementById('calc-history-list');
-    var foot = document.getElementById('calc-history-foot');
-    if (!list.length) {
-      wrap.innerHTML = '<div class="calc-history-empty">아직 계산 기록이 없어요</div>';
-      foot.style.display = 'none';
-      return;
-    }
-    wrap.innerHTML = list.map(function(it, i){
-      var badgeClass = it.mode || 'basic';
-      var label = MODE_LABEL[it.mode] || '기본';
-      return '<div class="calc-history-item" onclick="useHistory(' + i + ')">' +
-               '<div class="calc-history-meta">' +
-                 '<span class="calc-history-mode-badge ' + badgeClass + '">' + label + '</span>' +
-                 '<span>' + formatTime(it.t) + '</span>' +
-               '</div>' +
-               '<div class="calc-history-expr">' + escapeHtml(it.expr) + ' =</div>' +
-               '<div class="calc-history-result">' + escapeHtml(it.result) + '</div>' +
-             '</div>';
-    }).join('');
-    foot.style.display = '';
-  }
-  function formatTime(t) {
-    if (!t) return '';
-    var d = new Date(t);
-    var now = new Date();
-    var sameDay = d.toDateString() === now.toDateString();
-    var hh = String(d.getHours()).padStart(2,'0');
-    var mm = String(d.getMinutes()).padStart(2,'0');
-    if (sameDay) return hh + ':' + mm;
-    return (d.getMonth()+1) + '/' + d.getDate() + ' ' + hh + ':' + mm;
-  }
-  function useHistory(idx) {
-    var list = loadHistory();
-    var it = list[idx];
-    if (!it) return;
-    if (it.mode === 'expr') {
-      document.getElementById('calc-expr-input').value = it.expr;
-      onExprInput();
-      switchCalcView('expr');
-    } else {
-      calcState = { current: it.result, previous: null, op: null,
-                    justEvaluated: true, expr: it.expr + ' =', _awaitingNext: false };
-      refreshBasicDisplay();
-      switchCalcView('basic');
-    }
-  }
-  function clearCalcHistory() { saveHistory([]); renderHistory(); }
-
-  // 키보드
-  document.addEventListener('keydown', function(e){
-    if (e.key === 'Escape') { window.close(); return; }
-    var ae = document.activeElement;
-    var inInput = ae && (ae.id === 'calc-expr-input' || ae.id === 'tape-input');
-    if (inInput) {
-      if (currentView === 'expr' && (e.key === 'Enter' || e.key === '=')) {
-        e.preventDefault(); exprEvaluate();
-      }
-      return;
-    }
-    if (currentView !== 'basic') return;
-    if (/^[0-9]$/.test(e.key)) { e.preventDefault(); calcAction('NUM', e.key); return; }
-    if (e.key === '.') { e.preventDefault(); calcAction('DOT'); return; }
-    if (e.key === '+' || e.key === '-') { e.preventDefault(); calcAction('OP', e.key); return; }
-    if (e.key === '*') { e.preventDefault(); calcAction('OP', '×'); return; }
-    if (e.key === '/') { e.preventDefault(); calcAction('OP', '÷'); return; }
-    if (e.key === 'Enter' || e.key === '=') { e.preventDefault(); calcAction('EQ'); return; }
-    if (e.key === 'Backspace') { e.preventDefault(); calcAction('BACK'); return; }
-    if (e.key === '%') { e.preventDefault(); calcAction('PCT'); return; }
-  });
-
-  // 메인 창에서 기록 저장 시 자동 새로고침
-  window.addEventListener('storage', function(e){
-    if (e.key === HISTORY_KEY && currentView === 'history') renderHistory();
-  });
-
-  refreshBasicDisplay();
-  renderTape();
-  renderHistory();
-</script>
-</body>
-</html>
-</template>
-
-<script>
-  // ── 메인 페이지: 츄냥이 계산기 새 창 띄우기 ──
-  var CALC_WINDOW_GEOM_KEY = 'aion2_calc_window_geom';
-  var calcWin = null;
-
-  function openCalcWindow() {
-    if (calcWin && !calcWin.closed) {
-      calcWin.focus();
-      return;
-    }
-
-    var geom = { width: 380, height: 600, left: null, top: null };
-    try {
-      var saved = JSON.parse(localStorage.getItem(CALC_WINDOW_GEOM_KEY) || 'null');
-      if (saved) {
-        if (typeof saved.width  === 'number') geom.width  = saved.width;
-        if (typeof saved.height === 'number') geom.height = saved.height;
-        if (typeof saved.left   === 'number') geom.left   = saved.left;
-        if (typeof saved.top    === 'number') geom.top    = saved.top;
-      }
-    } catch(e) {}
-
-    var sw = window.screen.availWidth || 1280;
-    var sh = window.screen.availHeight || 720;
-    geom.width  = Math.min(Math.max(280, geom.width),  sw);
-    geom.height = Math.min(Math.max(360, geom.height), sh);
-    if (geom.left === null) geom.left = Math.max(0, Math.floor((sw - geom.width) / 2));
-    if (geom.top  === null) geom.top  = Math.max(0, Math.floor((sh - geom.height) / 3));
-
-    var features =
-      'width='  + geom.width  +
-      ',height=' + geom.height +
-      ',left='   + geom.left   +
-      ',top='    + geom.top    +
-      ',resizable=yes,scrollbars=yes,menubar=no,toolbar=no,location=no,status=no';
-
-    var w = window.open('about:blank', 'aion2_calc_window', features);
-    if (!w) {
-      if (typeof showToast === 'function') {
-        showToast('팝업이 차단됐어요. 주소창 옆 아이콘에서 허용해 주세요');
-      } else {
-        alert('팝업이 차단됐어요. 주소창 옆 아이콘에서 허용해 주세요');
-      }
-      return;
-    }
-    calcWin = w;
-
-    var tpl = document.getElementById('calc-window-template');
-    var html = '<!DOCTYPE html>' + tpl.innerHTML;
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
-
-    var saveGeom = function() {
-      try {
-        if (!w || w.closed) return;
-        localStorage.setItem(CALC_WINDOW_GEOM_KEY, JSON.stringify({
-          width:  w.outerWidth,
-          height: w.outerHeight,
-          left:   w.screenX,
-          top:    w.screenY
-        }));
-      } catch(e) {}
-    };
-    var intervalId = setInterval(function(){
-      if (!w || w.closed) {
-        clearInterval(intervalId);
-        calcWin = null;
-        return;
-      }
-      saveGeom();
-    }, 1000);
-
-    try { w.addEventListener('beforeunload', saveGeom); } catch(e) {}
-  }
-  window.openCalcWindow = openCalcWindow;
-</script>
-
-</body>
-</html>
-        
+  .tape-
