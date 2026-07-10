@@ -5300,8 +5300,8 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
 /* skin toggle button — active (GLC on) state, shown in both skins */
 .skin-toggle-btn.on { background: var(--sage); color: #fff; border-color: var(--sage); }
 
-/* ════════════ 할일 페이지 (오늘/주간) v1.7.6 ════════════ */
-.todo-wrap { max-width: 860px; margin: 0 auto; }
+/* ════════════ 할일 페이지 (오늘/주간 · 계정 좌우 분리) v1.7.6 ════════════ */
+.todo-wrap { max-width: 960px; margin: 0 auto; }
 .todo-subtabs {
   display: inline-flex; gap: 4px; padding: 4px;
   background: var(--surface2); border: 1px solid var(--border);
@@ -5316,61 +5316,45 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
 .todo-subtab:hover { color: var(--text); }
 .todo-subtab.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
 
-/* 완료(할 일 없음) 상태 */
-.todo-empty {
-  text-align: center; padding: 56px 20px; color: var(--text-sub);
-}
-.todo-empty-emoji { font-size: 2.4rem; display: block; margin-bottom: 12px; }
-.todo-empty-title { font-family: var(--font-head); font-size: 1.05rem; color: var(--text); margin-bottom: 4px; }
-.todo-empty-sub { font-size: 0.82rem; }
+/* 계정 2단 컬럼 (좌: 설냥 / 우: 츄츄) */
+.todo-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+@media (max-width: 640px) { .todo-cols { grid-template-columns: 1fr; } }
 
-/* 섹션 카드 */
-.todo-sec {
+.todo-col {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); box-shadow: var(--shadow-sm);
-  padding: 16px 18px; margin-bottom: 14px;
+  padding: 14px 16px 16px;
 }
-.todo-sec-head {
-  display: flex; align-items: center; gap: 9px; margin-bottom: 12px;
+.todo-col-head {
+  font-family: var(--font-head); font-size: 0.98rem; text-align: center;
+  padding: 7px 12px; border-radius: var(--radius-sm); margin-bottom: 14px;
 }
-.todo-sec-icon {
-  width: 26px; height: 26px; border-radius: var(--radius-xs);
-  display: inline-flex; align-items: center; justify-content: center;
-  font-size: 0.86rem; flex-shrink: 0;
-}
-.todo-sec-title { font-family: var(--font-head); font-size: 0.96rem; color: var(--text); }
-.todo-sec-count {
-  margin-left: auto; font-size: 0.74rem; color: var(--text-sub);
-  background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 999px; padding: 2px 10px;
+.todo-col-head.설냥 { background: var(--sage-light);  color: var(--color-owner-설냥, #5a8a42); }
+.todo-col-head.츄츄 { background: var(--peach-light); color: var(--color-owner-츄츄, #b06040); }
+
+/* 섹션(악몽/슈고/…) */
+.todo-sec2 { margin-bottom: 14px; }
+.todo-sec2:last-child { margin-bottom: 0; }
+.todo-sec2-label {
+  font-family: var(--font-head); font-size: 0.82rem; color: var(--text-sub);
+  margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid var(--border);
 }
 
-/* 개별 할일 행 */
+/* 개별 할일 행 — 한 줄 텍스트, 뱃지 없음 */
 .todo-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 11px; border-radius: var(--radius-sm);
-  border: 1px solid var(--border); background: var(--surface2);
-  cursor: pointer; transition: background .14s, transform .14s, border-color .14s;
+  padding: 6px 8px; border-radius: var(--radius-xs);
+  font-size: 0.85rem; line-height: 1.35; color: var(--text);
+  cursor: pointer; transition: background .12s;
 }
-.todo-item + .todo-item { margin-top: 7px; }
-.todo-item:hover { background: var(--hover); transform: translateX(2px); border-color: var(--sage); }
-.todo-item-owner {
-  font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;
-  flex-shrink: 0; min-width: 42px; text-align: center;
+.todo-item + .todo-item { margin-top: 2px; }
+.todo-item:hover { background: var(--hover); }
+.todo-item b { color: var(--odd-full); font-weight: 700; }   /* 소모/회수 강조 */
+.todo-item .dim { color: var(--text-sub); font-size: 0.78rem; }
+
+.todo-col-empty {
+  text-align: center; padding: 26px 8px; color: var(--text-sub); font-size: 0.85rem;
 }
-.todo-item-owner.설냥 { background: var(--sage-light); color: var(--color-owner-설냥, #5a8a42); }
-.todo-item-owner.츄츄 { background: var(--peach-light); color: var(--color-owner-츄츄, #b06040); }
-.todo-item-owner.계정 { background: var(--lavender-light); color: var(--lavender); }
-.todo-item-name { font-size: 0.86rem; color: var(--text); font-weight: 500; flex-shrink: 0; }
-.todo-item-desc { font-size: 0.8rem; color: var(--text-sub); }
-.todo-item-badge {
-  margin-left: auto; flex-shrink: 0; font-size: 0.72rem; font-weight: 600;
-  padding: 3px 10px; border-radius: 999px; white-space: nowrap;
-}
-.todo-item-badge.full { background: var(--odd-full); color: #fff; }        /* 가득 — 낭비 위험 */
-.todo-item-badge.warn { background: var(--peach); color: #fff; }           /* 임박 */
-.todo-item-badge.todo { background: var(--surface); color: var(--text-sub); border: 1px solid var(--border); }
-.todo-item-badge.time { background: var(--sky-light); color: var(--sky); }
+.todo-col-empty .em { font-size: 1.5rem; display: block; margin-bottom: 6px; }
 </style>
 </head>
 <body>
@@ -7799,180 +7783,144 @@ function setTodoTab(tab) {
   renderTodoPage();
 }
 
-// 재충전 낭비 계산: 다음 일일 리셋 때 하루치(recharge)가 채워지면서 max를 넘기는 양.
+// 재충전 낭비 계산: 다음 일일 리셋 때 하루치(recharge)가 채워지며 max를 넘기는 양.
 //   = 오늘 리셋 전까지 반드시 소진해야 하는 횟수. (cur + recharge - max, 최소 0)
 //   예) 슈고 13/14, +2 → 13+2-14 = 1회 / 12/14 → 0(안 넘침) / 14/14 → 2회
 function _todoOverflow(cur, max, recharge) {
   return Math.max(0, (cur || 0) + recharge - max);
 }
 
-// 캐릭 정렬: 계정 순 → 슬롯 순 (대표=맨 앞)
-function _todoSortedChars() {
-  return allChars.slice().sort((a, b) => {
-    if (a.owner !== b.owner) return OWNERS.indexOf(a.owner) - OWNERS.indexOf(b.owner);
-    return slotOrder(a) - slotOrder(b);
-  });
+// 오드에너지: "오드 여유(=840 넘쳐 낭비되기까지 남은 시간)"가 24시간을 넘게 하려면
+//   지금 소모해야 하는 최소 오드량. (computeOddTimer 로직의 역산)
+//   여유ms = getNextChargeMs() + (ticksUntilWaste-1)*3h,  ticksUntilWaste=floor(room/15)+1
+//   24h↑ 이려면 floor(room/15) >= ceil((24h - nextMs)/3h)=K → room>=15K → E<=840-15K
+function _todoOddConsume24h(char) {
+  const E = (typeof expCurrentOdd === 'function') ? expCurrentOdd(char) : (char.odd_energy_base || 0);
+  const nextMs = getNextChargeMs();
+  const K = Math.ceil((24 * 3600000 - nextMs) / 10800000);
+  const targetE = 840 - 15 * K;
+  return Math.max(0, Math.ceil(E - targetE));
 }
 
-// 어비스: 해당 캐릭이 자격 되는데 아직 못 깬 회랑 수
+// 한 계정의 캐릭 (휴식 제외, 슬롯 순 / 대표 맨 앞)
+function _todoOwnerChars(owner) {
+  return allChars.filter(c => c.owner === owner && !c.resting)
+    .sort((a, b) => slotOrder(a) - slotOrder(b));
+}
+
+// 어비스: 해당 캐릭이 자격 되는데 아직 못 깬 회랑 이름들
 function _todoAbyssUncleared(char) {
   const acquired = abyssCorridors.filter(c => c.acquired);
-  let n = 0, names = [];
+  let names = [];
   acquired.forEach(cor => {
     const layer = (ZONES.find(z => z.name === cor.zone) || {}).layer || '';
     const req = layer === '하층' ? 1000 : layer === '중층' ? 3000 : 0;
     if ((char.item_level || 0) < req) return;
     const cleared = (abyssClears[`${cor.id}_${char.id}`] || {}).cleared;
-    if (!cleared) { n++; names.push(cor.zone); }
+    if (!cleared) names.push(cor.zone);
   });
-  return { n, names };
+  return names;
 }
 
-// 할일 행 한 줄
-function _todoRow(ownerTag, name, desc, badge, badgeCls, onclick) {
-  return `<div class="todo-item" onclick="${onclick}">
-    <span class="todo-item-owner ${ownerTag}">${ownerTag}</span>
-    <span class="todo-item-name">${escapeHtml(name)}</span>
-    ${desc ? `<span class="todo-item-desc">${desc}</span>` : ''}
-    ${badge ? `<span class="todo-item-badge ${badgeCls}">${badge}</span>` : ''}
-  </div>`;
+// 한 줄 행 (텍스트 + 클릭 이동)
+function _todoLine(text, onclick) {
+  return `<div class="todo-item"${onclick ? ` onclick="${onclick}"` : ''}>${text}</div>`;
 }
-
-// 섹션(카드) 렌더 — items 없으면 '' 반환
-function _todoSection(icon, iconBg, title, items) {
+// 섹션 (라벨 + 아이템). 아이템 없으면 '' (숨김)
+function _todoSec(label, items) {
   if (!items.length) return '';
-  return `<div class="todo-sec">
-    <div class="todo-sec-head">
-      <span class="todo-sec-icon" style="background:${iconBg}">${icon}</span>
-      <span class="todo-sec-title">${title}</span>
-      <span class="todo-sec-count">${items.length}건</span>
-    </div>
-    ${items.join('')}
-  </div>`;
+  return `<div class="todo-sec2"><div class="todo-sec2-label">${label}</div>${items.join('')}</div>`;
 }
+function _nm(c) { return escapeHtml(c.name || '(이름없음)'); }
 
-function _todoEmpty(kind) {
-  return `<div class="todo-empty">
-    <span class="todo-empty-emoji">🎉</span>
-    <div class="todo-empty-title">${kind} 할 일이 없어요</div>
-    <div class="todo-empty-sub">낭비 없이 잘 챙기고 있어요.</div>
-  </div>`;
-}
-
-function _todoToday() {
-  const chars = _todoSortedChars().filter(c => !c.resting);
+// ── 계정 하나의 '오늘' 섹션 ──
+function _todoTodayCol(owner) {
+  const acc = accountData[owner] || {};
+  const chars = _todoOwnerChars(owner);
   let html = '';
 
-  // 1) 오드에너지 — 840까지 24시간 이하 남았거나 이미 가득
+  // 오드에너지 — 여유 24h 이하 or 가득. "N ↑ 소모필요 (현재 오드 여유 : …)"
   const oddItems = [];
   chars.forEach(c => {
     const t = computeOddTimer(c);
-    if (t.full) {
-      oddItems.push(_todoRow(c.owner, c.name || '(이름없음)', '오드에너지 가득 — 매 충전 낭비 중',
-        '가득', 'full', `openDetail('${c.id}')`));
-    } else if (t.ms <= 24 * 3600000) {
-      oddItems.push(_todoRow(c.owner, c.name || '(이름없음)', '오드에너지 곧 가득',
-        _fmtOddDur(t.ms) + ' 후', t.ms < 6 * 3600000 ? 'warn' : 'time', `openDetail('${c.id}')`));
-    }
+    if (!(t.full || t.ms <= 24 * 3600000)) return;
+    const consume = _todoOddConsume24h(c);
+    if (consume <= 0) return;
+    const remain = t.full ? '가득' : _fmtOddDur(t.ms);
+    oddItems.push(_todoLine(
+      `${_nm(c)} - <b>${consume} ↑</b> 소모필요 <span class="dim">(현재 오드 여유 : ${remain})</span>`,
+      `openDetail('${c.id}')`));
   });
-  html += _todoSection('오', 'var(--sky-light)', '오드에너지 (24시간 이내)', oddItems);
+  html += _todoSec('오드에너지', oddItems);
 
-  // 2) 악몽 티켓 — 최대 14 · 매일 +2 충전 → 다음 리셋에 넘칠 만큼(=오늘 소진할 횟수)
-  //    (기존 UI가 "12 이하 양호 / 13~14 주의"로 처리 → 하루 충전 +2 근거)
+  // 악몽 — 캐릭별 N회↑
   const nmItems = [];
   chars.forEach(c => {
-    const cur = c.nightmare_base || 0;
-    const need = _todoOverflow(cur, 14, 2);
-    if (need > 0) {
-      nmItems.push(_todoRow(c.owner, c.name || '(이름없음)', `${cur} / 14 · 매일 +2`,
-        `오늘 ${need}회`, 'full', `openDetail('${c.id}')`));
-    }
+    const need = _todoOverflow(c.nightmare_base || 0, 14, 2);
+    if (need > 0) nmItems.push(_todoLine(`${_nm(c)} - <b>${need}회 ↑</b>`, `openDetail('${c.id}')`));
   });
-  html += _todoSection('악', 'var(--peach-light)', '악몽 티켓', nmItems);
+  html += _todoSec('악몽', nmItems);
 
-  // 3) 슈고 열쇠 — 최대 14 · 매일 +2 충전 · 계정별
+  // 슈고 열쇠 — 계정 N회↑
   const shugoItems = [];
-  OWNERS.forEach(o => {
-    const acc = accountData[o] || {};
-    const cur = acc.shugo_key_base || 0;
-    const need = _todoOverflow(cur, 14, 2);
-    if (need > 0) {
-      shugoItems.push(_todoRow(o, '슈고 열쇠', `${cur} / 14 · 매일 +2`,
-        `오늘 ${need}회`, 'full', `openAccountModal('${o}')`));
-    }
-  });
-  html += _todoSection('슈', 'var(--sage-light)', '슈고 열쇠', shugoItems);
+  {
+    const need = _todoOverflow(acc.shugo_key_base || 0, 14, 2);
+    if (need > 0) shugoItems.push(_todoLine(`<b>${need}회 ↑</b>`, `openAccountModal('${owner}')`));
+  }
+  html += _todoSec('슈고 열쇠', shugoItems);
 
-  // 4) 침공 열쇠 — 최대 7 · 매일 +1 충전 · 계정별
+  // 침공 열쇠 — 계정 N회↑
   const invItems = [];
-  OWNERS.forEach(o => {
-    const acc = accountData[o] || {};
-    const cur = Math.min(7, acc.invasion_key || 0);
-    const need = _todoOverflow(cur, 7, 1);
-    if (need > 0) {
-      invItems.push(_todoRow(o, '침공 열쇠', `${cur} / 7 · 매일 +1`,
-        `오늘 ${need}회`, 'full', `openAccountModal('${o}')`));
-    }
-  });
-  html += _todoSection('침', 'var(--lavender-light)', '침공 열쇠', invItems);
+  {
+    const need = _todoOverflow(Math.min(7, acc.invasion_key || 0), 7, 1);
+    if (need > 0) invItems.push(_todoLine(`<b>${need}회 ↑</b>`, `openAccountModal('${owner}')`));
+  }
+  html += _todoSec('침공 열쇠', invItems);
 
-  // 5) 사명 — 계정별 일일, 미완
+  // 사명 — 미완료
   const missionItems = [];
-  OWNERS.forEach(o => {
-    const acc = accountData[o] || {};
-    if (!acc.daily_mission) {
-      missionItems.push(_todoRow(o, '사명', '오늘 아직 안 함', '미완', 'todo', `openAccountModal('${o}')`));
-    }
-  });
-  html += _todoSection('사', 'var(--sky-light)', '사명 (일일)', missionItems);
+  if (!acc.daily_mission) missionItems.push(_todoLine('미완료', `openAccountModal('${owner}')`));
+  html += _todoSec('사명', missionItems);
 
-  // 6) 어비스 회랑 — 다음 전쟁까지 24시간 이내인데 미클리어
+  // 어비스 — 다음 전쟁 24h 이내 + 미클리어
   const nextWar = getNextWarTime();
   const warMsLeft = nextWar ? (nextWar - new Date()) : Infinity;
   if (warMsLeft <= 24 * 3600000) {
     const abyssItems = [];
     chars.forEach(c => {
-      const { n, names } = _todoAbyssUncleared(c);
-      if (n > 0) {
-        abyssItems.push(_todoRow(c.owner, c.name || '(이름없음)', names.join(' · '),
-          `미클리어 ${n}곳`, 'warn', `openDetail('${c.id}')`));
-      }
+      const names = _todoAbyssUncleared(c);
+      if (names.length) abyssItems.push(_todoLine(
+        `${_nm(c)} - ${names.join(', ')}`, `openDetail('${c.id}')`));
     });
-    html += _todoSection('회', 'var(--peach-light)',
-      `어비스 회랑 (전쟁까지 ${_fmtOddDur(warMsLeft)})`, abyssItems);
+    html += _todoSec(`어비스 (전쟁까지 ${_fmtOddDur(warMsLeft)})`, abyssItems);
   }
 
-  return html || _todoEmpty('오늘');
+  return html;
 }
 
-function _todoWeekly() {
-  const chars = _todoSortedChars().filter(c => !c.resting);
+// ── 계정 하나의 '주간' 섹션 ──
+function _todoWeeklyCol(owner) {
+  const acc = accountData[owner] || {};
+  const chars = _todoOwnerChars(owner);
   let html = '';
 
-  // 1) 일일던전 — 계정별 주간, 남은 횟수
+  // 일일던전 — 계정 N회 (주간)
   const dungeonItems = [];
-  OWNERS.forEach(o => {
-    const acc = accountData[o] || {};
+  {
     const remain = acc.dungeon_remaining || 0;
-    if (remain > 0) {
-      dungeonItems.push(_todoRow(o, '일일던전', '이번 주 남은 입장',
-        `${remain}회 남음`, 'todo', `openAccountModal('${o}')`));
-    }
-  });
-  html += _todoSection('일', 'var(--sky-light)', '일일던전 (주간)', dungeonItems);
+    if (remain > 0) dungeonItems.push(_todoLine(`<b>${remain}회</b>`, `openAccountModal('${owner}')`));
+  }
+  html += _todoSec('일일던전', dungeonItems);
 
-  // 2) 각성 — 캐릭별, 3판 미만
+  // 각성 — 캐릭 0/3
   const awItems = [];
   chars.forEach(c => {
     const aw = c.awakening_done || 0;
-    if (aw < 3) {
-      awItems.push(_todoRow(c.owner, c.name || '(이름없음)', '각성 미완',
-        `${aw} / 3`, 'todo', `openDetail('${c.id}')`));
-    }
+    if (aw < 3) awItems.push(_todoLine(`${_nm(c)} - ${aw}/3`, `openDetail('${c.id}')`));
   });
-  html += _todoSection('각', 'var(--lavender-light)', '각성', awItems);
+  html += _todoSec('각성', awItems);
 
-  // 3) 성역 — 캐릭별, 자격 되는데 미완인 성역 나열
+  // 성역 — 캐릭 루드라, 무스펠 (나열만)
   const sanctItems = [];
   chars.forEach(c => {
     const ilvl = c.item_level || 0;
@@ -7981,63 +7929,51 @@ function _todoWeekly() {
     if (ilvl >= 2700 && !wt.ludra_done) remain.push('루드라');
     if (ilvl >= 3500 && !wt.erosion_done) remain.push('침식');
     if (ilvl >= 4300 && !wt.muspell_done) remain.push('무스펠');
-    if (remain.length) {
-      sanctItems.push(_todoRow(c.owner, c.name || '(이름없음)', remain.join(' · ') + ' 미완',
-        `${remain.length}곳`, 'todo', `openDetail('${c.id}')`));
-    }
+    if (remain.length) sanctItems.push(_todoLine(`${_nm(c)} - ${remain.join(', ')}`, `openDetail('${c.id}')`));
   });
-  html += _todoSection('성', 'var(--sage-light)', '성역', sanctItems);
+  html += _todoSec('성역', sanctItems);
 
-  // 4) 물질변환 — 계정별(캐릭 주4 / 계정 16)
+  // 물질변환 — 캐릭 N회 (남은 = 4 - 완료)
   const tmItems = [];
-  OWNERS.forEach(o => {
-    const acc = accountData[o] || {};
-    const oc = allChars.filter(c => c.owner === o);
-    const charSum = oc.reduce((s, c) => s + Math.min(4, c.transmutation_count || 0), 0);
-    const accCnt = Math.min(16, acc.transmutation_account_count || 0);
-    const allDone = oc.length > 0 && oc.every(c => (c.transmutation_count || 0) >= 4) && accCnt >= 16;
-    if (!allDone) {
-      tmItems.push(_todoRow(o, '물질변환', `캐릭 ${charSum}/${oc.length * 4} · 계정 ${accCnt}/16`,
-        '미완', 'todo', `openAccountModal('${o}')`));
-    }
+  chars.forEach(c => {
+    const remain = 4 - Math.min(4, c.transmutation_count || 0);
+    if (remain > 0) tmItems.push(_todoLine(`${_nm(c)} - ${remain}회`, `openDetail('${c.id}')`));
   });
-  html += _todoSection('물', 'var(--peach-light)', '물질변환 (주간)', tmItems);
+  html += _todoSec('물질변환', tmItems);
 
-  // 5) 상점(오드구매) — 계정별(캐릭 주4 / 계정 16)
+  // 상점 오드구매 — 캐릭 N회
   const shopItems = [];
-  OWNERS.forEach(o => {
-    const acc = accountData[o] || {};
-    const oc = allChars.filter(c => c.owner === o);
-    const charSum = oc.reduce((s, c) => s + Math.min(4, c.shop_purchase_count || 0), 0);
-    const accCnt = Math.min(16, acc.shop_purchase_account_count || 0);
-    const allDone = oc.length > 0 && oc.every(c => (c.shop_purchase_count || 0) >= 4) && accCnt >= 16;
-    if (!allDone) {
-      shopItems.push(_todoRow(o, '상점(오드구매)', `캐릭 ${charSum}/${oc.length * 4} · 계정 ${accCnt}/16`,
-        '미완', 'todo', `openAccountModal('${o}')`));
-    }
+  chars.forEach(c => {
+    const remain = 4 - Math.min(4, c.shop_purchase_count || 0);
+    if (remain > 0) shopItems.push(_todoLine(`${_nm(c)} - ${remain}회`, `openDetail('${c.id}')`));
   });
-  html += _todoSection('상', 'var(--sky-light)', '상점 오드구매 (주간)', shopItems);
+  html += _todoSec('상점 오드구매', shopItems);
 
-  // 6) 지령서 — 계정별, 미구매 나열 (하층·중층·알트가르드·모르헤임)
+  // 지령서 — 계정, 미구매 나열 (하층·중층·알트가르드·모르헤임)
   const orderDefs = [['order_lower', '하층'], ['order_middle', '중층'], ['order_town', '알트가르드'], ['order_morheim', '모르헤임']];
   const orderItems = [];
-  OWNERS.forEach(o => {
-    const acc = accountData[o] || {};
+  {
     const remain = orderDefs.filter(([k]) => !acc[k]).map(([, l]) => l);
-    if (remain.length) {
-      orderItems.push(_todoRow(o, '지령서', remain.join(' · ') + ' 미구매',
-        `${remain.length}종`, 'todo', `openAccountModal('${o}')`));
-    }
-  });
-  html += _todoSection('령', 'var(--lavender-light)', '지령서 (주간)', orderItems);
+    if (remain.length) orderItems.push(_todoLine(remain.join(', '), `openAccountModal('${owner}')`));
+  }
+  html += _todoSec('지령서', orderItems);
 
-  return html || _todoEmpty('주간');
+  return html;
+}
+
+function _todoColumn(owner) {
+  const body = _todoTab === 'today' ? _todoTodayCol(owner) : _todoWeeklyCol(owner);
+  const inner = body || `<div class="todo-col-empty"><span class="em">🎉</span>할 일 없음</div>`;
+  return `<div class="todo-col">
+    <div class="todo-col-head ${owner}">${owner}</div>
+    ${inner}
+  </div>`;
 }
 
 function renderTodoPage() {
   const el = document.getElementById('todo-content');
   if (!el) return;
-  el.innerHTML = _todoTab === 'today' ? _todoToday() : _todoWeekly();
+  el.innerHTML = `<div class="todo-cols">${OWNERS.map(o => _todoColumn(o)).join('')}</div>`;
 }
 
 // ── OVERVIEW RENDER ──
@@ -14413,355 +14349,4 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
 <!-- ── 계정 모달 ── -->
 <div id="acc-modal-overlay" style="
   display:none;position:fixed;inset:0;z-index:200;
-  background:rgba(90,82,75,0.35);backdrop-filter:blur(4px);
-  align-items:center;justify-content:center;padding:20px;
-" onclick="closeAccountModal()">
-  <div id="acc-modal" style="
-    background:var(--surface);border-radius:var(--radius);
-    border:1px solid var(--border);padding:20px;width:100%;max-width:420px;
-    max-height:calc(100vh - 40px);overflow-y:auto;
-    box-shadow:0 12px 40px rgba(160,150,140,0.18);
-    animation:fadeUp 0.2s ease-out;
-  " onclick="event.stopPropagation()">
-    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:16px;position:relative">
-      <span id="acc-modal-title" style="font-size:0.95rem;color:var(--text)"></span>
-      <button onclick="closeAccountModal()" style="
-        position:absolute;right:0;
-        width:28px;height:28px;border-radius:50%;border:1px solid var(--border);
-        background:transparent;color:var(--text-sub);font-size:1rem;
-        cursor:pointer;display:flex;align-items:center;justify-content:center;
-        font-family:'Gowun Dodum',sans-serif;
-      ">×</button>
-    </div>
-    <div id="acc-modal-body"></div>
-  </div>
-</div>
-
-<!-- ── 메모 모달 ── -->
-<div id="memo-modal-overlay" style="
-  display:none;position:fixed;inset:0;z-index:210;
-  background:rgba(90,82,75,0.35);backdrop-filter:blur(4px);
-  align-items:center;justify-content:center;padding:20px;
-" onclick="closeMemoModal()">
-  <div id="memo-modal" style="
-    background:var(--surface);border-radius:var(--radius);
-    border:1px solid var(--border);padding:20px;width:100%;max-width:360px;
-    box-shadow:0 12px 40px rgba(160,150,140,0.18);
-    animation:fadeUp 0.2s ease-out;
-  " onclick="event.stopPropagation()">
-    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:14px;position:relative">
-      <span id="memo-modal-title" style="font-size:0.95rem;color:var(--text)"></span>
-      <button onclick="closeMemoModal()" style="
-        position:absolute;right:0;
-        width:28px;height:28px;border-radius:50%;border:1px solid var(--border);
-        background:transparent;color:var(--text-sub);font-size:1rem;
-        cursor:pointer;display:flex;align-items:center;justify-content:center;
-        font-family:'Gowun Dodum',sans-serif;
-      ">×</button>
-    </div>
-    <textarea id="memo-modal-textarea" rows="6" placeholder="계정 관련 메모를 적어주세요"
-      autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
-      style="
-        width:100%;box-sizing:border-box;
-        background:var(--surface2);border:1px solid var(--border);
-        border-radius:var(--radius-sm);padding:10px 12px;
-        font-family:'Gowun Dodum',sans-serif;font-size:0.82rem;line-height:1.5;
-        color:var(--text);resize:vertical;min-height:120px;outline:none;
-      "></textarea>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
-      <button onclick="closeMemoModal()" style="
-        font-size:0.78rem;padding:6px 14px;border-radius:12px;
-        border:1px solid var(--border);background:transparent;color:var(--text-sub);
-        cursor:pointer;font-family:'Gowun Dodum',sans-serif;
-      ">취소</button>
-      <button onclick="saveMemo()" style="
-        font-size:0.78rem;padding:6px 14px;border-radius:12px;
-        border:1px solid var(--peach);background:var(--peach);color:white;
-        cursor:pointer;font-family:'Gowun Dodum',sans-serif;
-      ">저장</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── 슬롯 추가/편집 모달 (v1.5.1) ── -->
-<div id="supply-slot-modal-overlay" class="supply-modal-overlay" onclick="closeSupplySlotModal()">
-  <div class="supply-modal-card" onclick="event.stopPropagation()">
-    <div class="supply-modal-head">
-      <span class="supply-modal-title" id="supply-slot-modal-title">슬롯 추가</span>
-      <button class="supply-modal-close" onclick="closeSupplySlotModal()">×</button>
-    </div>
-
-    <div class="supply-form-row">
-      <span class="supply-form-label">유형</span>
-      <div class="supply-form-pill-row" id="supply-slot-type-row">
-        <button type="button" class="supply-form-pill urgent" data-type="urgent" onclick="supplySlotSetType('urgent')">긴급 (일일)</button>
-        <button type="button" class="supply-form-pill weekly" data-type="weekly" onclick="supplySlotSetType('weekly')">주간</button>
-      </div>
-    </div>
-
-    <div class="supply-form-row">
-      <span class="supply-form-label">퀘 이름 (선택)</span>
-      <input type="text" id="supply-slot-quest-name" class="supply-form-input"
-        placeholder="예) 분열의 갑주 II"
-        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
-    </div>
-
-    <div class="supply-form-row">
-      <span class="supply-form-label">필요 수량 (위 N개 납품)</span>
-      <input type="number" id="supply-slot-required" class="supply-form-input"
-        min="1" max="12" step="1" value="2"
-        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
-        inputmode="numeric">
-    </div>
-
-    <div class="supply-form-row">
-      <span class="supply-form-label">후보 아이템 이름 (한 줄에 하나 또는 콤마)</span>
-      <textarea id="supply-slot-items" class="supply-form-textarea" rows="3"
-        placeholder="예) 분열의 갑주&#10;타락한 심판관의 대검"
-        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
-        oninput="supplySlotItemsChanged()"></textarea>
-      <div class="supply-form-help" id="supply-slot-items-help"></div>
-    </div>
-
-    <!-- 던전 매핑 리스트 (v1.5.3) — 슬롯이 여러 (던전, 난이도)에 귀속될 수 있음 -->
-    <div class="supply-form-row">
-      <span class="supply-form-label">던전·난이도 (여러 곳에서 나오면 + 로 추가)</span>
-      <div id="supply-slot-dungeons-list" class="supply-dungeon-list"></div>
-      <button type="button" class="supply-dungeon-add-btn" onclick="addSlotDungeonRow()">＋ 던전 추가</button>
-    </div>
-
-    <div class="supply-form-actions">
-      <button type="button" class="btn-cancel" onclick="closeSupplySlotModal()">취소</button>
-      <button type="button" class="btn-confirm" id="supply-slot-confirm" onclick="saveSupplySlot()">저장</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── 도감 관리 모달 (v1.5.1) ── -->
-<div id="supply-dict-modal-overlay" class="supply-modal-overlay" onclick="closeSupplyDictModal()">
-  <div class="supply-modal-card" onclick="event.stopPropagation()">
-    <div class="supply-modal-head">
-      <span class="supply-modal-title">아이템 도감</span>
-      <button class="supply-modal-close" onclick="closeSupplyDictModal()">×</button>
-    </div>
-
-    <input type="text" id="supply-dict-search" class="supply-dict-search"
-      placeholder="아이템 또는 던전명 검색"
-      autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
-      oninput="supplyDictSearchChanged(this.value)">
-
-    <div id="supply-dict-list" class="supply-dict-list"></div>
-
-    <div class="supply-form-help" style="margin-top:10px;text-align:center">
-      슬롯 추가 시 새 아이템을 등록하면 자동으로 여기에 모입니다.<br>
-      한 아이템이 여러 던전에서 나오면 매핑이 칩으로 함께 표시돼요.<br>
-      잘못 등록한 매핑은 ✎ 로 수정, − 로 삭제 가능합니다.
-    </div>
-  </div>
-</div>
-
-<style>
-  #vsw-badge {
-    display: block;
-    margin-left: auto;
-    margin-right: 14px;
-    margin-bottom: 16px;
-    margin-top: 8px;
-    font-size: 0.72rem; color: var(--text-sub);
-    text-decoration: underline; text-underline-offset: 2px;
-    cursor: pointer;
-    font-family: 'Gowun Dodum', sans-serif;
-    background: transparent; border: none; padding: 0;
-    width: fit-content;
-  }
-  #vsw-badge:hover { color: var(--text); }
-  #vsw-overlay {
-    display: none; position: fixed; inset: 0; z-index: 400;
-    background: rgba(90,82,75,0.4);
-    align-items: center; justify-content: center; padding: 20px;
-  }
-  #vsw-overlay .vsw-card {
-    background: var(--surface); border-radius: var(--radius);
-    border: 1px solid var(--border); padding: 22px;
-    width: 100%; max-width: 340px; max-height: 80vh; overflow-y: auto;
-    box-shadow: 0 12px 40px rgba(160,150,140,0.18);
-  }
-  #vsw-overlay .vsw-title { text-align: center; font-size: 0.95rem; color: var(--text); margin-bottom: 4px; }
-  #vsw-overlay .vsw-sub { text-align: center; font-size: 0.72rem; color: var(--text-sub); margin-bottom: 16px; }
-  #vsw-overlay .vsw-pin-row { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; }
-  #vsw-overlay .vsw-pin {
-    flex: 1; padding: 8px 12px; font-size: 1rem; letter-spacing: 0.15em; text-align: center;
-    border: 1px solid var(--border); border-radius: 10px;
-    background: var(--surface2); font-family: 'Gowun Dodum', sans-serif;
-    -webkit-text-security: disc; text-security: disc;
-    color: var(--text); outline: none;
-  }
-  #vsw-overlay .vsw-err { font-size: 0.72rem; color: #b85050; min-height: 18px; text-align: center; margin-bottom: 12px; }
-  #vsw-overlay .vsw-list { display: none; flex-direction: column; gap: 6px; }
-  #vsw-overlay .vsw-item {
-    border: 1px solid var(--border); border-radius: 10px;
-    padding: 10px 12px; cursor: pointer; background: var(--surface2);
-    transition: all 0.15s;
-  }
-  #vsw-overlay .vsw-item:hover { background: var(--hover); }
-  #vsw-overlay .vsw-item.current { opacity: 0.55; cursor: default; background: var(--surface); }
-  #vsw-overlay .vsw-item.current:hover { background: var(--surface); }
-  #vsw-overlay .vsw-item-head { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text); margin-bottom: 4px; }
-  #vsw-overlay .vsw-item-date { font-size: 0.68rem; color: var(--text-sub); }
-  #vsw-overlay .vsw-item-desc { font-size: 0.72rem; color: var(--text-sub); white-space: pre-line; line-height: 1.5; }
-  #vsw-overlay .vsw-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
-  #vsw-overlay .vsw-btn {
-    padding: 6px 16px; border-radius: 20px; font-family: 'Gowun Dodum', sans-serif; font-size: 0.8rem;
-    border: 1px solid var(--border); background: transparent; color: var(--text-sub); cursor: pointer;
-  }
-  #vsw-overlay .vsw-btn.primary { background: var(--sage); color: white; border-color: var(--sage); }
-</style>
-
-<button id="vsw-badge" onclick="vswOpen()">v1.7</button>
-
-<div id="vsw-overlay" onclick="vswClose()">
-  <div class="vsw-card" onclick="event.stopPropagation()">
-    <div class="vsw-title">버전 전환</div>
-    <div class="vsw-sub">다른 버전으로 이동하려면 비밀번호 입력</div>
-    <div class="vsw-pin-row">
-      <input id="vsw-pin-input" class="vsw-pin" type="text" inputmode="numeric" maxlength="8"
-        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
-        placeholder="••••••••"
-        onkeydown="if(event.key==='Enter') vswCheckPin()">
-      <button class="vsw-btn primary" onclick="vswCheckPin()">확인</button>
-    </div>
-    <div id="vsw-err" class="vsw-err"></div>
-    <div id="vsw-list" class="vsw-list"></div>
-    <div class="vsw-btns">
-      <button class="vsw-btn" onclick="vswClose()">닫기</button>
-    </div>
-  </div>
-</div>
-
-<script>
-(function() {
-  const CURRENT_VERSION = 'v1.7';
-  const VERSIONS_URL = '/aion_task/versions.json';
-
-  function openModal() {
-    document.getElementById('vsw-err').textContent = '';
-    document.getElementById('vsw-pin-input').value = '';
-    document.getElementById('vsw-list').style.display = 'none';
-    document.getElementById('vsw-overlay').style.display = 'flex';
-    setTimeout(() => document.getElementById('vsw-pin-input').focus(), 100);
-  }
-  function closeModal() {
-    document.getElementById('vsw-overlay').style.display = 'none';
-  }
-
-  async function checkPin() {
-    const input = document.getElementById('vsw-pin-input').value.trim();
-    const errEl = document.getElementById('vsw-err');
-    if (input.length !== 8) { errEl.textContent = '8자리를 입력해주세요'; return; }
-    try {
-      const { data, error } = await sb.from('app_config').select('value').eq('key', 'version_pin').single();
-      if (error || !data) { errEl.textContent = '설정을 불러올 수 없어요'; return; }
-      if (input !== data.value) {
-        errEl.textContent = '비밀번호가 틀려요';
-        document.getElementById('vsw-pin-input').value = '';
-        return;
-      }
-      errEl.textContent = '';
-      await renderList();
-    } catch (e) {
-      console.error(e);
-      errEl.textContent = '확인 실패';
-    }
-  }
-
-  async function renderList() {
-    const listEl = document.getElementById('vsw-list');
-    listEl.innerHTML = '<div style="text-align:center;font-size:0.75rem;color:var(--text-sub);padding:12px">목록 불러오는 중...</div>';
-    listEl.style.display = 'flex';
-    try {
-      const res = await fetch(VERSIONS_URL + '?t=' + Date.now());
-      if (!res.ok) throw new Error('fetch failed');
-      const versions = await res.json();
-      listEl.innerHTML = versions.map(v => {
-        const isCurrent = v.id === CURRENT_VERSION;
-        const cls = 'vsw-item' + (isCurrent ? ' current' : '');
-        const handler = isCurrent ? '' : `onclick="location.href='${v.file}'"`;
-        const badge = isCurrent ? '<span style="font-size:0.68rem;color:var(--sage)">(현재)</span>' : '';
-        return `
-          <div class="${cls}" ${handler}>
-            <div class="vsw-item-head"><span>${v.id} ${badge}</span><span class="vsw-item-date">${v.date || ''}</span></div>
-            <div class="vsw-item-desc">${(v.desc || '').replace(/</g,'&lt;')}</div>
-          </div>
-        `;
-      }).join('');
-    } catch (e) {
-      listEl.innerHTML = '<div style="text-align:center;font-size:0.75rem;color:#b85050;padding:12px">버전 목록을 불러올 수 없어요</div>';
-    }
-  }
-
-  window.vswOpen = openModal;
-  window.vswClose = closeModal;
-  window.vswCheckPin = checkPin;
-})();
-</script>
-
-<!-- ════════════════════════════════════════════════════════════
-     v1.5.6 — 츄냥이 계산기 (별도 브라우저 창)
-     템플릿 리터럴 충돌 방지 위해 자식창 HTML은 <template>에 보관
-══════════════════════════════════════════════════════════════ -->
-<template id="calc-window-template">
-<!DOCTYPE html>
-<html lang="ko" data-darkreader-mode="off" data-darkreader-scheme="light">
-<head>
-<meta charset="UTF-8">
-<title>츄냥이 계산기</title>
-<!-- 외부 다크모드/색반전 차단 (브라우저, Dark Reader 등) -->
-<meta name="color-scheme" content="light only">
-<meta name="darkreader-lock">
-<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&family=Pixelify+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<script>
-  /* calc popup follows the main app's skin (shared localStorage, same origin) */
-  try{ if (localStorage.getItem('chunyang-skin') !== 'off') document.documentElement.classList.add('skin-glc'); }catch(e){}
-  window.addEventListener('storage', function(e){
-    if (e.key === 'chunyang-skin') document.documentElement.classList.toggle('skin-glc', e.newValue !== 'off');
-  });
-</script>
-<style>
-  :root {
-    color-scheme: light;
-    /* ORIGINAL calc tokens (default) */
-    --bg: #f9f6f0;
-    --surface: #ffffff;
-    --surface2: #faf8f5;
-    --text: #5a524b;
-    --text-sub: #9e9589;
-    --border: #eae2d6;
-    --hover: #f4efe6;
-    --sage: #a3b18a;
-    --sage-light: #d4e2c4;
-    --peach: #e2b49a;
-    --peach-light: #f5ddd0;
-    --lavender: #b8aed4;
-    --lavender-light: #ddd8ee;
-    --sky: #97c4d8;
-    --sky-light: #d4eaf4;
-    --shadow-sm: 0 2px 8px rgba(160,150,140,0.08);
-    --radius: 14px;
-    --radius-sm: 10px;
-    --radius-xs: 7px;
-    --font-display: 'Black Han Sans', 'Gowun Dodum', sans-serif;
-    --font-head: 'Jua', 'Gowun Dodum', sans-serif;
-    --font-pixel: 'Pixelify Sans', monospace;
-  }
-  /* GLC skin for the calc popup */
-  html.skin-glc {
-    --bg: #F5F4F1;
-    --surface: #FFFFFF;
-    --surface2: #F0EBE2;
-    --text: #593C3C;
-    --text-sub: #8A6F6A;
-    --border: #E2D5CB;
-    --hover: #EFE7DD;
-    --sage: #6FBE7A;
-    --sage-light: #E6F
+  background:rgba(90,82,75,0.35);bac
