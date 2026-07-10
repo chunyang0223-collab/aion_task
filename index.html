@@ -5355,6 +5355,13 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
   text-align: center; padding: 26px 8px; color: var(--text-sub); font-size: 0.85rem;
 }
 .todo-col-empty .em { font-size: 1.5rem; display: block; margin-bottom: 6px; }
+
+/* 할일 딥링크 도착 강조 (v1.7.6) */
+@keyframes secFlash {
+  0%, 45% { box-shadow: inset 0 0 0 2px var(--sage), 0 0 0 4px var(--sage-light); }
+  100%    { box-shadow: inset 0 0 0 2px transparent, 0 0 0 0 transparent; }
+}
+.sec-flash { animation: secFlash 1.6s ease-out; border-radius: var(--radius-sm); }
 </style>
 </head>
 <body>
@@ -7865,7 +7872,7 @@ function _todoTodayCol(owner) {
     const remain = t.full ? '가득' : _fmtOddDur(t.ms);
     oddItems.push(_todoLine(
       `${_nm(c)} - <b>${consume} ↑</b> 소모필요 <span class="dim">(현재 오드 여유 : ${remain})</span>`,
-      `openDetail('${c.id}')`));
+      `openDetail('${c.id}','odd')`));
   });
   html += _todoSec('오드에너지', oddItems);
 
@@ -7873,7 +7880,7 @@ function _todoTodayCol(owner) {
   const nmItems = [];
   chars.forEach(c => {
     const need = _todoOverflow(c.nightmare_base || 0, 14, 2);
-    if (need > 0) nmItems.push(_todoLine(`${_nm(c)} - <b>${need}회 ↑</b>`, `openDetail('${c.id}')`));
+    if (need > 0) nmItems.push(_todoLine(`${_nm(c)} - <b>${need}회 ↑</b>`, `openDetail('${c.id}','daily')`));
   });
   html += _todoSec('악몽', nmItems);
 
@@ -7881,7 +7888,7 @@ function _todoTodayCol(owner) {
   const shugoItems = [];
   {
     const need = _todoOverflow(acc.shugo_key_base || 0, 14, 2);
-    if (need > 0) shugoItems.push(_todoLine(`<b>${need}회 ↑</b>`, `openAccountModal('${owner}')`));
+    if (need > 0) shugoItems.push(_todoLine(`<b>${need}회 ↑</b>`, `openAccountModalAt('${owner}','shugo')`));
   }
   html += _todoSec('슈고 열쇠', shugoItems);
 
@@ -7889,13 +7896,15 @@ function _todoTodayCol(owner) {
   const invItems = [];
   {
     const need = _todoOverflow(Math.min(7, acc.invasion_key || 0), 7, 1);
-    if (need > 0) invItems.push(_todoLine(`<b>${need}회 ↑</b>`, `openAccountModal('${owner}')`));
+    if (need > 0) invItems.push(_todoLine(`<b>${need}회 ↑</b>`, `openAccountModalAt('${owner}','invasion')`));
   }
   html += _todoSec('침공 열쇠', invItems);
 
   // 사명 — 미완료
   const missionItems = [];
-  if (!acc.daily_mission) missionItems.push(_todoLine('미완료', `openAccountModal('${owner}')`));
+  if (!acc.daily_mission) missionItems.push(_todoLine(
+    `미완료 <span class="dim">(클릭 시 완료 처리)</span>`,
+    `toggleAccount('${owner}','daily_mission',true)`));
   html += _todoSec('사명', missionItems);
 
   // 어비스 — 다음 전쟁 24h 이내 + 미클리어
@@ -7906,7 +7915,7 @@ function _todoTodayCol(owner) {
     chars.forEach(c => {
       const names = _todoAbyssUncleared(c);
       if (names.length) abyssItems.push(_todoLine(
-        `${_nm(c)} - ${names.join(', ')}`, `openDetail('${c.id}')`));
+        `${_nm(c)} - ${names.join(', ')}`, `openDetail('${c.id}','abyss')`));
     });
     html += _todoSec(`어비스 (전쟁까지 ${_fmtOddDur(warMsLeft)})`, abyssItems);
   }
@@ -7924,7 +7933,7 @@ function _todoWeeklyCol(owner) {
   const dungeonItems = [];
   {
     const remain = acc.dungeon_remaining || 0;
-    if (remain > 0) dungeonItems.push(_todoLine(`<b>${remain}회</b>`, `openAccountModal('${owner}')`));
+    if (remain > 0) dungeonItems.push(_todoLine(`<b>${remain}회</b>`, `openAccountModalAt('${owner}','dungeon')`));
   }
   html += _todoSec('일일던전', dungeonItems);
 
@@ -7932,7 +7941,7 @@ function _todoWeeklyCol(owner) {
   const awItems = [];
   chars.forEach(c => {
     const aw = c.awakening_done || 0;
-    if (aw < 3) awItems.push(_todoLine(`${_nm(c)} - ${aw}/3`, `openDetail('${c.id}')`));
+    if (aw < 3) awItems.push(_todoLine(`${_nm(c)} - ${aw}/3`, `openDetail('${c.id}','weekly')`));
   });
   html += _todoSec('각성', awItems);
 
@@ -7945,7 +7954,7 @@ function _todoWeeklyCol(owner) {
     if (ilvl >= 2700 && !wt.ludra_done) remain.push('루드라');
     if (ilvl >= 3500 && !wt.erosion_done) remain.push('침식');
     if (ilvl >= 4300 && !wt.muspell_done) remain.push('무스펠');
-    if (remain.length) sanctItems.push(_todoLine(`${_nm(c)} - ${remain.join(', ')}`, `openDetail('${c.id}')`));
+    if (remain.length) sanctItems.push(_todoLine(`${_nm(c)} - ${remain.join(', ')}`, `openDetail('${c.id}','weekly')`));
   });
   html += _todoSec('성역', sanctItems);
 
@@ -7953,7 +7962,7 @@ function _todoWeeklyCol(owner) {
   const tmItems = [];
   chars.forEach(c => {
     const remain = 4 - Math.min(4, c.transmutation_count || 0);
-    if (remain > 0) tmItems.push(_todoLine(`${_nm(c)} - ${remain}회`, `openDetail('${c.id}')`));
+    if (remain > 0) tmItems.push(_todoLine(`${_nm(c)} - ${remain}회`, `openAccountModalAt('${owner}','tm')`));
   });
   html += _todoSec('물질변환', tmItems);
 
@@ -7961,7 +7970,7 @@ function _todoWeeklyCol(owner) {
   const shopItems = [];
   chars.forEach(c => {
     const remain = 4 - Math.min(4, c.shop_purchase_count || 0);
-    if (remain > 0) shopItems.push(_todoLine(`${_nm(c)} - ${remain}회`, `openDetail('${c.id}')`));
+    if (remain > 0) shopItems.push(_todoLine(`${_nm(c)} - ${remain}회`, `openAccountModalAt('${owner}','shop')`));
   });
   html += _todoSec('상점 오드구매', shopItems);
 
@@ -7970,7 +7979,7 @@ function _todoWeeklyCol(owner) {
   const orderItems = [];
   {
     const remain = orderDefs.filter(([k]) => !acc[k]).map(([, l]) => l);
-    if (remain.length) orderItems.push(_todoLine(remain.join(', '), `openAccountModal('${owner}')`));
+    if (remain.length) orderItems.push(_todoLine(remain.join(', '), `openAccountModalAt('${owner}','order')`));
   }
   html += _todoSec('지령서', orderItems);
 
@@ -7995,6 +8004,29 @@ function renderTodoPage() {
 // 할일 페이지가 열려 있을 때만 재렌더 — 60초 타이머·renderOverview 훅에서 호출 (v1.7.6)
 function refreshTodoIfVisible() {
   if (document.getElementById('todo-page')?.classList.contains('active')) renderTodoPage();
+}
+
+// ── 할일 딥링크 (v1.7.6) — 항목 클릭 시 실제 해소 UI 위치로 이동 ──
+//   대상 요소로 스크롤 + 잠깐 강조 링. (모달 내부든 페이지든 동일하게 동작)
+function _deepFocus(id) {
+  setTimeout(() => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el.classList.add('sec-flash');
+    setTimeout(() => el.classList.remove('sec-flash'), 1800);
+  }, 80);
+}
+
+// 계정 모달을 특정 섹션이 펼쳐진 상태로 열고 그 섹션으로 스크롤
+//   sec: 'shugo' | 'invasion' | 'dungeon' | 'tm' | 'shop' | 'order'
+function openAccountModalAt(owner, sec) {
+  if (sec === 'dungeon')    _dungeonDropdownExpanded = true;
+  else if (sec === 'tm')    _transmutationDropdownExpanded = true;
+  else if (sec === 'shop')  _shopDropdownExpanded = true;
+  else if (sec === 'order') _orderDropdownExpanded = true;
+  openAccountModal(owner);
+  _deepFocus(`am-sec-${sec}`);
 }
 
 // ── OVERVIEW RENDER ──
@@ -8440,7 +8472,7 @@ async function submitAddChar(owner, slot) {
 }
 
 // ── DETAIL ──
-async function openDetail(charId) {
+async function openDetail(charId, focus) {
   currentCharId = charId;
   const char = allChars.find(c => c.id === charId);
   if (!char) return;
@@ -8459,6 +8491,9 @@ async function openDetail(charId) {
   detailEl.dataset.renderKey = ''; // 스피너 표시 후 renderDetail skip 방지
 
   renderDetail(char);
+
+  // 할일 딥링크 (v1.7.6): 해당 숙제 카드/행으로 스크롤 + 강조
+  if (focus) _deepFocus(`dt-sec-${focus}`);
 }
 
 function renderDetail(char) {
@@ -8528,7 +8563,7 @@ function renderDetail(char) {
         <span class="cp-k">k</span>
       </div>
     </div>
-    <div class="stat-row">
+    <div class="stat-row" id="dt-sec-odd">
       <span class="stat-label" style="padding-top:6px">오드에너지<span class="stat-sublabel">기본 / 충전</span></span>
       <div class="stat-inputs">
         ${numInput(`odd_energy_base`, char.odd_energy_base||0, char.id, 0, 840)}
@@ -8571,7 +8606,7 @@ function renderDetail(char) {
 
   // ── 일일 숙제 ──
   // 사명(mission)은 v1.4.9.1부터 계정 통합으로 옮김 → account_data.daily_mission (계정 카드에서 관리)
-  html += `<div class="card">
+  html += `<div class="card" id="dt-sec-daily">
     <div class="card-title"><div class="card-title-icon icon-daily">일</div>일일 숙제 <span style="margin-left:auto;font-size:0.72rem;color:var(--text-sub)">05:00 리셋</span></div>
     <div class="stat-row">
       <span class="stat-label">보급</span>
@@ -8590,7 +8625,7 @@ function renderDetail(char) {
   </div>`;
 
   // ── 주간 숙제 ──
-  html += `<div class="card">
+  html += `<div class="card" id="dt-sec-weekly">
     <div class="card-title"><div class="card-title-icon icon-weekly">주</div>주간 숙제 <span style="margin-left:auto;font-size:0.72rem;color:var(--text-sub)">수요일 05:00 리셋</span></div>`;
 
   // 각성 pips
@@ -8649,7 +8684,7 @@ function renderDetail(char) {
       return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
     });
   if (acquiredZones.length > 0) {
-    html += `<div class="card">
+    html += `<div class="card" id="dt-sec-abyss">
       <div class="card-title"><div class="card-title-icon" style="background:var(--lavender-light)">회</div>어비스 회랑</div>`;
     acquiredZones.forEach(cor => {
       const k = `${cor.id}_${char.id}`;
@@ -10388,7 +10423,7 @@ function openAccountModal(owner) {
   document.getElementById('acc-modal-body').innerHTML = `
     <div class="am-body">
 
-      <div class="am-sec">
+      <div class="am-sec" id="am-sec-shugo">
         <div class="am-sec-head">
           <span class="am-sec-title">슈고열쇠 <small>계정 공유</small></span>
         </div>
@@ -10409,7 +10444,7 @@ function openAccountModal(owner) {
       </div>
 
       <!-- 침공 열쇠 (v1.6.98) -->
-      <div class="am-sec">
+      <div class="am-sec" id="am-sec-invasion">
         <div class="am-sec-head">
           <span class="am-sec-title">침공 열쇠 <small>계정 공유 · 매일 05시 +1 · 최대 7</small></span>
         </div>
@@ -10423,7 +10458,7 @@ function openAccountModal(owner) {
         </div>
       </div>
 
-      <div class="am-sec">
+      <div class="am-sec" id="am-sec-dungeon">
         <div class="am-sec-head am-sec-toggle" onclick="toggleDungeonDropdown('${owner}')">
           <span class="am-sec-title">일일던전 <small>계정 공유 · 주간 14회</small></span>
           <span id="dungeon-chevron-${owner}" class="am-chev" style="${_dungeonDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
@@ -10449,7 +10484,7 @@ function openAccountModal(owner) {
         </div>
       </div>
 
-      <div class="am-sec">
+      <div class="am-sec" id="am-sec-tm">
         <div class="am-sec-head am-sec-toggle" onclick="toggleTransmutationDropdown('${owner}')">
           <span class="am-sec-title">물질변환 <small>주간 · 캐릭 4 + 계정 16</small></span>
           <span id="transmutation-chevron-${owner}" class="am-chev" style="${_transmutationDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
@@ -10476,7 +10511,7 @@ function openAccountModal(owner) {
         </div>
       </div>
 
-      <div class="am-sec">
+      <div class="am-sec" id="am-sec-shop">
         <div class="am-sec-head am-sec-toggle" onclick="toggleShopDropdown('${owner}')">
           <span class="am-sec-title">상점(오드구매) <small>주간 · 캐릭 4 + 계정 16</small></span>
           <span id="shop-chevron-${owner}" class="am-chev" style="${_shopDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
@@ -10503,7 +10538,7 @@ function openAccountModal(owner) {
         </div>
       </div>
 
-      <div class="am-sec">
+      <div class="am-sec" id="am-sec-order">
         <div class="am-sec-head am-sec-toggle" onclick="toggleOrderDropdown('${owner}')">
           <span class="am-sec-title">지령서 <small>주간 리셋</small></span>
           <span id="order-chevron-${owner}" class="am-chev" style="${_orderDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
