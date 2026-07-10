@@ -8012,11 +8012,34 @@ function _deepFocus(id) {
   setTimeout(() => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (id.startsWith('dt-')) {
+      // 상세 페이지: sticky 상단 2단(메뉴바 + 캐릭터 서브바)에 가리지 않게
+      // 실제 높이를 재서 그만큼 아래에 멈춤 (줌·폰트 크기와 무관)
+      const tb = document.querySelector('.topbar');
+      const sb = document.getElementById('detail-subbar');
+      const off = (tb ? tb.getBoundingClientRect().height : 0)
+                + (sb ? sb.getBoundingClientRect().height : 0) + 12;
+      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - off, behavior: 'smooth' });
+    } else {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     el.classList.add('sec-flash');
     setTimeout(() => el.classList.remove('sec-flash'), 1800);
   }, 80);
 }
+
+// 상세 서브바(sticky top)를 메뉴바 "실제" 높이에 딱 붙임 — 하드코딩 52px로 인한
+// 메뉴바-서브바 사이 미세 틈 제거 (1px 겹쳐 하위픽셀 경계선까지 차단) (v1.7.6)
+function syncSubbarTop() {
+  const tb = document.querySelector('.topbar');
+  const sb = document.getElementById('detail-subbar');
+  if (!tb || !sb) return;
+  sb.style.top = (Math.ceil(tb.getBoundingClientRect().height) - 1) + 'px';
+}
+window.addEventListener('resize', syncSubbarTop);
+window.addEventListener('load', syncSubbarTop);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncSubbarTop);   // 웹폰트 적용 후 높이 재보정
+syncSubbarTop();
 
 // 계정 모달을 특정 섹션이 펼쳐진 상태로 열고 그 섹션으로 스크롤
 //   sec: 'shugo' | 'invasion' | 'dungeon' | 'tm' | 'shop' | 'order'
@@ -8483,6 +8506,7 @@ async function openDetail(charId, focus) {
   badge.textContent = char.owner;
   badge.className = `detail-owner-badge badge-${char.owner}`;
   document.getElementById('detail-subbar').style.display = 'flex';
+  syncSubbarTop();
 
   document.getElementById('detail-tab').style.display = '';
   showPage('detail-page');
