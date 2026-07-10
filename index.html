@@ -5329,8 +5329,8 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
   font-family: var(--font-head); font-size: 0.98rem; text-align: center;
   padding: 7px 12px; border-radius: var(--radius-sm); margin-bottom: 14px;
 }
-.todo-col-head.설냥 { background: var(--sage-light);  color: var(--color-owner-설냥, #5a8a42); }
-.todo-col-head.츄츄 { background: var(--peach-light); color: var(--color-owner-츄츄, #b06040); }
+.todo-col-head.설냥 { background: var(--sage-light);  color: var(--color-owner-설냥); }
+.todo-col-head.츄츄 { background: var(--peach-light); color: var(--color-owner-츄츄); }
 
 /* 섹션(악몽/슈고/…) */
 .todo-sec2 { margin-bottom: 14px; }
@@ -7738,7 +7738,8 @@ async function loadAll() {
   });
 
   // ── 카드 순서 잠금 상태 (계정별: app_config.card_lock_{owner}, 전 사용자 공유) v1.7.6 ──
-  //   구버전 단일 키(card_lock)는 최초 1회 양쪽 계정으로 이관.
+  //   구버전 단일 키(card_lock)가 남아 있으면 값을 승계한 뒤, 계정별 키를 실제로
+  //   DB에 기록(upsert)하고 구키는 삭제 — 최초 1회 이관. upsert라 동시 실행도 무해.
   try {
     const keys = OWNERS.map(o => `card_lock_${o}`).concat('card_lock');
     const { data: lockRows } = await sb.from('app_config').select('key,value').in('key', keys);
@@ -7746,11 +7747,25 @@ async function loadAll() {
     (lockRows || []).forEach(r => { byKey[r.key] = r.value; });
     const legacy = byKey['card_lock'];
     const legacyOn = legacy === '1' || legacy === 'true';
+    const migrate = [];   // 계정별 키가 아직 없어 구키 값을 승계한 계정
     OWNERS.forEach(o => {
       const v = byKey[`card_lock_${o}`];
-      // 계정별 키가 있으면 그 값, 없으면 구버전 공유값을 승계
-      cardLocked[o] = (v === '1' || v === 'true') || (v === undefined && legacyOn);
+      cardLockOwnKey[o] = (v !== undefined);
+      if (v !== undefined) {
+        cardLocked[o] = (v === '1' || v === 'true');
+      } else {
+        cardLocked[o] = legacyOn;
+        if (legacy !== undefined) migrate.push(o);
+      }
     });
+    if (migrate.length) {
+      const rows = migrate.map(o => ({ key: `card_lock_${o}`, value: legacyOn ? '1' : '0' }));
+      const { error: mErr } = await sb.from('app_config').upsert(rows, { onConflict: 'key' });
+      if (!mErr) {
+        migrate.forEach(o => { cardLockOwnKey[o] = true; });
+        await sb.from('app_config').delete().eq('key', 'card_lock');   // 이관 완료 후 구키 제거
+      }
+    }
   } catch (e) { OWNERS.forEach(o => { cardLocked[o] = false; }); }
 
   // ── 시즌 데이터 (Supabase 공유 + 1회 로컬 이관) ──
@@ -7764,6 +7779,7 @@ function slotOrder(c) { const s = (c && c.slot) || 99; return s === 9 ? 0 : s; }
 // ── 카드 순서 잠금 (계정별: app_config.card_lock_{owner}, 전 사용자 공유) v1.7.6 ──
 //   { 설냥: false, 츄츄: false } — 계정마다 독립. isCardLocked(owner)로 조회.
 let cardLocked = {};
+let cardLockOwnKey = {};   // 계정별 키(card_lock_{owner})의 DB 존재 여부 — 구키 하위호환 적용 판단용
 function isCardLocked(owner) { return !!cardLocked[owner]; }
 
 // ════════════════════════════════════════════════════════════════
@@ -7976,6 +7992,11 @@ function renderTodoPage() {
   el.innerHTML = `<div class="todo-cols">${OWNERS.map(o => _todoColumn(o)).join('')}</div>`;
 }
 
+// 할일 페이지가 열려 있을 때만 재렌더 — 60초 타이머·renderOverview 훅에서 호출 (v1.7.6)
+function refreshTodoIfVisible() {
+  if (document.getElementById('todo-page')?.classList.contains('active')) renderTodoPage();
+}
+
 // ── OVERVIEW RENDER ──
 function renderOverview() {
   const el = document.getElementById('overview-content');
@@ -8111,6 +8132,7 @@ function renderOverview() {
   //    (backupSync 5초 타이머 때문에 생기던 깜빡임 제거)
   //    어비스 섹션도 같이 renderOverview의 html에 포함되므로 같이 방어됨.
   const prevKey = el.dataset.renderKey || '';
+  refreshTodoIfVisible();   // v1.7.6: 같은 클라이언트의 값 변경(모달 토글 등)도 할일 페이지에 즉시 반영
   const nextKey = html.length + '::' + _fastHash(html);
   if (prevKey === nextKey) return;
   el.innerHTML = html;
@@ -10703,14 +10725,16 @@ function subscribeRealtime() {
       if (row.key && row.key.startsWith('card_lock_')) {
         const o = row.key.slice('card_lock_'.length);
         if (OWNERS.includes(o)) {
+          cardLockOwnKey[o] = true;
           cardLocked[o] = (row.value === '1' || row.value === 'true');
           renderOverview();   // 다른 사용자의 잠금/해제를 실시간 반영
         }
       } else if (row.key === 'card_lock') {
-        // 구버전 단일 키(하위호환) — 아직 계정별 키가 없는 계정에만 적용
+        // 구버전 단일 키(하위호환) — 계정별 키가 "아직 없는" 계정에만 적용
         const on = (row.value === '1' || row.value === 'true');
-        OWNERS.forEach(o => { cardLocked[o] = on; });
-        renderOverview();
+        let changed = false;
+        OWNERS.forEach(o => { if (!cardLockOwnKey[o]) { cardLocked[o] = on; changed = true; } });
+        if (changed) renderOverview();
       }
     })
     .subscribe(status => {
@@ -10840,6 +10864,8 @@ function scheduleLocalRerender() {
       if (focused && seasonPage && seasonPage.contains(focused) &&
           (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA' || focused.tagName === 'SELECT')) return;
       renderSeasonPage();
+    } else if (document.getElementById('todo-page')?.classList.contains('active')) {
+      renderTodoPage();   // v1.7.6: 할일 페이지 실시간 갱신 (다른 기기 변경 반영)
     } else if (currentCharId) {
       // detail 페이지에 포커스된 input/textarea가 있으면 re-render 건너뜀
       const focused = document.activeElement;
@@ -10931,6 +10957,8 @@ async function reloadTable(table) {
     if (focused && seasonPage && seasonPage.contains(focused) &&
         (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA' || focused.tagName === 'SELECT')) return;
     renderSeasonPage();
+  } else if (document.getElementById('todo-page')?.classList.contains('active')) {
+    renderTodoPage();   // v1.7.6: 할일 페이지 실시간 갱신 (INSERT/DELETE 재조회 후)
   } else if (currentCharId) {
     const char = allChars.find(c => c.id === currentCharId);
     if (char) renderDetail(char);
@@ -11750,7 +11778,10 @@ function updateOddCardTimers() {
   });
   updateOddOwnerChips();   // owner 칩(오드 일괄 적용 버튼 왼쪽)도 같이 갱신
 }
-if (!_oddCardTimerLoop) _oddCardTimerLoop = setInterval(updateOddCardTimers, 60000);
+if (!_oddCardTimerLoop) _oddCardTimerLoop = setInterval(() => {
+  updateOddCardTimers();
+  refreshTodoIfVisible();   // v1.7.6: 할일 탭 '오드 여유·전쟁까지' 시간 흐름 반영
+}, 60000);
 
 // ── 오드 owner 칩 (v1.6.5) ──
 //   소유자별(휴식 제외)로 "가득 찬 캐릭 수(①②③…)" + "안 찬 것 중 최단 타이머"를 함께 표시.
@@ -12051,6 +12082,7 @@ async function toggleCardLock(e, owner) {
     showToast('저장 실패');
     return;
   }
+  cardLockOwnKey[owner] = true;   // 이제 계정별 키 보유 — 구키 이벤트 영향 안 받음
   showToast(next ? `${owner} 카드 순서 잠금` : `${owner} 잠금 해제`);
 }
 
@@ -14349,4 +14381,1141 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
 <!-- ── 계정 모달 ── -->
 <div id="acc-modal-overlay" style="
   display:none;position:fixed;inset:0;z-index:200;
-  background:rgba(90,82,75,0.35);bac
+  background:rgba(90,82,75,0.35);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:20px;
+" onclick="closeAccountModal()">
+  <div id="acc-modal" style="
+    background:var(--surface);border-radius:var(--radius);
+    border:1px solid var(--border);padding:20px;width:100%;max-width:420px;
+    max-height:calc(100vh - 40px);overflow-y:auto;
+    box-shadow:0 12px 40px rgba(160,150,140,0.18);
+    animation:fadeUp 0.2s ease-out;
+  " onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:16px;position:relative">
+      <span id="acc-modal-title" style="font-size:0.95rem;color:var(--text)"></span>
+      <button onclick="closeAccountModal()" style="
+        position:absolute;right:0;
+        width:28px;height:28px;border-radius:50%;border:1px solid var(--border);
+        background:transparent;color:var(--text-sub);font-size:1rem;
+        cursor:pointer;display:flex;align-items:center;justify-content:center;
+        font-family:'Gowun Dodum',sans-serif;
+      ">×</button>
+    </div>
+    <div id="acc-modal-body"></div>
+  </div>
+</div>
+
+<!-- ── 메모 모달 ── -->
+<div id="memo-modal-overlay" style="
+  display:none;position:fixed;inset:0;z-index:210;
+  background:rgba(90,82,75,0.35);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:20px;
+" onclick="closeMemoModal()">
+  <div id="memo-modal" style="
+    background:var(--surface);border-radius:var(--radius);
+    border:1px solid var(--border);padding:20px;width:100%;max-width:360px;
+    box-shadow:0 12px 40px rgba(160,150,140,0.18);
+    animation:fadeUp 0.2s ease-out;
+  " onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:14px;position:relative">
+      <span id="memo-modal-title" style="font-size:0.95rem;color:var(--text)"></span>
+      <button onclick="closeMemoModal()" style="
+        position:absolute;right:0;
+        width:28px;height:28px;border-radius:50%;border:1px solid var(--border);
+        background:transparent;color:var(--text-sub);font-size:1rem;
+        cursor:pointer;display:flex;align-items:center;justify-content:center;
+        font-family:'Gowun Dodum',sans-serif;
+      ">×</button>
+    </div>
+    <textarea id="memo-modal-textarea" rows="6" placeholder="계정 관련 메모를 적어주세요"
+      autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+      style="
+        width:100%;box-sizing:border-box;
+        background:var(--surface2);border:1px solid var(--border);
+        border-radius:var(--radius-sm);padding:10px 12px;
+        font-family:'Gowun Dodum',sans-serif;font-size:0.82rem;line-height:1.5;
+        color:var(--text);resize:vertical;min-height:120px;outline:none;
+      "></textarea>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
+      <button onclick="closeMemoModal()" style="
+        font-size:0.78rem;padding:6px 14px;border-radius:12px;
+        border:1px solid var(--border);background:transparent;color:var(--text-sub);
+        cursor:pointer;font-family:'Gowun Dodum',sans-serif;
+      ">취소</button>
+      <button onclick="saveMemo()" style="
+        font-size:0.78rem;padding:6px 14px;border-radius:12px;
+        border:1px solid var(--peach);background:var(--peach);color:white;
+        cursor:pointer;font-family:'Gowun Dodum',sans-serif;
+      ">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 슬롯 추가/편집 모달 (v1.5.1) ── -->
+<div id="supply-slot-modal-overlay" class="supply-modal-overlay" onclick="closeSupplySlotModal()">
+  <div class="supply-modal-card" onclick="event.stopPropagation()">
+    <div class="supply-modal-head">
+      <span class="supply-modal-title" id="supply-slot-modal-title">슬롯 추가</span>
+      <button class="supply-modal-close" onclick="closeSupplySlotModal()">×</button>
+    </div>
+
+    <div class="supply-form-row">
+      <span class="supply-form-label">유형</span>
+      <div class="supply-form-pill-row" id="supply-slot-type-row">
+        <button type="button" class="supply-form-pill urgent" data-type="urgent" onclick="supplySlotSetType('urgent')">긴급 (일일)</button>
+        <button type="button" class="supply-form-pill weekly" data-type="weekly" onclick="supplySlotSetType('weekly')">주간</button>
+      </div>
+    </div>
+
+    <div class="supply-form-row">
+      <span class="supply-form-label">퀘 이름 (선택)</span>
+      <input type="text" id="supply-slot-quest-name" class="supply-form-input"
+        placeholder="예) 분열의 갑주 II"
+        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
+    </div>
+
+    <div class="supply-form-row">
+      <span class="supply-form-label">필요 수량 (위 N개 납품)</span>
+      <input type="number" id="supply-slot-required" class="supply-form-input"
+        min="1" max="12" step="1" value="2"
+        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+        inputmode="numeric">
+    </div>
+
+    <div class="supply-form-row">
+      <span class="supply-form-label">후보 아이템 이름 (한 줄에 하나 또는 콤마)</span>
+      <textarea id="supply-slot-items" class="supply-form-textarea" rows="3"
+        placeholder="예) 분열의 갑주&#10;타락한 심판관의 대검"
+        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+        oninput="supplySlotItemsChanged()"></textarea>
+      <div class="supply-form-help" id="supply-slot-items-help"></div>
+    </div>
+
+    <!-- 던전 매핑 리스트 (v1.5.3) — 슬롯이 여러 (던전, 난이도)에 귀속될 수 있음 -->
+    <div class="supply-form-row">
+      <span class="supply-form-label">던전·난이도 (여러 곳에서 나오면 + 로 추가)</span>
+      <div id="supply-slot-dungeons-list" class="supply-dungeon-list"></div>
+      <button type="button" class="supply-dungeon-add-btn" onclick="addSlotDungeonRow()">＋ 던전 추가</button>
+    </div>
+
+    <div class="supply-form-actions">
+      <button type="button" class="btn-cancel" onclick="closeSupplySlotModal()">취소</button>
+      <button type="button" class="btn-confirm" id="supply-slot-confirm" onclick="saveSupplySlot()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 도감 관리 모달 (v1.5.1) ── -->
+<div id="supply-dict-modal-overlay" class="supply-modal-overlay" onclick="closeSupplyDictModal()">
+  <div class="supply-modal-card" onclick="event.stopPropagation()">
+    <div class="supply-modal-head">
+      <span class="supply-modal-title">아이템 도감</span>
+      <button class="supply-modal-close" onclick="closeSupplyDictModal()">×</button>
+    </div>
+
+    <input type="text" id="supply-dict-search" class="supply-dict-search"
+      placeholder="아이템 또는 던전명 검색"
+      autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+      oninput="supplyDictSearchChanged(this.value)">
+
+    <div id="supply-dict-list" class="supply-dict-list"></div>
+
+    <div class="supply-form-help" style="margin-top:10px;text-align:center">
+      슬롯 추가 시 새 아이템을 등록하면 자동으로 여기에 모입니다.<br>
+      한 아이템이 여러 던전에서 나오면 매핑이 칩으로 함께 표시돼요.<br>
+      잘못 등록한 매핑은 ✎ 로 수정, − 로 삭제 가능합니다.
+    </div>
+  </div>
+</div>
+
+<style>
+  #vsw-badge {
+    display: block;
+    margin-left: auto;
+    margin-right: 14px;
+    margin-bottom: 16px;
+    margin-top: 8px;
+    font-size: 0.72rem; color: var(--text-sub);
+    text-decoration: underline; text-underline-offset: 2px;
+    cursor: pointer;
+    font-family: 'Gowun Dodum', sans-serif;
+    background: transparent; border: none; padding: 0;
+    width: fit-content;
+  }
+  #vsw-badge:hover { color: var(--text); }
+  #vsw-overlay {
+    display: none; position: fixed; inset: 0; z-index: 400;
+    background: rgba(90,82,75,0.4);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  #vsw-overlay .vsw-card {
+    background: var(--surface); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 22px;
+    width: 100%; max-width: 340px; max-height: 80vh; overflow-y: auto;
+    box-shadow: 0 12px 40px rgba(160,150,140,0.18);
+  }
+  #vsw-overlay .vsw-title { text-align: center; font-size: 0.95rem; color: var(--text); margin-bottom: 4px; }
+  #vsw-overlay .vsw-sub { text-align: center; font-size: 0.72rem; color: var(--text-sub); margin-bottom: 16px; }
+  #vsw-overlay .vsw-pin-row { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; }
+  #vsw-overlay .vsw-pin {
+    flex: 1; padding: 8px 12px; font-size: 1rem; letter-spacing: 0.15em; text-align: center;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface2); font-family: 'Gowun Dodum', sans-serif;
+    -webkit-text-security: disc; text-security: disc;
+    color: var(--text); outline: none;
+  }
+  #vsw-overlay .vsw-err { font-size: 0.72rem; color: #b85050; min-height: 18px; text-align: center; margin-bottom: 12px; }
+  #vsw-overlay .vsw-list { display: none; flex-direction: column; gap: 6px; }
+  #vsw-overlay .vsw-item {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; cursor: pointer; background: var(--surface2);
+    transition: all 0.15s;
+  }
+  #vsw-overlay .vsw-item:hover { background: var(--hover); }
+  #vsw-overlay .vsw-item.current { opacity: 0.55; cursor: default; background: var(--surface); }
+  #vsw-overlay .vsw-item.current:hover { background: var(--surface); }
+  #vsw-overlay .vsw-item-head { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text); margin-bottom: 4px; }
+  #vsw-overlay .vsw-item-date { font-size: 0.68rem; color: var(--text-sub); }
+  #vsw-overlay .vsw-item-desc { font-size: 0.72rem; color: var(--text-sub); white-space: pre-line; line-height: 1.5; }
+  #vsw-overlay .vsw-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+  #vsw-overlay .vsw-btn {
+    padding: 6px 16px; border-radius: 20px; font-family: 'Gowun Dodum', sans-serif; font-size: 0.8rem;
+    border: 1px solid var(--border); background: transparent; color: var(--text-sub); cursor: pointer;
+  }
+  #vsw-overlay .vsw-btn.primary { background: var(--sage); color: white; border-color: var(--sage); }
+</style>
+
+<button id="vsw-badge" onclick="vswOpen()">v1.7</button>
+
+<div id="vsw-overlay" onclick="vswClose()">
+  <div class="vsw-card" onclick="event.stopPropagation()">
+    <div class="vsw-title">버전 전환</div>
+    <div class="vsw-sub">다른 버전으로 이동하려면 비밀번호 입력</div>
+    <div class="vsw-pin-row">
+      <input id="vsw-pin-input" class="vsw-pin" type="text" inputmode="numeric" maxlength="8"
+        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+        placeholder="••••••••"
+        onkeydown="if(event.key==='Enter') vswCheckPin()">
+      <button class="vsw-btn primary" onclick="vswCheckPin()">확인</button>
+    </div>
+    <div id="vsw-err" class="vsw-err"></div>
+    <div id="vsw-list" class="vsw-list"></div>
+    <div class="vsw-btns">
+      <button class="vsw-btn" onclick="vswClose()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const CURRENT_VERSION = 'v1.7';
+  const VERSIONS_URL = '/aion_task/versions.json';
+
+  function openModal() {
+    document.getElementById('vsw-err').textContent = '';
+    document.getElementById('vsw-pin-input').value = '';
+    document.getElementById('vsw-list').style.display = 'none';
+    document.getElementById('vsw-overlay').style.display = 'flex';
+    setTimeout(() => document.getElementById('vsw-pin-input').focus(), 100);
+  }
+  function closeModal() {
+    document.getElementById('vsw-overlay').style.display = 'none';
+  }
+
+  async function checkPin() {
+    const input = document.getElementById('vsw-pin-input').value.trim();
+    const errEl = document.getElementById('vsw-err');
+    if (input.length !== 8) { errEl.textContent = '8자리를 입력해주세요'; return; }
+    try {
+      const { data, error } = await sb.from('app_config').select('value').eq('key', 'version_pin').single();
+      if (error || !data) { errEl.textContent = '설정을 불러올 수 없어요'; return; }
+      if (input !== data.value) {
+        errEl.textContent = '비밀번호가 틀려요';
+        document.getElementById('vsw-pin-input').value = '';
+        return;
+      }
+      errEl.textContent = '';
+      await renderList();
+    } catch (e) {
+      console.error(e);
+      errEl.textContent = '확인 실패';
+    }
+  }
+
+  async function renderList() {
+    const listEl = document.getElementById('vsw-list');
+    listEl.innerHTML = '<div style="text-align:center;font-size:0.75rem;color:var(--text-sub);padding:12px">목록 불러오는 중...</div>';
+    listEl.style.display = 'flex';
+    try {
+      const res = await fetch(VERSIONS_URL + '?t=' + Date.now());
+      if (!res.ok) throw new Error('fetch failed');
+      const versions = await res.json();
+      listEl.innerHTML = versions.map(v => {
+        const isCurrent = v.id === CURRENT_VERSION;
+        const cls = 'vsw-item' + (isCurrent ? ' current' : '');
+        const handler = isCurrent ? '' : `onclick="location.href='${v.file}'"`;
+        const badge = isCurrent ? '<span style="font-size:0.68rem;color:var(--sage)">(현재)</span>' : '';
+        return `
+          <div class="${cls}" ${handler}>
+            <div class="vsw-item-head"><span>${v.id} ${badge}</span><span class="vsw-item-date">${v.date || ''}</span></div>
+            <div class="vsw-item-desc">${(v.desc || '').replace(/</g,'&lt;')}</div>
+          </div>
+        `;
+      }).join('');
+    } catch (e) {
+      listEl.innerHTML = '<div style="text-align:center;font-size:0.75rem;color:#b85050;padding:12px">버전 목록을 불러올 수 없어요</div>';
+    }
+  }
+
+  window.vswOpen = openModal;
+  window.vswClose = closeModal;
+  window.vswCheckPin = checkPin;
+})();
+</script>
+
+<!-- ════════════════════════════════════════════════════════════
+     v1.5.6 — 츄냥이 계산기 (별도 브라우저 창)
+     템플릿 리터럴 충돌 방지 위해 자식창 HTML은 <template>에 보관
+══════════════════════════════════════════════════════════════ -->
+<template id="calc-window-template">
+<!DOCTYPE html>
+<html lang="ko" data-darkreader-mode="off" data-darkreader-scheme="light">
+<head>
+<meta charset="UTF-8">
+<title>츄냥이 계산기</title>
+<!-- 외부 다크모드/색반전 차단 (브라우저, Dark Reader 등) -->
+<meta name="color-scheme" content="light only">
+<meta name="darkreader-lock">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&family=Pixelify+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+  /* calc popup follows the main app's skin (shared localStorage, same origin) */
+  try{ if (localStorage.getItem('chunyang-skin') !== 'off') document.documentElement.classList.add('skin-glc'); }catch(e){}
+  window.addEventListener('storage', function(e){
+    if (e.key === 'chunyang-skin') document.documentElement.classList.toggle('skin-glc', e.newValue !== 'off');
+  });
+</script>
+<style>
+  :root {
+    color-scheme: light;
+    /* ORIGINAL calc tokens (default) */
+    --bg: #f9f6f0;
+    --surface: #ffffff;
+    --surface2: #faf8f5;
+    --text: #5a524b;
+    --text-sub: #9e9589;
+    --border: #eae2d6;
+    --hover: #f4efe6;
+    --sage: #a3b18a;
+    --sage-light: #d4e2c4;
+    --peach: #e2b49a;
+    --peach-light: #f5ddd0;
+    --lavender: #b8aed4;
+    --lavender-light: #ddd8ee;
+    --sky: #97c4d8;
+    --sky-light: #d4eaf4;
+    --shadow-sm: 0 2px 8px rgba(160,150,140,0.08);
+    --radius: 14px;
+    --radius-sm: 10px;
+    --radius-xs: 7px;
+    --font-display: 'Black Han Sans', 'Gowun Dodum', sans-serif;
+    --font-head: 'Jua', 'Gowun Dodum', sans-serif;
+    --font-pixel: 'Pixelify Sans', monospace;
+  }
+  /* GLC skin for the calc popup */
+  html.skin-glc {
+    --bg: #F5F4F1;
+    --surface: #FFFFFF;
+    --surface2: #F0EBE2;
+    --text: #593C3C;
+    --text-sub: #8A6F6A;
+    --border: #E2D5CB;
+    --hover: #EFE7DD;
+    --sage: #6FBE7A;
+    --sage-light: #E6F7BD;
+    --peach: #F6953F;
+    --peach-light: #FBE2C8;
+    --lavender: #C9A6EA;
+    --lavender-light: #E4D2F5;
+    --sky: #5B8DEF;
+    --sky-light: #DCE7FB;
+    --shadow-sm: 0 1px 2px rgba(89,60,60,0.08);
+    --radius: 18px;
+    --radius-sm: 14px;
+    --radius-xs: 9px;
+  }
+  html.skin-glc .calc-title { font-family: var(--font-head); letter-spacing: 0.01em; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    font-family: 'Gowun Dodum', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  body { display: flex; flex-direction: column; overflow: hidden; }
+  .calc-header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px;
+    padding: 9px 11px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    flex-shrink: 0;
+  }
+  .calc-title {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.85rem; color: var(--text);
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+  .calc-title .ct-emoji { font-size: 0.95rem; line-height: 1; }
+  .calc-title .ct-name  { color: var(--sage); }
+  .calc-title .ct-accent { color: var(--peach); }
+  .calc-tabs {
+    display: flex; gap: 3px;
+    background: var(--hover);
+    padding: 3px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+  }
+  .calc-tab {
+    padding: 4px 9px;
+    border: none; background: transparent;
+    color: var(--text-sub);
+    font-family: 'Gowun Dodum', sans-serif;
+    font-size: 0.72rem;
+    border-radius: 11px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+  .calc-tab.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+  }
+  .calc-body {
+    flex: 1; padding: 12px;
+    overflow-y: auto;
+    display: flex; flex-direction: column;
+    min-height: 0;
+  }
+  .calc-display {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    text-align: right;
+    min-height: 72px;
+    display: flex; flex-direction: column;
+    justify-content: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .calc-expr {
+    font-size: 0.78rem; color: var(--text-sub);
+    min-height: 1em; word-break: break-all; line-height: 1.4;
+  }
+  .calc-result {
+    font-size: clamp(1.4rem, 4vw, 1.8rem);
+    color: var(--text);
+    font-weight: 500; word-break: break-all; line-height: 1.2;
+  }
+  .calc-expr-input {
+    width: 100%;
+    background: transparent; border: none; outline: none;
+    color: var(--text);
+    font-family: 'Gowun Dodum', sans-serif;
+    font-size: clamp(0.95rem, 3vw, 1.1rem);
+    text-align: right; line-height: 1.4;
+    padding: 0; word-break: break-all;
+    -webkit-user-select: text; user-select: text;
+  }
+  .calc-expr-input::placeholder { color: var(--text-sub); opacity: 0.6; }
+  .calc-keys {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    flex: 1;
+    min-height: 240px;
+  }
+  .calc-keys.expr-keys { grid-template-columns: repeat(5, 1fr); }
+  .calc-btn {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Gowun Dodum', sans-serif;
+    font-size: clamp(0.85rem, 2.4vw, 1.05rem);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, transform 0.08s;
+    min-height: 36px;
+  }
+  .calc-btn:hover { background: var(--hover); border-color: var(--text-sub); }
+  .calc-btn:active { transform: scale(0.96); }
+  .calc-btn.func { background: var(--surface2); color: var(--text-sub); }
+  .calc-btn.op   { background: var(--peach-light); color: #8a5a3a; border-color: var(--peach); }
+  .calc-btn.op:hover { background: var(--peach); color: #fff; }
+  .calc-btn.eq   { background: var(--sage); color: #fff; border-color: var(--sage); }
+  .calc-btn.eq:hover { background: #8da078; border-color: #8da078; }
+  .calc-btn.clear{ background: var(--lavender-light); color: #5a4d80; border-color: var(--lavender); }
+  .calc-btn.clear:hover { background: var(--lavender); color: #fff; }
+  .calc-btn.zero { grid-column: span 2; }
+  .tape-input-row { display: flex; gap: 6px; margin-bottom: 10px; flex-shrink: 0; }
+  .tape-input {
+    flex: 1; padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'Gowun Dodum', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+    -webkit-user-select: text; user-select: text;
+    min-width: 0;
+  }
+  .tape-input:focus { border-color: var(--sage); background: var(--surface); }
+  .tape-input::placeholder { color: var(--text-sub); opacity: 0.6; }
+  .tape-add-btn {
+    padding: 0 14px;
+    border: 1px solid var(--sage);
+    background: var(--sage); color: #fff;
+    border-radius: var(--radius-sm);
+    font-family: 'Gowun Dodum', sans-serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+    white-space: nowrap;
+  }
+  .tape-add-btn:hover { background: #8da078; border-color: #8da078; }
+  .tape-list {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    flex: 1; min-height: 100px;
+    overflow-y: auto;
+    padding: 4px; margin-bottom: 10px;
+  }
+  .tape-empty { text-align: center; padding: 24px 12px; color: var(--text-sub); font-size: 0.78rem; }
+  .tape-item {
+    display: grid;
+    grid-template-columns: 20px 1fr auto auto;
+    align-items: center; gap: 8px;
+    padding: 7px 9px;
+    border-radius: var(--radius-xs);
+    transition: background 0.12s;
+  }
+  .tape-item:hover { background: var(--hover); }
+  .tape-item + .tape-item { border-top: 1px dashed var(--border); }
+  .tape-num { font-size: 0.7rem; color: var(--text-sub); text-align: center; }
+  .tape-expr { font-size: 0.85rem; color: var(--text); word-break: break-all; }
+  .tape-val  { font-size: 0.85rem; color: var(--text); font-weight: 500; text-align: right; min-width: 60px; }
+  .tape-del {
+    width: 22px; height: 22px;
+    border: none; background: transparent;
+    color: var(--text-sub);
+    font-size: 14px; border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+  }
+  .tape-del:hover { background: var(--peach-light); color: #8a5a3a; }
+  .tape-total {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--sage-light);
+    border: 1px solid var(--sage);
+    border-radius: var(--radius-sm);
+    margin-bottom: 10px;
+    flex-shrink: 0;
+  }
+  .tape-total-label { font-size: 0.78rem; color: #4a6030; }
+  .tape-total-val   { font-size: 1.2rem; color: #3a5020; font-weight: 500; word-break: break-all; }
+  .tape-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .tape-action-btn {
+    flex: 1; padding: 8px 0;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-sub);
+    font-family: 'Gowun Dodum', sans-serif;
+    font-size: 0.78rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  .tape-action-btn:hover { background: var(--hover); color: var(--text); border-color: var(--text-sub); }
+  .tape-action-btn.danger:hover { background: var(--peach-light); color: #8a5a3a; border-color: var(--peach); }
+  .calc-history {
+    display: none; flex-direction: column; gap: 8px;
+    flex: 1; overflow-y: auto;
+    padding-right: 2px;
+  }
+  .calc-history.open { display: flex; }
+  .calc-history-empty { text-align: center; color: var(--text-sub); font-size: 0.78rem; padding: 32px 12px; }
+  .calc-history-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 9px 11px; cursor: pointer;
+    display: flex; flex-direction: column; gap: 2px;
+    transition: background 0.12s, border-color 0.12s;
+    flex-shrink: 0;
+  }
+  .calc-history-item:hover { background: var(--hover); border-color: var(--text-sub); }
+  .calc-history-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.68rem; color: var(--text-sub);
+  }
+  .calc-history-mode-badge {
+    padding: 1px 6px; border-radius: 6px;
+    background: var(--hover); color: var(--text-sub);
+    font-size: 0.65rem;
+  }
+  .calc-history-mode-badge.basic { background: var(--peach-light); color: #8a5a3a; }
+  .calc-history-mode-badge.expr  { background: var(--sky-light);   color: #3a6080; }
+  .calc-history-mode-badge.tape  { background: var(--sage-light);  color: #4a6030; }
+  .calc-history-expr   { font-size: 0.75rem; color: var(--text-sub); word-break: break-all; }
+  .calc-history-result { font-size: 0.95rem; color: var(--text); text-align: right; font-weight: 500; word-break: break-all; }
+  .calc-history-foot {
+    display: flex; justify-content: flex-end;
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .calc-history-clear {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: transparent;
+    color: var(--text-sub);
+    font-family: 'Gowun Dodum', sans-serif;
+    font-size: 0.74rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .calc-history-clear:hover { background: var(--hover); color: var(--text); }
+  #calc-view-basic, #calc-view-expr, #calc-view-tape {
+    display: flex; flex-direction: column; flex: 1; min-height: 0;
+  }
+  .calc-history::-webkit-scrollbar,
+  .tape-list::-webkit-scrollbar,
+  .calc-body::-webkit-scrollbar { width: 6px; }
+  .calc-history::-webkit-scrollbar-track,
+  .tape-list::-webkit-scrollbar-track,
+  .calc-body::-webkit-scrollbar-track { background: transparent; }
+  .calc-history::-webkit-scrollbar-thumb,
+  .tape-list::-webkit-scrollbar-thumb,
+  .calc-body::-webkit-scrollbar-thumb {
+    background: var(--border); border-radius: 3px;
+  }
+  @media (max-width: 340px) {
+    .calc-tab { padding: 4px 6px; font-size: 0.68rem; }
+    .calc-title { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="calc-header">
+  <div class="calc-title"><span class="ct-emoji">  </span><span class="ct-name">츄<span class="ct-accent">냥</span>이 계산기</span></div>
+  <div class="calc-tabs" id="calc-tabs">
+    <button class="calc-tab active" data-view="basic"   onclick="switchCalcView('basic')">기본</button>
+    <button class="calc-tab"        data-view="expr"    onclick="switchCalcView('expr')">수식</button>
+    <button class="calc-tab"        data-view="tape"    onclick="switchCalcView('tape')">테이프</button>
+    <button class="calc-tab"        data-view="history" onclick="switchCalcView('history')">기록</button>
+  </div>
+</div>
+
+<div class="calc-body">
+
+  <div id="calc-view-basic">
+    <div class="calc-display">
+      <div class="calc-expr" id="calc-expr">&nbsp;</div>
+      <div class="calc-result" id="calc-result">0</div>
+    </div>
+    <div class="calc-keys">
+      <button class="calc-btn clear" onclick="calcAction('AC')">AC</button>
+      <button class="calc-btn func"  onclick="calcAction('SIGN')">±</button>
+      <button class="calc-btn func"  onclick="calcAction('PCT')">%</button>
+      <button class="calc-btn op"    onclick="calcAction('OP','÷')">÷</button>
+      <button class="calc-btn" onclick="calcAction('NUM','7')">7</button>
+      <button class="calc-btn" onclick="calcAction('NUM','8')">8</button>
+      <button class="calc-btn" onclick="calcAction('NUM','9')">9</button>
+      <button class="calc-btn op" onclick="calcAction('OP','×')">×</button>
+      <button class="calc-btn" onclick="calcAction('NUM','4')">4</button>
+      <button class="calc-btn" onclick="calcAction('NUM','5')">5</button>
+      <button class="calc-btn" onclick="calcAction('NUM','6')">6</button>
+      <button class="calc-btn op" onclick="calcAction('OP','-')">−</button>
+      <button class="calc-btn" onclick="calcAction('NUM','1')">1</button>
+      <button class="calc-btn" onclick="calcAction('NUM','2')">2</button>
+      <button class="calc-btn" onclick="calcAction('NUM','3')">3</button>
+      <button class="calc-btn op" onclick="calcAction('OP','+')">+</button>
+      <button class="calc-btn zero" onclick="calcAction('NUM','0')">0</button>
+      <button class="calc-btn" onclick="calcAction('DOT')">.</button>
+      <button class="calc-btn eq" onclick="calcAction('EQ')">=</button>
+    </div>
+  </div>
+
+  <div id="calc-view-expr" style="display:none">
+    <div class="calc-display">
+      <input type="text" id="calc-expr-input" class="calc-expr-input"
+             placeholder="예: 2*2 + 3*3 + 4*4"
+             autocomplete="off" spellcheck="false" oninput="onExprInput()" />
+      <div class="calc-result" id="calc-expr-result">0</div>
+    </div>
+    <div class="calc-keys expr-keys">
+      <button class="calc-btn clear" onclick="exprAC()">AC</button>
+      <button class="calc-btn func"  onclick="exprInsert('(')">(</button>
+      <button class="calc-btn func"  onclick="exprInsert(')')">)</button>
+      <button class="calc-btn func"  onclick="exprBack()">⌫</button>
+      <button class="calc-btn op"    onclick="exprInsert('÷')">÷</button>
+      <button class="calc-btn" onclick="exprInsert('7')">7</button>
+      <button class="calc-btn" onclick="exprInsert('8')">8</button>
+      <button class="calc-btn" onclick="exprInsert('9')">9</button>
+      <button class="calc-btn func" onclick="exprInsert('%')">%</button>
+      <button class="calc-btn op"   onclick="exprInsert('×')">×</button>
+      <button class="calc-btn" onclick="exprInsert('4')">4</button>
+      <button class="calc-btn" onclick="exprInsert('5')">5</button>
+      <button class="calc-btn" onclick="exprInsert('6')">6</button>
+      <button class="calc-btn func" onclick="exprInsert(',')"> ,</button>
+      <button class="calc-btn op"   onclick="exprInsert('-')">−</button>
+      <button class="calc-btn" onclick="exprInsert('1')">1</button>
+      <button class="calc-btn" onclick="exprInsert('2')">2</button>
+      <button class="calc-btn" onclick="exprInsert('3')">3</button>
+      <button class="calc-btn" onclick="exprInsert('.')">.</button>
+      <button class="calc-btn op"   onclick="exprInsert('+')">+</button>
+      <button class="calc-btn" style="grid-column: span 2" onclick="exprInsert('0')">0</button>
+      <button class="calc-btn" onclick="exprInsert('00')">00</button>
+      <button class="calc-btn eq" style="grid-column: span 2" onclick="exprEvaluate()">=</button>
+    </div>
+  </div>
+
+  <div id="calc-view-tape" style="display:none">
+    <div class="tape-input-row">
+      <input type="text" id="tape-input" class="tape-input"
+             placeholder="예: 2*2   또는   3*3"
+             autocomplete="off" spellcheck="false"
+             onkeydown="if(event.key==='Enter')tapeAdd()" />
+      <button class="tape-add-btn" onclick="tapeAdd()">＋ 추가</button>
+    </div>
+    <div class="tape-list" id="tape-list"></div>
+    <div class="tape-total">
+      <div class="tape-total-label">합계</div>
+      <div class="tape-total-val" id="tape-total">0</div>
+    </div>
+    <div class="tape-actions">
+      <button class="tape-action-btn" onclick="tapeSaveToHistory()">📌 기록에 저장</button>
+      <button class="tape-action-btn danger" onclick="tapeClear()">🗑 모두 지우기</button>
+    </div>
+  </div>
+
+  <div class="calc-history" id="calc-view-history">
+    <div id="calc-history-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="calc-history-foot" id="calc-history-foot" style="display:none">
+      <button class="calc-history-clear" onclick="clearCalcHistory()">기록 모두 지우기</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  var HISTORY_KEY = 'aion2_calc_history_v1';
+  var HISTORY_MAX = 50;
+
+  function fmt(n) {
+    if (n === null || n === undefined || Number.isNaN(n)) return '오류';
+    if (!Number.isFinite(n)) return '∞';
+    return Math.abs(n) >= 1e16 ? n.toExponential(6) : String(parseFloat(n.toPrecision(12)));
+  }
+  function loadHistory() {
+    try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) { return []; }
+  }
+  function saveHistory(list) {
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, HISTORY_MAX))); } catch(e) {}
+  }
+  function pushHistory(mode, expr, result) {
+    var list = loadHistory();
+    list.unshift({ mode: mode, expr: expr, result: result, t: Date.now() });
+    saveHistory(list);
+    renderHistory();
+  }
+  function evalExpression(raw) {
+    if (!raw || !raw.trim()) return null;
+    var s = raw.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-')
+               .replace(/\s+/g,'').replace(/,/g,'');
+    if (!/^[0-9+\-*/().% ]+$/.test(s)) throw new Error('허용되지 않은 문자');
+    s = s.replace(/(\d+(?:\.\d+)?)%/g, '($1/100)');
+    var fn = new Function('return (' + s + ')');
+    var v = fn();
+    if (typeof v !== 'number' || Number.isNaN(v)) throw new Error('계산 결과 없음');
+    return v;
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // 기본 계산기
+  var calcState = { current:'0', previous:null, op:null, justEvaluated:false, expr:'', _awaitingNext:false };
+  function compute(a, op, b) {
+    switch(op) { case '+': return a+b; case '-': return a-b; case '×': return a*b; case '÷': return b===0?NaN:a/b; }
+    return b;
+  }
+  function refreshBasicDisplay() {
+    document.getElementById('calc-expr').innerHTML = calcState.expr || '&nbsp;';
+    document.getElementById('calc-result').textContent = calcState.current;
+  }
+  function calcAction(type, val) {
+    if ((type==='NUM' || type==='DOT') && calcState._awaitingNext) {
+      calcState.current = (type==='DOT') ? '0.' : val;
+      calcState._awaitingNext = false;
+      refreshBasicDisplay(); return;
+    }
+    switch(type) {
+      case 'NUM':
+        if (calcState.justEvaluated) { calcState.current = val; calcState.expr = ''; calcState.justEvaluated = false; }
+        else if (calcState.current === '0') calcState.current = val;
+        else if (calcState.current.length < 16) calcState.current += val;
+        break;
+      case 'DOT':
+        if (calcState.justEvaluated) { calcState.current = '0.'; calcState.expr = ''; calcState.justEvaluated = false; }
+        else if (!calcState.current.includes('.')) calcState.current += '.';
+        break;
+      case 'OP':
+        var num = parseFloat(calcState.current);
+        if (calcState.previous !== null && calcState.op && !calcState.justEvaluated) {
+          var r = compute(calcState.previous, calcState.op, num);
+          calcState.previous = r; calcState.current = fmt(r);
+        } else { calcState.previous = num; }
+        calcState.op = val;
+        calcState.expr = fmt(calcState.previous) + ' ' + val;
+        calcState.justEvaluated = false;
+        calcState._awaitingNext = true;
+        break;
+      case 'EQ':
+        if (calcState.op !== null && calcState.previous !== null) {
+          var a = calcState.previous;
+          var b = parseFloat(calcState.current);
+          var rr = compute(a, calcState.op, b);
+          var exprFull = fmt(a) + ' ' + calcState.op + ' ' + fmt(b);
+          calcState.expr = exprFull + ' =';
+          calcState.current = fmt(rr);
+          if (calcState.current !== '오류' && calcState.current !== '∞') {
+            pushHistory('basic', exprFull, calcState.current);
+          }
+          calcState.previous = null; calcState.op = null;
+          calcState.justEvaluated = true; calcState._awaitingNext = false;
+        }
+        break;
+      case 'AC':
+        calcState = { current:'0', previous:null, op:null, justEvaluated:false, expr:'', _awaitingNext:false };
+        break;
+      case 'SIGN':
+        if (calcState.current !== '0' && calcState.current !== '오류') {
+          calcState.current = calcState.current.indexOf('-') === 0
+            ? calcState.current.slice(1) : '-' + calcState.current;
+        }
+        break;
+      case 'PCT':
+        var n2 = parseFloat(calcState.current);
+        if (!Number.isNaN(n2)) calcState.current = fmt(n2 / 100);
+        break;
+      case 'BACK':
+        if (calcState.justEvaluated) break;
+        if (calcState.current.length <= 1 || (calcState.current.length === 2 && calcState.current.indexOf('-') === 0)) {
+          calcState.current = '0';
+        } else { calcState.current = calcState.current.slice(0, -1); }
+        break;
+    }
+    refreshBasicDisplay();
+  }
+
+  // 수식
+  function exprInsert(ch) {
+    var input = document.getElementById('calc-expr-input');
+    var start = input.selectionStart != null ? input.selectionStart : input.value.length;
+    var end   = input.selectionEnd   != null ? input.selectionEnd   : input.value.length;
+    var v = input.value;
+    input.value = v.slice(0, start) + ch + v.slice(end);
+    var pos = start + ch.length;
+    input.focus(); input.setSelectionRange(pos, pos);
+    onExprInput();
+  }
+  function exprBack() {
+    var input = document.getElementById('calc-expr-input');
+    var start = input.selectionStart != null ? input.selectionStart : input.value.length;
+    var end   = input.selectionEnd   != null ? input.selectionEnd   : input.value.length;
+    var v = input.value;
+    if (start === end && start > 0) {
+      input.value = v.slice(0, start - 1) + v.slice(end);
+      var pos = start - 1;
+      input.focus(); input.setSelectionRange(pos, pos);
+    } else if (start !== end) {
+      input.value = v.slice(0, start) + v.slice(end);
+      input.focus(); input.setSelectionRange(start, start);
+    }
+    onExprInput();
+  }
+  function exprAC() {
+    document.getElementById('calc-expr-input').value = '';
+    document.getElementById('calc-expr-result').textContent = '0';
+    document.getElementById('calc-expr-input').focus();
+  }
+  function onExprInput() {
+    var raw = document.getElementById('calc-expr-input').value;
+    var out = document.getElementById('calc-expr-result');
+    if (!raw.trim()) { out.textContent = '0'; out.style.color=''; return; }
+    try { out.textContent = fmt(evalExpression(raw)); out.style.color=''; }
+    catch(e) { out.textContent = '…'; out.style.color = 'var(--text-sub)'; }
+  }
+  function exprEvaluate() {
+    var raw = document.getElementById('calc-expr-input').value;
+    var out = document.getElementById('calc-expr-result');
+    if (!raw.trim()) return;
+    try {
+      var result = fmt(evalExpression(raw));
+      out.textContent = result; out.style.color = '';
+      pushHistory('expr', raw, result);
+    } catch(e) {
+      out.textContent = '오류'; out.style.color = 'var(--peach)';
+    }
+  }
+
+  // 테이프
+  var tapeItems = [];
+  function tapeAdd() {
+    var input = document.getElementById('tape-input');
+    var raw = input.value.trim();
+    if (!raw) return;
+    try {
+      var v = evalExpression(raw);
+      tapeItems.push({ expr: raw, val: v });
+      input.value = ''; renderTape(); input.focus();
+    } catch(e) {
+      input.style.borderColor = 'var(--peach)';
+      input.style.background = 'var(--peach-light)';
+      setTimeout(function(){ input.style.borderColor=''; input.style.background=''; }, 600);
+    }
+  }
+  function tapeRemove(idx) { tapeItems.splice(idx, 1); renderTape(); }
+  function tapeClear() { if (!tapeItems.length) return; tapeItems = []; renderTape(); }
+  function tapeTotal() {
+    return tapeItems.reduce(function(s, it){ return s + (typeof it.val === 'number' ? it.val : 0); }, 0);
+  }
+  function renderTape() {
+    var list = document.getElementById('tape-list');
+    var total = document.getElementById('tape-total');
+    if (tapeItems.length === 0) {
+      list.innerHTML = '<div class="tape-empty">항을 입력하고 ＋추가 (또는 Enter) 하세요</div>';
+    } else {
+      list.innerHTML = tapeItems.map(function(it, i){
+        return '<div class="tape-item">' +
+          '<div class="tape-num">' + (i+1) + '</div>' +
+          '<div class="tape-expr">' + escapeHtml(it.expr) + '</div>' +
+          '<div class="tape-val">= ' + fmt(it.val) + '</div>' +
+          '<button class="tape-del" onclick="tapeRemove(' + i + ')" title="삭제">✕</button>' +
+        '</div>';
+      }).join('');
+    }
+    total.textContent = fmt(tapeTotal());
+  }
+  function tapeSaveToHistory() {
+    if (!tapeItems.length) return;
+    var expr = tapeItems.map(function(it){ return '(' + it.expr + ')'; }).join(' + ');
+    var result = fmt(tapeTotal());
+    pushHistory('tape', expr, result);
+    var btn = event.currentTarget;
+    var original = btn.textContent;
+    btn.textContent = '✓ 저장됨'; btn.style.color = 'var(--sage)';
+    setTimeout(function(){ btn.textContent = original; btn.style.color = ''; }, 1200);
+  }
+
+  // 탭 전환
+  var currentView = 'basic';
+  function switchCalcView(view) {
+    currentView = view;
+    var tabs = document.querySelectorAll('.calc-tab');
+    for (var i = 0; i < tabs.length; i++) {
+      var t = tabs[i];
+      if (t.dataset.view === view) t.classList.add('active');
+      else t.classList.remove('active');
+    }
+    document.getElementById('calc-view-basic').style.display = (view==='basic') ? '' : 'none';
+    document.getElementById('calc-view-expr').style.display  = (view==='expr')  ? '' : 'none';
+    document.getElementById('calc-view-tape').style.display  = (view==='tape')  ? '' : 'none';
+    var hist = document.getElementById('calc-view-history');
+    if (view === 'history') hist.classList.add('open'); else hist.classList.remove('open');
+    if (view === 'expr')    setTimeout(function(){ document.getElementById('calc-expr-input').focus(); }, 30);
+    if (view === 'tape')    setTimeout(function(){ document.getElementById('tape-input').focus(); }, 30);
+    if (view === 'history') renderHistory();
+  }
+
+  // 히스토리
+  var MODE_LABEL = { basic: '기본', expr: '수식', tape: '테이프' };
+  function renderHistory() {
+    var list = loadHistory();
+    var wrap = document.getElementById('calc-history-list');
+    var foot = document.getElementById('calc-history-foot');
+    if (!list.length) {
+      wrap.innerHTML = '<div class="calc-history-empty">아직 계산 기록이 없어요</div>';
+      foot.style.display = 'none';
+      return;
+    }
+    wrap.innerHTML = list.map(function(it, i){
+      var badgeClass = it.mode || 'basic';
+      var label = MODE_LABEL[it.mode] || '기본';
+      return '<div class="calc-history-item" onclick="useHistory(' + i + ')">' +
+               '<div class="calc-history-meta">' +
+                 '<span class="calc-history-mode-badge ' + badgeClass + '">' + label + '</span>' +
+                 '<span>' + formatTime(it.t) + '</span>' +
+               '</div>' +
+               '<div class="calc-history-expr">' + escapeHtml(it.expr) + ' =</div>' +
+               '<div class="calc-history-result">' + escapeHtml(it.result) + '</div>' +
+             '</div>';
+    }).join('');
+    foot.style.display = '';
+  }
+  function formatTime(t) {
+    if (!t) return '';
+    var d = new Date(t);
+    var now = new Date();
+    var sameDay = d.toDateString() === now.toDateString();
+    var hh = String(d.getHours()).padStart(2,'0');
+    var mm = String(d.getMinutes()).padStart(2,'0');
+    if (sameDay) return hh + ':' + mm;
+    return (d.getMonth()+1) + '/' + d.getDate() + ' ' + hh + ':' + mm;
+  }
+  function useHistory(idx) {
+    var list = loadHistory();
+    var it = list[idx];
+    if (!it) return;
+    if (it.mode === 'expr') {
+      document.getElementById('calc-expr-input').value = it.expr;
+      onExprInput();
+      switchCalcView('expr');
+    } else {
+      calcState = { current: it.result, previous: null, op: null,
+                    justEvaluated: true, expr: it.expr + ' =', _awaitingNext: false };
+      refreshBasicDisplay();
+      switchCalcView('basic');
+    }
+  }
+  function clearCalcHistory() { saveHistory([]); renderHistory(); }
+
+  // 키보드
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') { window.close(); return; }
+    var ae = document.activeElement;
+    var inInput = ae && (ae.id === 'calc-expr-input' || ae.id === 'tape-input');
+    if (inInput) {
+      if (currentView === 'expr' && (e.key === 'Enter' || e.key === '=')) {
+        e.preventDefault(); exprEvaluate();
+      }
+      return;
+    }
+    if (currentView !== 'basic') return;
+    if (/^[0-9]$/.test(e.key)) { e.preventDefault(); calcAction('NUM', e.key); return; }
+    if (e.key === '.') { e.preventDefault(); calcAction('DOT'); return; }
+    if (e.key === '+' || e.key === '-') { e.preventDefault(); calcAction('OP', e.key); return; }
+    if (e.key === '*') { e.preventDefault(); calcAction('OP', '×'); return; }
+    if (e.key === '/') { e.preventDefault(); calcAction('OP', '÷'); return; }
+    if (e.key === 'Enter' || e.key === '=') { e.preventDefault(); calcAction('EQ'); return; }
+    if (e.key === 'Backspace') { e.preventDefault(); calcAction('BACK'); return; }
+    if (e.key === '%') { e.preventDefault(); calcAction('PCT'); return; }
+  });
+
+  // 메인 창에서 기록 저장 시 자동 새로고침
+  window.addEventListener('storage', function(e){
+    if (e.key === HISTORY_KEY && currentView === 'history') renderHistory();
+  });
+
+  refreshBasicDisplay();
+  renderTape();
+  renderHistory();
+</script>
+</body>
+</html>
+</template>
+
+<script>
+  // ── 메인 페이지: 츄냥이 계산기 새 창 띄우기 ──
+  var CALC_WINDOW_GEOM_KEY = 'aion2_calc_window_geom';
+  var calcWin = null;
+
+  function openCalcWindow() {
+    if (calcWin && !calcWin.closed) {
+      calcWin.focus();
+      return;
+    }
+
+    var geom = { width: 380, height: 600, left: null, top: null };
+    try {
+      var saved = JSON.parse(localStorage.getItem(CALC_WINDOW_GEOM_KEY) || 'null');
+      if (saved) {
+        if (typeof saved.width  === 'number') geom.width  = saved.width;
+        if (typeof saved.height === 'number') geom.height = saved.height;
+        if (typeof saved.left   === 'number') geom.left   = saved.left;
+        if (typeof saved.top    === 'number') geom.top    = saved.top;
+      }
+    } catch(e) {}
+
+    var sw = window.screen.availWidth || 1280;
+    var sh = window.screen.availHeight || 720;
+    geom.width  = Math.min(Math.max(280, geom.width),  sw);
+    geom.height = Math.min(Math.max(360, geom.height), sh);
+    if (geom.left === null) geom.left = Math.max(0, Math.floor((sw - geom.width) / 2));
+    if (geom.top  === null) geom.top  = Math.max(0, Math.floor((sh - geom.height) / 3));
+
+    var features =
+      'width='  + geom.width  +
+      ',height=' + geom.height +
+      ',left='   + geom.left   +
+      ',top='    + geom.top    +
+      ',resizable=yes,scrollbars=yes,menubar=no,toolbar=no,location=no,status=no';
+
+    var w = window.open('about:blank', 'aion2_calc_window', features);
+    if (!w) {
+      if (typeof showToast === 'function') {
+        showToast('팝업이 차단됐어요. 주소창 옆 아이콘에서 허용해 주세요');
+      } else {
+        alert('팝업이 차단됐어요. 주소창 옆 아이콘에서 허용해 주세요');
+      }
+      return;
+    }
+    calcWin = w;
+
+    var tpl = document.getElementById('calc-window-template');
+    var html = '<!DOCTYPE html>' + tpl.innerHTML;
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+
+    var saveGeom = function() {
+      try {
+        if (!w || w.closed) return;
+        localStorage.setItem(CALC_WINDOW_GEOM_KEY, JSON.stringify({
+          width:  w.outerWidth,
+          height: w.outerHeight,
+          left:   w.screenX,
+          top:    w.screenY
+        }));
+      } catch(e) {}
+    };
+    var intervalId = setInterval(function(){
+      if (!w || w.closed) {
+        clearInterval(intervalId);
+        calcWin = null;
+        return;
+      }
+      saveGeom();
+    }, 1000);
+
+    try { w.addEventListener('beforeunload', saveGeom); } catch(e) {}
+  }
+  window.openCalcWindow = openCalcWindow;
+</script>
+
+</body>
+</html>
