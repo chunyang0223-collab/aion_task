@@ -8139,8 +8139,8 @@ function renderOverview() {
     const ownerTicketSum = allChars
       .filter(c => c.owner === owner)
       .reduce((s, c) => s + (c.dungeon_tickets || 0) + (c.dungeon_tickets_perm || 0), 0);
-    // 물질변환 (v1.6.1): 캐릭별 주 4회 + 계정 통합 16회
-    const tmChars = allChars.filter(c => c.owner === owner);
+    // 물질변환 (v1.6.1): 캐릭별 주 4회 + 계정 통합 16회 — 휴식 캐릭 제외 (v1.7.6)
+    const tmChars = allChars.filter(c => c.owner === owner && !c.resting);
     const tmCharSum = tmChars.reduce((s, c) => s + Math.min(4, c.transmutation_count || 0), 0);
     const tmAccCnt = Math.min(16, acc.transmutation_account_count || 0);
     const tmAllDone = tmChars.length > 0
@@ -10301,7 +10301,7 @@ function stepInvasion(owner, delta) {
 async function toggleAllTransmutation(owner, value) {
   if (currentActor === 'guest') return;
 
-  const ownerChars = allChars.filter(c => c.owner === owner);
+  const ownerChars = allChars.filter(c => c.owner === owner && !c.resting);   // 휴식 캐릭 제외 (v1.7.6)
   const target = value ? 4 : 0;
   const accTarget = value ? 16 : 0;
 
@@ -10328,7 +10328,7 @@ async function toggleAllTransmutation(owner, value) {
 async function toggleAllShopPurchase(owner, value) {
   if (currentActor === 'guest') return;
 
-  const ownerChars = allChars.filter(c => c.owner === owner);
+  const ownerChars = allChars.filter(c => c.owner === owner && !c.resting);   // 휴식 캐릭 제외 (v1.7.6)
   const target = value ? 4 : 0;
   const accTarget = value ? 16 : 0;
 
@@ -10444,6 +10444,9 @@ function openAccountModal(owner) {
   // 상점(오드구매) 계정 통합 카운트 (v1.6.7)
   const shopAccCnt = Math.min(16, acc.shop_purchase_account_count || 0);
 
+  // 휴식 캐릭은 물질변환·상점(오드구매) 목록에서 제외 (v1.7.6) — 일일던전 충전권 목록에는 유지
+  const activeChars = ownerChars.filter(c => !c.resting);
+
   document.getElementById('acc-modal-body').innerHTML = `
     <div class="am-body">
 
@@ -10514,7 +10517,7 @@ function openAccountModal(owner) {
           <span id="transmutation-chevron-${owner}" class="am-chev" style="${_transmutationDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
         </div>
         <div id="transmutation-dropdown-${owner}" class="am-body-inner" style="display:${_transmutationDropdownExpanded?'block':'none'}">
-          ${ownerChars.length === 0
+          ${activeChars.length === 0
             ? `<div style="text-align:center;font-size:0.75rem;color:var(--text-sub);padding:4px">등록된 캐릭터가 없어요</div>`
             : `<div class="am-ledger">
                  <div class="am-ledger-head" style="grid-template-columns:minmax(0,1.05fr) 2fr 46px"><span>캐릭터</span><span></span><span></span></div>
@@ -10523,7 +10526,7 @@ function openAccountModal(owner) {
                    <div class="am-cc">${tmSliderHtml(owner, tmAccCnt, 16, 'acc')}</div>
                    <div class="am-cc"><span class="tm-num tm-num-sm"><span class="tm-n">${tmAccCnt}</span><span class="tm-unit">/16</span></span></div>
                  </div>` +
-                 ownerChars.map(c => {
+                 activeChars.map(c => {
                    const cnt = Math.min(4, c.transmutation_count||0);
                    return `<div class="am-ledger-row" style="grid-template-columns:minmax(0,1.05fr) 2fr 46px">
                    <div class="am-nmcell"><span class="am-odot" style="background:var(--color-owner-${owner})"></span><span class="am-row-name">${escapeHtml(c.name || '(이름없음)')}</span></div>
@@ -10541,7 +10544,7 @@ function openAccountModal(owner) {
           <span id="shop-chevron-${owner}" class="am-chev" style="${_shopDropdownExpanded?'transform:rotate(180deg)':''}">▾</span>
         </div>
         <div id="shop-dropdown-${owner}" class="am-body-inner" style="display:${_shopDropdownExpanded?'block':'none'}">
-          ${ownerChars.length === 0
+          ${activeChars.length === 0
             ? `<div style="text-align:center;font-size:0.75rem;color:var(--text-sub);padding:4px">등록된 캐릭터가 없어요</div>`
             : `<div class="am-ledger">
                  <div class="am-ledger-head" style="grid-template-columns:minmax(0,1.05fr) 2fr 46px"><span>캐릭터</span><span></span><span></span></div>
@@ -10550,7 +10553,7 @@ function openAccountModal(owner) {
                    <div class="am-cc">${tmSliderHtml(owner, shopAccCnt, 16, 'acc', null, 'shop')}</div>
                    <div class="am-cc"><span class="tm-num tm-num-sm"><span class="tm-n">${shopAccCnt}</span><span class="tm-unit">/16</span></span></div>
                  </div>` +
-                 ownerChars.map(c => {
+                 activeChars.map(c => {
                    const cnt = Math.min(4, c.shop_purchase_count||0);
                    return `<div class="am-ledger-row" style="grid-template-columns:minmax(0,1.05fr) 2fr 46px">
                    <div class="am-nmcell"><span class="am-odot" style="background:var(--color-owner-${owner})"></span><span class="am-row-name">${escapeHtml(c.name || '(이름없음)')}</span></div>
