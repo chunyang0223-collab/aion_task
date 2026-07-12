@@ -1256,6 +1256,16 @@ body.guest-mode .odd-batch-btn { display: none; }
 /* 계정 카드: 슈고열쇠(왼쪽) · 침공열쇠(오른쪽) 한 줄 배치 */
 .stat-duo { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 3px 0; }
 .stat-duo-cell { display: inline-flex; align-items: baseline; gap: 8px; min-width: 0; white-space: nowrap; }
+/* 계정 카드: 일일던전(왼쪽 세로) · 슈고/침공열쇠(오른쪽 세로) 2×2 배치 (작업본7) */
+.stat-quad {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 12px;
+  row-gap: 2px;
+  align-items: baseline;
+  padding: 3px 0;
+}
+.stat-quad .stat-duo-cell:nth-child(even) { justify-self: end; }
 
 /* 일일던전 드롭다운 헤더 — hover 시 살짝 강조 (레이아웃 유지) */
 .dungeon-toggle-row {
@@ -2186,6 +2196,8 @@ html.skin-glc .alarm-row.on { background: #FBF2F6; border-color: #ecd2d2; }
   box-shadow: var(--shadow);
   padding: 12px 14px;
   min-width: 224px;
+  max-height: min(72vh, 620px);   /* 항목이 늘어나도 화면 밖으로 안 나가게 (작업본6) */
+  overflow-y: auto;
   opacity: 0;
   visibility: hidden;
   transform: translateY(-4px);
@@ -5362,6 +5374,186 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
   100%    { box-shadow: inset 0 0 0 2px transparent, 0 0 0 0 transparent; }
 }
 .sec-flash { animation: secFlash 1.6s ease-out; border-radius: var(--radius-sm); }
+
+/* ════════════ 설정 팝오버 — 상단 요소 섹션 (작업본6) ════════════ */
+.settings-section-title {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+
+/* ════════════ 데바패스 페이지 (작업본6) ════════════ */
+.deva-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.deva-topbar-note {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+}
+.deva-add-btn {
+  flex: none;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px dashed var(--sage);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.deva-add-btn:hover { background: var(--sage-light); border-color: var(--sage); }
+.deva-pass-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 16px 18px 14px;
+  margin-bottom: 14px;
+}
+.deva-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.deva-card-name { font-size: 0.95rem; color: var(--text); }
+.deva-card-price { font-size: 0.72rem; color: var(--text-sub); margin-top: 2px; }
+.deva-card-actions { display: flex; gap: 6px; flex: none; }
+.deva-icon-btn {
+  min-width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-sub);
+  font-size: 0.76rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  font-family: 'Gowun Dodum', sans-serif;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.deva-icon-btn:hover { background: var(--hover); color: var(--text); }
+.deva-icon-btn.arm {
+  background: var(--odd-full);
+  border-color: var(--odd-full);
+  color: #fff;
+  font-size: 0.68rem;
+}
+.deva-card-stats { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; margin-bottom: 12px; }
+.deva-stat-chip {
+  font-size: 0.68rem;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-sub);
+}
+.deva-stat-chip.full { background: var(--sage-light); border-color: var(--sage); color: var(--text); }
+.deva-owner-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 640px) { .deva-owner-cols { grid-template-columns: 1fr; } }
+.deva-owner-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  margin-bottom: 4px;
+}
+.deva-owner-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.deva-char-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+.deva-char-row + .deva-char-row { border-top: 1px dashed var(--border); }
+.deva-char-name {
+  flex: 1;
+  font-size: 0.82rem;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.deva-chip {
+  flex: none;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-sub);
+  cursor: pointer;
+  font-family: 'Gowun Dodum', sans-serif;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.deva-chip:hover { border-color: var(--text-sub); }
+.deva-chip.premium.on { background: var(--lavender-light); border-color: var(--lavender); color: var(--text); }
+.deva-chip.xp.on { background: var(--sage-light); border-color: var(--sage); color: var(--text); }
+body.guest-mode .deva-chip { cursor: default; }
+body.guest-mode .deva-chip:hover { border-color: var(--border); }
+.deva-empty {
+  text-align: center;
+  color: var(--text-sub);
+  font-size: 0.85rem;
+  padding: 32px 16px;
+}
+.deva-col-empty {
+  font-size: 0.76rem;
+  color: var(--text-sub);
+  padding: 10px 0;
+}
+
+/* 데바패스 등록/수정 모달 폼 (작업본6) */
+.deva-form-field { margin-top: 12px; }
+.deva-form-label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  margin-bottom: 5px;
+}
+.deva-form-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.deva-form-input:focus { border-color: var(--sage); background: var(--surface); }
+.deva-form-save {
+  width: 100%;
+  margin-top: 16px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--sage);
+  color: #fff;
+  font-size: 0.85rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.deva-form-save:hover { filter: brightness(0.95); }
 </style>
 </head>
 <body>
@@ -5371,19 +5563,20 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
   <div style="display:flex;align-items:center;gap:7px;flex-shrink:0">
     <div class="realtime-dot" id="rt-dot" title="실시간 연결"></div>
     <div class="topbar-title" id="topbar-title-area">Aion2 <span>츄냥이숙제</span></div>
-    <button class="calc-icon-btn" onclick="openCalcWindow()" title="츄냥이 계산기" aria-label="계산기 열기">🧮</button>
+    <button class="calc-icon-btn" id="calc-btn" onclick="openCalcWindow()" title="츄냥이 계산기" aria-label="계산기 열기">🧮</button>
     <button class="calc-icon-btn skin-toggle-btn" id="skin-toggle-btn" onclick="toggleSkin()" title="스킨 전환" aria-label="스킨 전환">🎨</button>
   </div>
   <div class="tab-pills">
     <button class="tab-pill active" id="tab-overview" onclick="showPage('overview')">전체</button>
-    <button class="tab-pill" id="tab-todo" onclick="showPage('todo-page')">할일</button>
     <button class="tab-pill" onclick="showPage('detail-page')" id="detail-tab" style="display:none">상세</button>
+    <button class="tab-pill" id="tab-todo" onclick="showPage('todo-page')">할일</button>
+    <button class="tab-pill" id="tab-deva" onclick="showPage('deva-page')">데바패스</button>
     <button class="tab-pill" id="tab-sanctuary" onclick="showPage('sanctuary-page')">성역</button>
     <button class="tab-pill" id="tab-expedition" onclick="showPage('expedition-page')">원정</button>
     <button class="tab-pill" id="tab-supply" onclick="showPage('supply-page')">보급</button>
-    <button class="tab-pill" id="tab-growth" onclick="showPage('growth-page')">성장</button>
     <button class="tab-pill" id="tab-craft" onclick="showPage('craft-page')">제작</button>
     <button class="tab-pill" id="tab-season" onclick="showPage('season-page')">시즌</button>
+    <button class="tab-pill" id="tab-growth" onclick="showPage('growth-page')">성장</button>
     <button class="tab-pill" id="tab-log" onclick="showPage('log-page')">로그</button>
   </div>
   <div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;gap:2px;position:relative">
@@ -5417,6 +5610,8 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
     <div id="settings-popover" class="settings-popover" role="region" aria-label="메뉴 설정">
       <div class="settings-popover-title">메뉴 표시 설정</div>
       <div id="settings-menu-list"></div>
+      <div class="settings-popover-title settings-section-title">상단 요소 표시 설정</div>
+      <div id="settings-ui-list"></div>
       <div class="settings-popover-hint">이 기기에만 저장돼요</div>
     </div>
   </div>
@@ -5782,6 +5977,31 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
 </div>
 
 <!-- ── 제작 페이지 (v1.7.4) ── -->
+<!-- ── 데바패스 페이지 (작업본6) ── -->
+<div id="deva-page" class="page">
+  <div id="deva-content">
+    <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
+  </div>
+</div>
+
+<!-- 데바패스 등록/수정 모달 (작업본6) -->
+<div id="deva-modal-overlay" class="alarm-overlay" onclick="closeDevaPassModal(event)">
+  <div class="alarm-modal" style="max-width:320px" onclick="event.stopPropagation()">
+    <button class="alarm-close" onclick="closeDevaPassModal()" aria-label="닫기">×</button>
+    <div class="alarm-modal-title" id="deva-modal-title">패스 등록</div>
+    <div class="alarm-modal-desc">모든 기기에서 공유 · 삭제 전까지 유지돼요</div>
+    <div class="deva-form-field">
+      <label class="deva-form-label" for="deva-pass-name">패스 이름</label>
+      <input type="text" id="deva-pass-name" class="deva-form-input" placeholder="예: LV51 영웅의 초대장" maxlength="40" onkeydown="if(event.key==='Enter')saveDevaPassModal()">
+    </div>
+    <div class="deva-form-field">
+      <label class="deva-form-label" for="deva-pass-price">프리미엄 가격 (선택)</label>
+      <input type="text" id="deva-pass-price" class="deva-form-input" placeholder="모르면 비워두고 나중에 수정" maxlength="20" onkeydown="if(event.key==='Enter')saveDevaPassModal()">
+    </div>
+    <button class="deva-form-save" onclick="saveDevaPassModal()">저장</button>
+  </div>
+</div>
+
 <div id="craft-page" class="page">
   <div id="craft-content">
     <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
@@ -6076,15 +6296,64 @@ document.addEventListener('keydown', (e) => {
 const MENU_DEFS = [
   { key: 'overview',   tab: 'tab-overview',   page: 'overview',        label: '전체' },
   { key: 'todo',       tab: 'tab-todo',       page: 'todo-page',       label: '할일' },
+  { key: 'deva',       tab: 'tab-deva',       page: 'deva-page',       label: '데바패스' },
   { key: 'sanctuary',  tab: 'tab-sanctuary',  page: 'sanctuary-page',  label: '성역' },
   { key: 'expedition', tab: 'tab-expedition', page: 'expedition-page', label: '원정' },
   { key: 'supply',     tab: 'tab-supply',     page: 'supply-page',     label: '보급' },
-  { key: 'growth',     tab: 'tab-growth',     page: 'growth-page',     label: '성장' },
   { key: 'craft',      tab: 'tab-craft',      page: 'craft-page',      label: '제작' },
   { key: 'season',     tab: 'tab-season',     page: 'season-page',     label: '시즌' },
+  { key: 'growth',     tab: 'tab-growth',     page: 'growth-page',     label: '성장' },
   { key: 'log',        tab: 'tab-log',        page: 'log-page',        label: '로그' },
 ];
 const MENU_STORE_KEY = 'aion2_menu_hidden';
+
+/* ── 상단 요소 표시/숨김 (로컬 저장, 사용자별) 작업본6 ──
+   로고·계산기·스킨테마·알람·리셋정보를 개별 숨김. 알람 버튼을 숨겨도
+   예약된 알람 자체는 계속 작동함(표시만 감춤). */
+const TOPBAR_DEFS = [
+  { key: 'logo',  el: 'topbar-title-area', label: '로고' },
+  { key: 'calc',  el: 'calc-btn',          label: '계산기' },
+  { key: 'skin',  el: 'skin-toggle-btn',   label: '스킨테마' },
+  { key: 'alarm', el: 'alarm-btn',         label: '알람' },
+  { key: 'reset', el: 'reset-trigger',     label: '리셋 정보' },
+];
+const TOPBAR_STORE_KEY = 'aion2_topbar_hidden';
+
+function getHiddenTopbar() {
+  let all = {};
+  try { all = JSON.parse(localStorage.getItem(TOPBAR_STORE_KEY) || '{}'); } catch (e) {}
+  return new Set(all[_menuActorKey()] || []);
+}
+function setHiddenTopbar(set) {
+  let all = {};
+  try { all = JSON.parse(localStorage.getItem(TOPBAR_STORE_KEY) || '{}'); } catch (e) {}
+  all[_menuActorKey()] = [...set];
+  try { localStorage.setItem(TOPBAR_STORE_KEY, JSON.stringify(all)); } catch (e) {}
+}
+function applyTopbarVisibility() {
+  const hidden = getHiddenTopbar();
+  TOPBAR_DEFS.forEach(m => {
+    const el = document.getElementById(m.el);
+    if (el) el.style.display = hidden.has(m.key) ? 'none' : '';
+  });
+  // 리셋 정보 버튼을 숨기면 열려 있던 팝오버도 닫음
+  if (hidden.has('reset') && typeof closeResetInfo === 'function') {
+    try { closeResetInfo(); } catch (e) {}
+  }
+}
+function toggleTopbarItem(e, btn, key) {
+  if (e) e.stopPropagation();   // 팝오버가 닫히지 않도록 버블링 차단
+  const hidden = getHiddenTopbar();
+  if (hidden.has(key)) hidden.delete(key);
+  else hidden.add(key);
+  setHiddenTopbar(hidden);
+  applyTopbarVisibility();
+  const on = !hidden.has(key);
+  if (btn) {
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-checked', on ? 'true' : 'false');
+  }
+}
 
 function _menuActorKey() {
   return (typeof currentActor !== 'undefined' && currentActor) ? currentActor : 'guest';
@@ -6128,6 +6397,20 @@ function buildSettingsList() {
       'onclick="toggleMenu(event, this, \'' + m.key + '\')"><span class="menu-toggle-knob"></span></button>' +
       '</div>';
   }).join('');
+  // 상단 요소 토글 목록 (작업본6)
+  const uiList = document.getElementById('settings-ui-list');
+  if (uiList) {
+    const uiHidden = getHiddenTopbar();
+    uiList.innerHTML = TOPBAR_DEFS.map(m => {
+      const on = !uiHidden.has(m.key);
+      return '<div class="settings-row">' +
+        '<span class="settings-row-label">' + m.label + '</span>' +
+        '<button type="button" class="menu-toggle' + (on ? ' on' : '') + '" role="switch" ' +
+        'aria-checked="' + (on ? 'true' : 'false') + '" aria-label="' + m.label + ' 표시" ' +
+        'onclick="toggleTopbarItem(event, this, \'' + m.key + '\')"><span class="menu-toggle-knob"></span></button>' +
+        '</div>';
+    }).join('');
+  }
 }
 function toggleMenu(e, btn, key) {
   if (e) e.stopPropagation();   // 팝오버가 닫히지 않도록 버블링 차단
@@ -6193,8 +6476,10 @@ document.addEventListener('keydown', (e) => {
 // 초기 적용
 document.addEventListener('DOMContentLoaded', function () {
   try { applyMenuVisibility(); } catch (e) { console.error('[메뉴설정]', e); }
+  try { applyTopbarVisibility(); } catch (e) { console.error('[상단요소설정]', e); }
 });
 try { applyMenuVisibility(); } catch (e) {}
+try { applyTopbarVisibility(); } catch (e) {}
 
 /* ════════════════ 시즌 페이지 (로컬 저장, 캐릭터별) v1.6.92 ════════════════ */
 const SEASON_STORE_KEY = 'aion2_season';   // 기존 로컬 키 (1회 이관용)
@@ -7490,6 +7775,18 @@ function showPage(id) {
         `</div>`;
     }
   }
+  if (id === 'deva-page') {
+    document.getElementById('tab-deva').classList.add('active');
+    try {
+      renderDevaPage();
+    } catch (e) {
+      console.error('[데바패스 탭 에러]', e);
+      document.getElementById('deva-content').innerHTML =
+        `<div class="card" style="color:#b85050;font-size:0.85rem;white-space:pre-wrap">` +
+        `데바패스 탭 렌더 오류:\n${e.message}\n\n콘솔 로그를 확인해 주세요.` +
+        `</div>`;
+    }
+  }
   if (id === 'detail-page') document.getElementById('detail-tab').classList.add('active');
   if (id === 'sanctuary-page') {
     document.getElementById('tab-sanctuary').classList.add('active');
@@ -7774,6 +8071,9 @@ async function loadAll() {
       }
     }
   } catch (e) { OWNERS.forEach(o => { cardLocked[o] = false; }); }
+
+  // ── 데바패스 목록 (app_config.deva_passes, 전 사용자 공유) 작업본6 ──
+  await loadDevaPasses();
 
   // ── 시즌 데이터 (Supabase 공유 + 1회 로컬 이관) ──
   await seasonInitLoad();
@@ -8154,20 +8454,22 @@ function renderOverview() {
       && shopAccCnt >= 16;
     html += `<div class="account-card" style="cursor:pointer" onclick="openAccountModal('${owner}')">
       <div class="account-card-title">${owner} 계정 <span style="float:right;font-size:0.7rem;color:var(--text-sub)">✎</span></div>
-      <!-- 슈고열쇠(왼쪽) · 침공열쇠(오른쪽) 한 줄 (v1.6.98) -->
-      <div class="stat-duo">
+      <!-- 일일던전(왼쪽 위·아래) · 슈고/침공열쇠(오른쪽 위·아래) 2×2 배치 (작업본7) -->
+      <div class="stat-quad">
+        <span class="stat-duo-cell">
+          <span class="stat-label" style="font-size:0.78rem">일일던전</span>
+        </span>
         <span class="stat-duo-cell">
           <span class="stat-label" style="font-size:0.78rem">슈고열쇠</span>
           <span style="font-size:0.78rem;color:var(--text)">${acc.shugo_key_base||0} <span style="color:var(--text-sub)">+${acc.shugo_key_charged||0}</span></span>
         </span>
         <span class="stat-duo-cell">
+          <span style="font-size:0.78rem;color:var(--text)">${acc.dungeon_remaining||0} <span style="color:var(--text-sub)">+${ownerDungeonTotal(owner)} 충전권</span></span>
+        </span>
+        <span class="stat-duo-cell">
           <span class="stat-label" style="font-size:0.78rem">침공열쇠</span>
           <span style="font-size:0.78rem;color:var(--text)">${Math.min(7, acc.invasion_key||0)} <span style="color:var(--text-sub)">/ 7</span></span>
         </span>
-      </div>
-      <div class="stat-row" style="padding:3px 0;border:none">
-        <span class="stat-label" style="font-size:0.78rem">일일던전</span>
-        <span style="font-size:0.78rem;color:var(--text)">${acc.dungeon_remaining||0} <span style="color:var(--text-sub)">+${ownerDungeonTotal(owner)} 충전권</span></span>
       </div>
       <div class="account-bool-row">
         <span class="toggle-btn ${shopAllDone?'done':''}" style="font-size:0.72rem;padding:3px 8px" title="상점(오드구매) 캐릭 ${shopCharSum}/${tmChars.length*4} · 계정 ${shopAccCnt}/16 (주간)" onclick="event.stopPropagation();toggleAllShopPurchase('${owner}',${!shopAllDone})">상점</span>
@@ -10740,6 +11042,206 @@ async function toggleAbyssChar(corridorId, charId, cleared) {
   }
 }
 
+/* ════════════════ 데바패스 (작업본6) ════════════════
+   - 패스 목록: app_config key 'deva_passes' (JSON 배열, 전 사용자 공유, 삭제 전까지 유지)
+   - 프리미엄 활성화: characters.deva_premium jsonb { passId: true } — 캐릭터별, 유지
+   - 주간 EXP 완료: weekly_tasks.deva_xp jsonb { passId: true } — 주차별 행이라 수요일 05시 자동 리셋
+   - 휴식 캐릭터는 페이지에 아예 노출하지 않음 */
+let devaPasses = [];
+let _devaEditId = null;
+let _devaDelArm = null;
+
+async function loadDevaPasses() {
+  try {
+    const { data } = await sb.from('app_config').select('value').eq('key', 'deva_passes');
+    const raw = data && data[0] && data[0].value;
+    devaPasses = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(devaPasses)) devaPasses = [];
+  } catch (e) { console.error('[데바패스 로드]', e); devaPasses = []; }
+}
+async function saveDevaPasses() {
+  try {
+    const { error } = await sb.from('app_config')
+      .upsert({ key: 'deva_passes', value: JSON.stringify(devaPasses) }, { onConflict: 'key' });
+    return !error;
+  } catch (e) { return false; }
+}
+
+function _devaChars() {
+  return allChars.filter(c => !c.resting);   // 휴식 캐릭터는 아예 노출 X
+}
+
+function renderDevaPage() {
+  const el = document.getElementById('deva-content');
+  if (!el) return;
+  _devaDelArm = null;
+  const isGuest = currentActor === 'guest';
+  const topbar = `<div class="deva-topbar">
+    <span class="deva-topbar-note">주간 EXP 체크는 수요일 05시 리셋에 맞춰 자동 초기화돼요</span>
+    ${isGuest ? '' : '<button class="deva-add-btn" onclick="openDevaPassModal()">＋ 패스 등록</button>'}
+  </div>`;
+  if (!devaPasses.length) {
+    el.innerHTML = topbar +
+      `<div class="card deva-empty">등록된 데바 패스가 없어요.` +
+      (isGuest ? '' : '<br>우측 상단 <b>＋ 패스 등록</b>으로 구독 중인 패스를 추가해 주세요.') +
+      `</div>`;
+    return;
+  }
+  el.innerHTML = topbar + devaPasses.map(p => _devaPassCard(p, isGuest)).join('');
+}
+
+function _devaPassCard(pass, isGuest) {
+  const chars = _devaChars();
+  const pid = pass.id;
+  const premiumOn = c => !!((c.deva_premium || {})[pid]);
+  const xpOn = c => !!(((weeklyTasks[c.id] || {}).deva_xp || {})[pid]);
+  const pCnt = chars.filter(premiumOn).length;
+  const xCnt = chars.filter(xpOn).length;
+  const total = chars.length;
+  const actions = isGuest ? '' : `<div class="deva-card-actions">
+      <button class="deva-icon-btn" title="수정" aria-label="패스 수정" onclick="openDevaPassModal('${pid}')">✎</button>
+      <button class="deva-icon-btn" title="삭제" aria-label="패스 삭제" onclick="deleteDevaPass('${pid}', this)">🗑</button>
+    </div>`;
+  const cols = OWNERS.map(owner => {
+    const list = chars.filter(c => c.owner === owner).sort((a, b) => slotOrder(a) - slotOrder(b));
+    const rows = list.length
+      ? list.map(c => _devaCharRow(c, pid)).join('')
+      : '<div class="deva-col-empty">표시할 캐릭터가 없어요 (휴식 제외)</div>';
+    return `<div>
+      <div class="deva-owner-head"><span class="deva-owner-dot" style="background:var(--color-owner-${owner})"></span>${owner}</div>
+      ${rows}
+    </div>`;
+  }).join('');
+  return `<div class="deva-pass-card">
+    <div class="deva-card-head">
+      <div style="min-width:0">
+        <div class="deva-card-name">${escapeHtml(pass.name)}</div>
+        ${pass.price ? `<div class="deva-card-price">프리미엄 ${escapeHtml(pass.price)}</div>` : ''}
+      </div>
+      ${actions}
+    </div>
+    <div class="deva-card-stats">
+      <span class="deva-stat-chip${total && pCnt === total ? ' full' : ''}">프리미엄 ${pCnt}/${total}</span>
+      <span class="deva-stat-chip${total && xCnt === total ? ' full' : ''}">주간 EXP ${xCnt}/${total}</span>
+    </div>
+    <div class="deva-owner-cols">${cols}</div>
+  </div>`;
+}
+
+function _devaCharRow(c, pid) {
+  const pOn = !!((c.deva_premium || {})[pid]);
+  const xOn = !!(((weeklyTasks[c.id] || {}).deva_xp || {})[pid]);
+  return `<div class="deva-char-row">
+    <span class="deva-char-name">${escapeHtml(c.name)}</span>
+    <button class="deva-chip premium${pOn ? ' on' : ''}" onclick="toggleDevaPremium('${c.id}','${pid}')" title="프리미엄 구독(활성화) 여부">${pOn ? '✓ ' : ''}프리미엄</button>
+    <button class="deva-chip xp${xOn ? ' on' : ''}" onclick="toggleDevaXp('${c.id}','${pid}')" title="이번 주 경험치 제한 달성 여부">${xOn ? '✓ ' : ''}주간 EXP</button>
+  </div>`;
+}
+
+async function toggleDevaPremium(charId, passId) {
+  if (currentActor === 'guest') return;
+  const char = allChars.find(c => c.id === charId);
+  if (!char) return;
+  const cur = { ...(char.deva_premium || {}) };
+  const on = !cur[passId];
+  if (on) cur[passId] = true; else delete cur[passId];
+  markSelfChange('characters', charId);
+  const { error } = await sb.from('characters').update({ deva_premium: cur }).eq('id', charId);
+  if (error) { showToast('저장 실패'); return; }
+  char.deva_premium = cur;
+  renderDevaPage();
+}
+
+async function toggleDevaXp(charId, passId) {
+  if (currentActor === 'guest') return;
+  const week = getWeekStart();
+  const existing = weeklyTasks[charId];
+  const cur = { ...((existing && existing.deva_xp) || {}) };
+  const on = !cur[passId];
+  if (on) cur[passId] = true; else delete cur[passId];
+  let error;
+  if (existing) {
+    markSelfChange('weekly_tasks', existing.id);
+    ({ error } = await sb.from('weekly_tasks').update({ deva_xp: cur }).eq('id', existing.id));
+    if (!error) existing.deva_xp = cur;
+  } else {
+    const { data, error: err } = await sb.from('weekly_tasks')
+      .insert({ character_id: charId, week_start: week, deva_xp: cur })
+      .select().single();
+    error = err;
+    if (!error) weeklyTasks[charId] = data;
+  }
+  if (error) { showToast('저장 실패'); return; }
+  const char = allChars.find(c => c.id === charId);
+  if (char) {
+    const pass = devaPasses.find(p => p.id === passId);
+    const label = `데바패스-${pass ? pass.name : '?'} 주간EXP 완료`;
+    if (on) writeLog(char.owner, char.name, label, char.id, 'deva_xp_' + passId);
+    else deleteLog(char.id, 'deva_xp_' + passId);
+  }
+  renderDevaPage();
+}
+
+// ── 패스 등록/수정 모달 ──
+function openDevaPassModal(passId) {
+  if (currentActor === 'guest') return;
+  _devaEditId = passId || null;
+  const pass = passId ? devaPasses.find(p => p.id === passId) : null;
+  document.getElementById('deva-modal-title').textContent = pass ? '패스 수정' : '패스 등록';
+  document.getElementById('deva-pass-name').value = pass ? (pass.name || '') : '';
+  document.getElementById('deva-pass-price').value = pass ? (pass.price || '') : '';
+  document.getElementById('deva-modal-overlay').classList.add('show');
+  setTimeout(() => { const i = document.getElementById('deva-pass-name'); if (i) i.focus(); }, 60);
+}
+function closeDevaPassModal(e) {
+  if (e && e.target !== e.currentTarget) return;   // 모달 내부 클릭은 무시 (오버레이 직접 클릭만 닫힘)
+  document.getElementById('deva-modal-overlay').classList.remove('show');
+  _devaEditId = null;
+}
+async function saveDevaPassModal() {
+  if (currentActor === 'guest') return;
+  const name = document.getElementById('deva-pass-name').value.trim();
+  const price = document.getElementById('deva-pass-price').value.trim();
+  if (!name) { showToast('패스 이름을 입력해주세요'); return; }
+  if (_devaEditId) {
+    const pass = devaPasses.find(p => p.id === _devaEditId);
+    if (pass) { pass.name = name; pass.price = price; }
+  } else {
+    devaPasses.push({ id: 'dp' + Date.now(), name, price });
+  }
+  const ok = await saveDevaPasses();
+  if (!ok) { showToast('저장 실패'); await loadDevaPasses(); }
+  _devaEditId = null;
+  document.getElementById('deva-modal-overlay').classList.remove('show');
+  renderDevaPage();
+}
+async function deleteDevaPass(passId, btn) {
+  if (currentActor === 'guest') return;
+  // 1차 클릭 → "삭제?" 확인 상태, 2.6초 내 재클릭 시 실제 삭제
+  if (_devaDelArm !== passId) {
+    _devaDelArm = passId;
+    if (btn) { btn.textContent = '삭제?'; btn.classList.add('arm'); }
+    setTimeout(() => {
+      if (_devaDelArm === passId) {
+        _devaDelArm = null;
+        if (document.getElementById('deva-page')?.classList.contains('active')) renderDevaPage();
+      }
+    }, 2600);
+    return;
+  }
+  _devaDelArm = null;
+  devaPasses = devaPasses.filter(p => p.id !== passId);
+  const ok = await saveDevaPasses();
+  if (!ok) { showToast('저장 실패'); await loadDevaPasses(); }
+  renderDevaPage();
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const ov = document.getElementById('deva-modal-overlay');
+    if (ov && ov.classList.contains('show')) { ov.classList.remove('show'); _devaEditId = null; }
+  }
+});
+
 // ── REALTIME ──
 function subscribeRealtime() {
   const dot = document.getElementById('rt-dot');
@@ -10797,6 +11299,13 @@ function subscribeRealtime() {
         let changed = false;
         OWNERS.forEach(o => { if (!cardLockOwnKey[o]) { cardLocked[o] = on; changed = true; } });
         if (changed) renderOverview();
+      } else if (row.key === 'deva_passes') {
+        // 데바패스 목록 실시간 반영 (작업본6) — 내 upsert 에코도 동일 데이터라 무해
+        try {
+          const arr = JSON.parse(row.value || '[]');
+          devaPasses = Array.isArray(arr) ? arr : [];
+        } catch (e) {}
+        if (document.getElementById('deva-page')?.classList.contains('active')) renderDevaPage();
       }
     })
     .subscribe(status => {
@@ -10928,6 +11437,8 @@ function scheduleLocalRerender() {
       renderSeasonPage();
     } else if (document.getElementById('todo-page')?.classList.contains('active')) {
       renderTodoPage();   // v1.7.6: 할일 페이지 실시간 갱신 (다른 기기 변경 반영)
+    } else if (document.getElementById('deva-page')?.classList.contains('active')) {
+      renderDevaPage();   // 작업본6: 데바패스 실시간 갱신 (다른 기기 변경 반영)
     } else if (currentCharId) {
       // detail 페이지에 포커스된 input/textarea가 있으면 re-render 건너뜀
       const focused = document.activeElement;
@@ -11095,6 +11606,8 @@ function setActor(name) {
   updateActorIndicator();
   // 사용자별 메뉴 표시 설정 적용
   try { applyMenuVisibility(); } catch (e) {}
+  // 사용자별 상단 요소 표시 설정 적용 (작업본6)
+  try { applyTopbarVisibility(); } catch (e) {}
   // 사용자별 수면 모드 재적용 (예약음 재필터 + 모달 열려있으면 갱신) v1.6.94
   try { if (_alarmCtx) rescheduleAlarms(); const ov = document.getElementById('alarm-overlay'); if (ov && ov.classList.contains('show')) renderAlarmModal(); } catch (e) {}
 }
