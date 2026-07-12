@@ -5504,6 +5504,8 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
 .deva-chip:hover { border-color: var(--text-sub); }
 .deva-chip.premium.on { background: var(--lavender-light); border-color: var(--lavender); color: var(--text); }
 .deva-chip.xp.on { background: var(--sage-light); border-color: var(--sage); color: var(--text); }
+/* 체크(✓) 유무와 무관하게 칩 폭 고정 → 줄마다 세그먼트 정렬 유지 (작업본9) */
+.deva-chip.xp { min-width: 60px; text-align: center; }
 .deva-chip.dim { opacity: 0.45; }
 
 /* 미구매/기본/프리미엄 세그먼트 (작업본8) — 기본·프리미엄 동시 활성화 가능 */
