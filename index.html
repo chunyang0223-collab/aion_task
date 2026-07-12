@@ -5504,6 +5504,71 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
 .deva-chip:hover { border-color: var(--text-sub); }
 .deva-chip.premium.on { background: var(--lavender-light); border-color: var(--lavender); color: var(--text); }
 .deva-chip.xp.on { background: var(--sage-light); border-color: var(--sage); color: var(--text); }
+.deva-chip.dim { opacity: 0.45; }
+
+/* 미구매/기본/프리미엄 세그먼트 (작업본8) — 기본·프리미엄 동시 활성화 가능 */
+.deva-seg {
+  display: inline-flex;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--surface2);
+}
+.deva-seg-btn {
+  padding: 4px 9px;
+  font-size: 0.7rem;
+  border: none;
+  background: transparent;
+  color: var(--text-sub);
+  cursor: pointer;
+  font-family: 'Gowun Dodum', sans-serif;
+  transition: background 0.15s, color 0.15s;
+}
+.deva-seg-btn + .deva-seg-btn { border-left: 1px solid var(--border); }
+.deva-seg-btn:hover { color: var(--text); }
+.deva-seg-btn.t-none.on { background: var(--hover); color: var(--text); }
+.deva-seg-btn.t-basic.on { background: var(--sky-light); color: var(--text); }
+.deva-seg-btn.t-premium.on { background: var(--lavender-light); color: var(--text); }
+
+/* 캐릭터 중심 배열 (작업본8) */
+.deva-char-block {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.deva-char-head {
+  font-size: 0.85rem;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.deva-char-block .deva-char-row { padding: 5px 0; }
+.deva-char-block .deva-chip,
+.deva-char-block .deva-seg { background: var(--surface); }
+
+/* 상단 패스 관리 카드 (작업본8) */
+.deva-manage-card { padding: 10px 18px; }
+.deva-manage-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  flex-wrap: wrap;
+}
+.deva-manage-row + .deva-manage-row { border-top: 1px dashed var(--border); }
+.deva-manage-name {
+  flex: 1;
+  min-width: 120px;
+  font-size: 0.85rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.deva-manage-price { font-size: 0.72rem; color: var(--text-sub); }
+.deva-manage-row .deva-card-actions { display: inline-flex; gap: 6px; flex: none; }
 body.guest-mode .deva-chip { cursor: default; }
 body.guest-mode .deva-chip:hover { border-color: var(--border); }
 .deva-empty {
@@ -11071,6 +11136,15 @@ function _devaChars() {
   return allChars.filter(c => !c.resting);   // 휴식 캐릭터는 아예 노출 X
 }
 
+// 구매 상태: deva_premium[passId] = 'basic' | 'premium' | 'both' (레거시 true = 'premium'), 키 없음 = 미구매
+function _devaFlags(c, pid) {
+  const v = (c.deva_premium || {})[pid];
+  if (v === true || v === 'premium') return { basic: false, premium: true };
+  if (v === 'basic') return { basic: true, premium: false };
+  if (v === 'both') return { basic: true, premium: true };
+  return { basic: false, premium: false };
+}
+
 function renderDevaPage() {
   const el = document.getElementById('deva-content');
   if (!el) return;
@@ -11087,64 +11161,85 @@ function renderDevaPage() {
       `</div>`;
     return;
   }
-  el.innerHTML = topbar + devaPasses.map(p => _devaPassCard(p, isGuest)).join('');
-}
-
-function _devaPassCard(pass, isGuest) {
+  // 패스 관리(상단) + 캐릭터 중심 목록 (작업본8)
   const chars = _devaChars();
-  const pid = pass.id;
-  const premiumOn = c => !!((c.deva_premium || {})[pid]);
-  const xpOn = c => !!(((weeklyTasks[c.id] || {}).deva_xp || {})[pid]);
-  const pCnt = chars.filter(premiumOn).length;
-  const xCnt = chars.filter(xpOn).length;
-  const total = chars.length;
-  const actions = isGuest ? '' : `<div class="deva-card-actions">
-      <button class="deva-icon-btn" title="수정" aria-label="패스 수정" onclick="openDevaPassModal('${pid}')">✎</button>
-      <button class="deva-icon-btn" title="삭제" aria-label="패스 삭제" onclick="deleteDevaPass('${pid}', this)">🗑</button>
-    </div>`;
   const cols = OWNERS.map(owner => {
     const list = chars.filter(c => c.owner === owner).sort((a, b) => slotOrder(a) - slotOrder(b));
-    const rows = list.length
-      ? list.map(c => _devaCharRow(c, pid)).join('')
+    const blocks = list.length
+      ? list.map(c => _devaCharBlock(c)).join('')
       : '<div class="deva-col-empty">표시할 캐릭터가 없어요 (휴식 제외)</div>';
     return `<div>
       <div class="deva-owner-head"><span class="deva-owner-dot" style="background:var(--color-owner-${owner})"></span>${owner}</div>
-      ${rows}
+      ${blocks}
     </div>`;
   }).join('');
-  return `<div class="deva-pass-card">
-    <div class="deva-card-head">
-      <div style="min-width:0">
-        <div class="deva-card-name">${escapeHtml(pass.name)}</div>
-        ${pass.price ? `<div class="deva-card-price">프리미엄 ${escapeHtml(pass.price)}</div>` : ''}
-      </div>
+  el.innerHTML = topbar + _devaManageCard(isGuest) + `<div class="deva-owner-cols">${cols}</div>`;
+}
+
+// 상단: 등록된 패스 목록 + 패스별 집계 + 수정/삭제
+function _devaManageCard(isGuest) {
+  const chars = _devaChars();
+  const rows = devaPasses.map(pass => {
+    const pid = pass.id;
+    const xpOn = c => !!(((weeklyTasks[c.id] || {}).deva_xp || {})[pid]);
+    const bCnt = chars.filter(c => _devaFlags(c, pid).basic).length;
+    const pCnt = chars.filter(c => _devaFlags(c, pid).premium).length;
+    // 구매(기본 또는 프리미엄) 캐릭 기준으로 주간 EXP 집계 — 미구매는 분모에서 제외
+    const ownedChars = chars.filter(c => { const f = _devaFlags(c, pid); return f.basic || f.premium; });
+    const owned = ownedChars.length;
+    const xCnt = ownedChars.filter(xpOn).length;
+    const actions = isGuest ? '' : `<span class="deva-card-actions">
+        <button class="deva-icon-btn" title="수정" aria-label="패스 수정" onclick="openDevaPassModal('${pid}')">✎</button>
+        <button class="deva-icon-btn" title="삭제" aria-label="패스 삭제" onclick="deleteDevaPass('${pid}', this)">🗑</button>
+      </span>`;
+    return `<div class="deva-manage-row">
+      <span class="deva-manage-name" title="${escapeHtml(pass.name)}">${escapeHtml(pass.name)}</span>
+      ${pass.price ? `<span class="deva-manage-price">프리미엄 ${escapeHtml(pass.price)}</span>` : ''}
+      <span class="deva-stat-chip">기본 ${bCnt}</span>
+      <span class="deva-stat-chip">프리미엄 ${pCnt}</span>
+      <span class="deva-stat-chip${owned && xCnt === owned ? ' full' : ''}">주간 EXP ${xCnt}/${owned}</span>
       ${actions}
-    </div>
-    <div class="deva-card-stats">
-      <span class="deva-stat-chip${total && pCnt === total ? ' full' : ''}">프리미엄 ${pCnt}/${total}</span>
-      <span class="deva-stat-chip${total && xCnt === total ? ' full' : ''}">주간 EXP ${xCnt}/${total}</span>
-    </div>
-    <div class="deva-owner-cols">${cols}</div>
+    </div>`;
+  }).join('');
+  return `<div class="deva-pass-card deva-manage-card">${rows}</div>`;
+}
+
+// 캐릭터 블록: 캐릭 이름 아래에 등록된 모든 패스를 한 번에 체크
+function _devaCharBlock(c) {
+  const rows = devaPasses.map(p => _devaPassRow(c, p)).join('');
+  return `<div class="deva-char-block">
+    <div class="deva-char-head">${escapeHtml(c.name)}</div>
+    ${rows}
   </div>`;
 }
 
-function _devaCharRow(c, pid) {
-  const pOn = !!((c.deva_premium || {})[pid]);
+function _devaPassRow(c, p) {
+  const pid = p.id;
+  const f = _devaFlags(c, pid);
+  const noneOn = !f.basic && !f.premium;
   const xOn = !!(((weeklyTasks[c.id] || {}).deva_xp || {})[pid]);
   return `<div class="deva-char-row">
-    <span class="deva-char-name">${escapeHtml(c.name)}</span>
-    <button class="deva-chip premium${pOn ? ' on' : ''}" onclick="toggleDevaPremium('${c.id}','${pid}')" title="프리미엄 구독(활성화) 여부">${pOn ? '✓ ' : ''}프리미엄</button>
-    <button class="deva-chip xp${xOn ? ' on' : ''}" onclick="toggleDevaXp('${c.id}','${pid}')" title="이번 주 경험치 제한 달성 여부">${xOn ? '✓ ' : ''}주간 EXP</button>
+    <span class="deva-char-name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</span>
+    <span class="deva-seg" title="구매 상태 — 기본·프리미엄은 동시 선택 가능">
+      <button class="deva-seg-btn t-none${noneOn ? ' on' : ''}" onclick="setDevaBuy('${c.id}','${pid}','none')">미구매</button>
+      <button class="deva-seg-btn t-basic${f.basic ? ' on' : ''}" onclick="setDevaBuy('${c.id}','${pid}','basic')">기본</button>
+      <button class="deva-seg-btn t-premium${f.premium ? ' on' : ''}" onclick="setDevaBuy('${c.id}','${pid}','premium')">프리미엄</button>
+    </span>
+    <button class="deva-chip xp${xOn ? ' on' : ''}${noneOn ? ' dim' : ''}" onclick="toggleDevaXp('${c.id}','${pid}')" title="이번 주 경험치 제한 달성 여부">${xOn ? '✓ ' : ''}EXP</button>
   </div>`;
 }
 
-async function toggleDevaPremium(charId, passId) {
+// 미구매/기본/프리미엄 설정 — 기본·프리미엄은 독립 토글(동시 가능), 미구매는 전체 해제
+async function setDevaBuy(charId, passId, kind) {
   if (currentActor === 'guest') return;
   const char = allChars.find(c => c.id === charId);
   if (!char) return;
+  const f = _devaFlags(char, passId);
+  if (kind === 'none') { f.basic = false; f.premium = false; }
+  else f[kind] = !f[kind];
   const cur = { ...(char.deva_premium || {}) };
-  const on = !cur[passId];
-  if (on) cur[passId] = true; else delete cur[passId];
+  if (!f.basic && !f.premium) delete cur[passId];   // 둘 다 해제 → 미구매
+  else cur[passId] = (f.basic && f.premium) ? 'both' : (f.basic ? 'basic' : 'premium');
   markSelfChange('characters', charId);
   const { error } = await sb.from('characters').update({ deva_premium: cur }).eq('id', charId);
   if (error) { showToast('저장 실패'); return; }
