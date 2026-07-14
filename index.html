@@ -16323,7 +16323,8 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
 
   function render(b){
     const s = S[b], el = document.getElementById('if-body-'+b);
-    const btn = document.getElementById('if-collect-'+b); if(btn) btn.disabled = !!s.job;
+    const btn = document.getElementById('if-collect-'+b);
+    if(btn){ const allowed = infoCanCollect(); btn.disabled = !!s.job || !allowed; btn.title = allowed ? '' : '수집은 설냥만 시작할 수 있어요'; }
     if(!el) return;
     if(s.job){ el.innerHTML = collectingHTML(s.job); return; }
     if(!s.snaps.length){ el.innerHTML = emptyHTML(); return; }
@@ -16387,8 +16388,12 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
     }, 5000);
   }
 
+  // 현재 로그인 owner 판별 (currentActor=actor → accountData 로 역매핑) · 수집은 설냥만
+  function infoCurrentOwner(){ try{ for(const o of OWNERS){ if(accountData && accountData[o] && accountData[o].actor === currentActor) return o; } }catch(e){} return null; }
+  function infoCanCollect(){ return infoCurrentOwner() === '설냥'; }
+  function infoDenyToast(){ const m='수집은 설냥만 시작할 수 있어요'; if(typeof showToast==='function') showToast(m); else alert(m); }
   window.renderInfoPage = async function(){ if(S._boot) return; S._boot = true; await Promise.all([loadBucket('pvp'), loadBucket('pve')]); };
-  window.infoCollect = async function(b){ const btn=document.getElementById('if-collect-'+b); if(btn) btn.disabled=true; await callFn({action:'start',bucket:b}); S[b].job={status:'ranking',total:0,processed:0}; render(b); startPoll(b); };
+  window.infoCollect = async function(b){ if(!infoCanCollect()){ infoDenyToast(); return; } const btn=document.getElementById('if-collect-'+b); if(btn) btn.disabled=true; await callFn({action:'start',bucket:b}); S[b].job={status:'ranking',total:0,processed:0}; render(b); startPoll(b); };
   window.infoNav = async function(b,dir){ const s=S[b], ni=s.idx+dir; if(ni<0||ni>=s.snaps.length) return; s.idx=ni; await loadRows(b); render(b); };
   window.infoSelectClass = function(b,cid){ S[b].cls=cid; const el=document.getElementById('if-body-'+b); if(el) el.querySelectorAll('.if-pill').forEach(p=>p.classList.toggle('on', Number(p.dataset.cid)===cid)); renderTables(b); };
   window.infoDelete = async function(b){ const s=S[b], snap=s.snaps[s.idx]; if(!snap||!confirm(`${fmtDate(snap.collected_at)} 스냅샷을 삭제할까요?`)) return; await callFn({action:'delete',snapshotId:snap.id}); await loadBucket(b); };
