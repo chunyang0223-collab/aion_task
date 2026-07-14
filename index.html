@@ -6127,6 +6127,8 @@ body.guest-mode .deva-chip:hover { border-color: var(--border); }
     #info-page .if-cat-t{font-size:0.85rem;font-weight:700;color:var(--text)}
     #info-page .if-chip{font-size:0.6rem;font-weight:700;color:var(--if-accent);background:var(--if-accent-l);padding:2px 7px;border-radius:999px;margin-left:6px}
     #info-page .if-hint{font-size:0.68rem;color:var(--text-sub)}
+    #info-page .if-sort{cursor:pointer;user-select:none}
+    #info-page .if-sort:hover{color:var(--text);text-decoration:underline}
     #info-page table.if-t{width:100%;border-collapse:collapse}
     #info-page .if-t th{font-size:0.68rem;color:var(--text-sub);text-align:left;padding:4px;font-weight:600}
     #info-page .if-t th.n{text-align:right}
@@ -6146,6 +6148,14 @@ body.guest-mode .deva-chip:hover { border-color: var(--border); }
     #info-page .if-prog{max-width:300px;margin:14px auto 0;height:10px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);overflow:hidden}
     #info-page .if-prog>i{display:block;height:100%;background:var(--if-accent);transition:width .5s}
     #info-page .if-note{margin-top:14px;font-size:0.68rem;color:var(--text-sub)}
+    #info-page .if-live{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px}
+    #info-page .if-live-top{font-size:0.8rem;color:var(--text);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    #info-page .if-live-top b{color:var(--if-accent)}
+    #info-page .if-live-dot{width:9px;height:9px;border-radius:50%;background:var(--if-accent);animation:if-pulse 1.2s ease-in-out infinite}
+    @keyframes if-pulse{0%,100%{opacity:1}50%{opacity:.3}}
+    #info-page .if-live-bar{margin-top:8px;height:8px;border-radius:999px;background:var(--surface);overflow:hidden}
+    #info-page .if-live-bar>i{display:block;height:100%;background:var(--if-accent);transition:width .5s}
+    #info-page .if-live-note{margin-top:8px;font-size:0.66rem;color:var(--text-sub)}
     #info-page .if-emoji{font-size:32px;margin-bottom:10px}
   </style>
   <div class="if-wrap">
@@ -16287,8 +16297,8 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
   const CAT_LABEL = { Active:['액티브','ACTIVE'], Passive:['패시브','PASSIVE'], Dp:['스티그마','STIGMA'] };
   const CAT_ORDER = ['Dp','Active','Passive'];
   const S = {
-    pvp:{ snaps:[], idx:0, cls:null, rows:[], classes:[], job:null, poll:null },
-    pve:{ snaps:[], idx:0, cls:null, rows:[], classes:[], job:null, poll:null },
+    pvp:{ snaps:[], idx:0, cls:null, rows:[], classes:[], job:null, poll:null, sort:{Active:'level',Passive:'level',Dp:'level'} },
+    pve:{ snaps:[], idx:0, cls:null, rows:[], classes:[], job:null, poll:null, sort:{Active:'level',Passive:'level',Dp:'level'} },
     _boot:false
   };
   const nf = n => Number(n).toLocaleString('ko-KR');
@@ -16303,7 +16313,8 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
     s.snaps = snaps || [];
     const { data:jobs } = await sb.from('skill_collect_job').select('*').eq('bucket',b).in('status',['ranking','equipment','aggregating']).order('created_at',{ascending:false}).limit(1);
     s.job = (jobs && jobs[0]) || null; s.idx = 0;
-    if(s.snaps.length) await loadRows(b);
+    if(s.job) await loadLive(b);
+    else if(s.snaps.length) await loadRows(b);
     render(b);
     if(s.job) startPoll(b);
   }
@@ -16326,10 +16337,40 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
     const btn = document.getElementById('if-collect-'+b);
     if(btn){ const allowed = infoCanCollect(); btn.disabled = !!s.job || !allowed; btn.title = allowed ? '' : '수집은 설냥만 시작할 수 있어요'; }
     if(!el) return;
-    if(s.job){ el.innerHTML = collectingHTML(s.job); return; }
+    if(s.job){ el.innerHTML = liveHTML(b); if(s.rows && s.rows.length) renderTables(b); return; }
     if(!s.snaps.length){ el.innerHTML = emptyHTML(); return; }
     el.innerHTML = dataHTML(b);
     renderTables(b);
+  }
+
+  async function loadLive(b){
+    const s = S[b];
+    const { data:snaps } = await sb.from('skill_snapshot').select('*').eq('bucket',b).eq('status','running').order('id',{ascending:false}).limit(1);
+    const snap = snaps && snaps[0];
+    if(!snap){ s.rows=[]; s.classes=[]; return; }
+    let rows=[], from=0; const PAGE=1000;
+    for(;;){
+      const { data } = await sb.from('skill_snapshot_row').select('*').eq('snapshot_id',snap.id).order('avg_level',{ascending:false}).range(from,from+PAGE-1);
+      const arr = data||[]; rows.push(...arr);
+      if(arr.length<PAGE) break; from+=PAGE;
+    }
+    s.rows = rows;
+    s.classes = [...new Map(rows.map(r=>[r.class_id, r.class_name])).entries()].sort((a,b)=>a[0]-b[0]);
+    if(s.cls==null || !s.classes.some(c=>c[0]===s.cls)) s.cls = s.classes.length ? s.classes[0][0] : s.cls;
+  }
+
+  function liveHTML(b){
+    const s = S[b], job = s.job;
+    const known = job.total>0;
+    const pct = known ? Math.min(100, Math.round(job.processed/job.total*100)) : 6;
+    const cnt = known ? `${nf(job.processed)} / ${nf(job.total)}` : '준비 중…';
+    const phase = job.status==='ranking' ? '대상 목록 수집 중' : job.status==='aggregating' ? '마무리 집계 중' : '스킬 수집 중';
+    const pills = (s.classes||[]).map(([cid,name])=>`<span class="if-pill ${cid===s.cls?'on':''}" data-cid="${cid}" onclick="infoSelectClass('${b}',${cid})">${name}</span>`).join('');
+    const hasData = s.rows && s.rows.length;
+    const banner = `<div class="if-live"><div class="if-live-top"><span class="if-live-dot"></span> 수집 중 (잠정) · <b>${cnt}</b> · ${phase}</div><div class="if-live-bar"><i style="width:${pct}%"></i></div><div class="if-live-note">🖥 브라우저를 닫아도 서버에서 계속 진행 · 숫자는 수집이 진행될수록 안정돼요</div></div>`;
+    return banner + (hasData
+      ? `<div class="if-classes">${pills}</div><div class="if-cats" id="if-cats-${b}"></div>`
+      : `<div class="if-state"><div class="if-spin"></div>첫 데이터를 모으는 중…</div>`);
   }
 
   function collectingHTML(job){
@@ -16366,7 +16407,8 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
   function catsHTML(b){
     const s = S[b], rows = s.rows.filter(r=>r.class_id===s.cls);
     return CAT_ORDER.map(cat=>{
-      const list = rows.filter(r=>r.category===cat).sort((a,b)=>b.avg_level-a.avg_level);
+      const mode = (s.sort && s.sort[cat]) || 'level';
+      const list = rows.filter(r=>r.category===cat).sort((a,b)=> mode==='rate' ? ((b.adoption_rate-a.adoption_rate)||(b.avg_level-a.avg_level)) : ((b.avg_level-a.avg_level)||(b.adoption_rate-a.adoption_rate)));
       const pair = CAT_LABEL[cat]||[cat,cat]; const ko=pair[0], en=pair[1];
       const body = list.length ? list.map(r=>{
         const pct = Math.round(r.adoption_rate*100);
@@ -16374,7 +16416,7 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
           <td style="width:42%"><div class="if-rate"><div class="if-bar"><i style="width:${pct}%"></i></div><span class="if-rv">${pct}%</span></div></td>
           <td class="if-lv">${Number(r.avg_level).toFixed(1)}</td></tr>`;
       }).join('') : `<tr><td colspan="3" style="color:var(--text-sub);text-align:center;padding:12px">데이터 없음</td></tr>`;
-      return `<div class="if-cat"><div class="if-cat-h"><div class="if-cat-t">${ko}<span class="if-chip">${en}</span></div><div class="if-hint">평균레벨 높은 순</div></div>
+      return `<div class="if-cat"><div class="if-cat-h"><div class="if-cat-t">${ko}<span class="if-chip">${en}</span></div><div class="if-hint if-sort" onclick="infoToggleSort('${b}','${cat}')" title="클릭하여 정렬 전환">${mode==='rate'?'채용률 높은 순':'평균레벨 높은 순'} ⇅</div></div>
         <table class="if-t"><thead><tr><th>스킬</th><th>채용률</th><th class="n">평균Lv</th></tr></thead><tbody>${body}</tbody></table></div>`;
     }).join('');
   }
@@ -16383,7 +16425,7 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
     const s = S[b]; if(s.poll) clearInterval(s.poll);
     s.poll = setInterval(async ()=>{
       const { data:jobs } = await sb.from('skill_collect_job').select('*').eq('bucket',b).in('status',['ranking','equipment','aggregating']).order('created_at',{ascending:false}).limit(1);
-      if(jobs && jobs.length){ s.job = jobs[0]; render(b); }
+      if(jobs && jobs.length){ s.job = jobs[0]; await loadLive(b); render(b); }
       else { clearInterval(s.poll); s.poll=null; s.job=null; await loadBucket(b); }
     }, 5000);
   }
@@ -16396,6 +16438,7 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
   window.infoCollect = async function(b){ if(!infoCanCollect()){ infoDenyToast(); return; } const btn=document.getElementById('if-collect-'+b); if(btn) btn.disabled=true; await callFn({action:'start',bucket:b}); S[b].job={status:'ranking',total:0,processed:0}; render(b); startPoll(b); };
   window.infoNav = async function(b,dir){ const s=S[b], ni=s.idx+dir; if(ni<0||ni>=s.snaps.length) return; s.idx=ni; await loadRows(b); render(b); };
   window.infoSelectClass = function(b,cid){ S[b].cls=cid; const el=document.getElementById('if-body-'+b); if(el) el.querySelectorAll('.if-pill').forEach(p=>p.classList.toggle('on', Number(p.dataset.cid)===cid)); renderTables(b); };
+  window.infoToggleSort = function(b,cat){ if(!S[b].sort) S[b].sort={}; S[b].sort[cat] = (S[b].sort[cat]==='rate'?'level':'rate'); renderTables(b); };
   window.infoDelete = async function(b){ const s=S[b], snap=s.snaps[s.idx]; if(!snap||!confirm(`${fmtDate(snap.collected_at)} 스냅샷을 삭제할까요?`)) return; await callFn({action:'delete',snapshotId:snap.id}); await loadBucket(b); };
 })();
 </script>
