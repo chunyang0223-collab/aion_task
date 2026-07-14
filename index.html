@@ -16439,7 +16439,7 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
   window.infoNav = async function(b,dir){ const s=S[b], ni=s.idx+dir; if(ni<0||ni>=s.snaps.length) return; s.idx=ni; await loadRows(b); render(b); };
   window.infoSelectClass = function(b,cid){ S[b].cls=cid; const el=document.getElementById('if-body-'+b); if(el) el.querySelectorAll('.if-pill').forEach(p=>p.classList.toggle('on', Number(p.dataset.cid)===cid)); renderTables(b); };
   window.infoToggleSort = function(b,cat){ if(!S[b].sort) S[b].sort={}; S[b].sort[cat] = (S[b].sort[cat]==='rate'?'level':'rate'); renderTables(b); };
-  window.infoDelete = async function(b){ const s=S[b], snap=s.snaps[s.idx]; if(!snap||!confirm(`${fmtDate(snap.collected_at)} 스냅샷을 삭제할까요?`)) return; await callFn({action:'delete',snapshotId:snap.id}); await loadBucket(b); };
+  window.infoDelete = async function(b){ const s=S[b], snap=s.snaps[s.idx]; if(!snap) return; const pw=prompt(`${fmtDate(snap.collected_at)} 스냅샷을 삭제하려면 비밀번호를 입력하세요`); if(pw===null||pw==='') return; const res=await callFn({action:'delete',snapshotId:snap.id,pw}); if(!res||res.ok===false){ alert((res&&res.error)||'삭제 실패'); return; } await loadBucket(b); };
 })();
 </script>
 
