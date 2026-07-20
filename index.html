@@ -8266,19 +8266,22 @@ async function loadAll() {
   const weeklyBoundary = getWeeklyBoundaryISO();
 
   const [charsRes, accountRes, dailyRes, weeklyRes, corridorRes, clearsRes, supplyRes,
-         supDictRes, supSlotsRes, supProgRes] = await Promise.all([
+         supDictRes, supSlotsRes] = await Promise.all([
     sb.from('characters').select('*').order('owner').order('slot'),
     sb.from('account_data').select('*').order('owner'),
     sb.from('daily_tasks').select('*').eq('task_date', today),
     sb.from('weekly_tasks').select('*').eq('week_start', week),
     sb.from('abyss_corridors').select('*').eq('war_date', warDate),
-    sb.from('abyss_clears').select('*, abyss_corridors(war_date)'),
+    // v1.7.7 fix: 전량 조회 시 PostgREST 기본 1000행 상한에 걸려 최근 회차 행이
+    //             잘려 나가고, 캐시 미스 → insert → unique 위반(409)이 발생했다.
+    //             현재 회차 회랑에 속한 행만 inner join 필터로 가져온다.
+    sb.from('abyss_clears').select('*, abyss_corridors!inner(war_date)')
+      .eq('abyss_corridors.war_date', warDate),
     sb.from('expedition_supply').select('dungeon_key'),
     sb.from('supply_item_dict').select('*').order('name'),
     sb.from('supply_slot').select('*')
       .or(`and(slot_type.eq.urgent,created_at.gte.${dailyBoundary}),and(slot_type.eq.weekly,created_at.gte.${weeklyBoundary})`)
       .order('created_at', { ascending: false }),
-    sb.from('supply_progress').select('*'),
   ]);
 
   allChars = charsRes.data || [];
@@ -8312,10 +8315,17 @@ async function loadAll() {
   // ── 보급의뢰 데이터 ──
   supplyDict = supDictRes.data || [];
   supplySlots = (supSlotsRes.data || []).filter(s => isSlotActive(s));
+  // v1.7.7 fix: supply_progress도 전량 조회였다. 슬롯이 쌓이면 1000행 상한에 걸려
+  //             최신 슬롯 진행도가 통째로 안 보이게 된다. 활성 슬롯으로 한정.
   supplyProgress = {};
-  (supProgRes.data || []).forEach(p => {
-    supplyProgress[`${p.slot_id}_${p.character_id}`] = p;
-  });
+  const activeSlotIds = supplySlots.map(s => s.id);
+  if (activeSlotIds.length) {
+    const { data: supProgData } = await sb.from('supply_progress')
+      .select('*').in('slot_id', activeSlotIds);
+    (supProgData || []).forEach(p => {
+      supplyProgress[`${p.slot_id}_${p.character_id}`] = p;
+    });
+  }
 
   // ── 카드 순서 잠금 상태 (계정별: app_config.card_lock_{owner}, 전 사용자 공유) v1.7.6 ──
   //   구버전 단일 키(card_lock)가 남아 있으면 값을 승계한 뒤, 계정별 키를 실제로
@@ -11301,7 +11311,8 @@ async function toggleAbyssChar(corridorId, charId, cleared) {
     existing.cleared = cleared;
   } else {
     const { data, error } = await sb.from('abyss_clears')
-      .insert({ corridor_id: corridorId, character_id: charId, cleared })
+      .upsert({ corridor_id: corridorId, character_id: charId, cleared },
+              { onConflict: 'corridor_id,character_id' })
       .select().single();
     if (error) { showToast('저장 실패'); return; }
     abyssClears[k] = data;
@@ -11782,7 +11793,8 @@ async function reloadTable(table) {
     const { data } = await sb.from('abyss_corridors').select('*').eq('war_date', warDate);
     abyssCorridors = data || [];
   } else if (table === 'abyss_clears') {
-    const { data } = await sb.from('abyss_clears').select('*, abyss_corridors(war_date)');
+    const { data } = await sb.from('abyss_clears')
+      .select('*, abyss_corridors!inner(war_date)').eq('abyss_corridors.war_date', warDate);
     abyssClears = {};
     (data||[]).forEach(c => { abyssClears[`${c.corridor_id}_${c.character_id}`] = c; });
   } else if (table === 'expedition_supply') {
@@ -11808,7 +11820,10 @@ async function reloadTable(table) {
       .order('created_at', { ascending: false });
     supplySlots = (data || []).filter(s => isSlotActive(s));
   } else if (table === 'supply_progress') {
-    const { data } = await sb.from('supply_progress').select('*');
+    const slotIds = supplySlots.map(s => s.id);
+    const { data } = slotIds.length
+      ? await sb.from('supply_progress').select('*').in('slot_id', slotIds)
+      : { data: [] };
     supplyProgress = {};
     (data || []).forEach(p => { supplyProgress[`${p.slot_id}_${p.character_id}`] = p; });
   } else if (table === 'season_data') {
@@ -13074,7 +13089,8 @@ async function backupSyncTick() {
       sb.from('daily_tasks').select('*').eq('task_date', today),
       sb.from('weekly_tasks').select('*').eq('week_start', week),
       sb.from('abyss_corridors').select('*').eq('war_date', warDate),
-      sb.from('abyss_clears').select('*'),
+      sb.from('abyss_clears').select('*, abyss_corridors!inner(war_date)')
+        .eq('abyss_corridors.war_date', warDate),
     ]);
     if (chars.data) allChars = chars.data;
     if (accs.data) { accountData = {}; accs.data.forEach(a => accountData[a.owner] = a); validateActor(); }
