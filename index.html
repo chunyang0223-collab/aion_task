@@ -5884,6 +5884,19 @@ select.ctodo-select {
   display: flex; align-items: center; gap: 10px;
   padding: 6px 6px; font-size: 0.8rem; border-radius: var(--radius-xs);
 }
+/* 카테고리별 요약 (목록 위 가로 나열) 작업본18 */
+.cmp-coop-breakdown {
+  display: flex; flex-wrap: wrap; gap: 6px 8px;
+  padding: 10px 4px 12px; margin-bottom: 4px;
+  border-bottom: 1px dashed var(--border);
+}
+.cmp-coop-cat {
+  font-size: 0.78rem; color: var(--text);
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 999px; padding: 3px 10px; white-space: nowrap;
+}
+.cmp-coop-cat b { font-family: var(--font-head); font-weight: 600; }
+.cmp-coop-cat-pct { color: var(--text-sub); font-size: 0.72rem; }
 .cmp-coop-item:nth-child(even) { background: var(--surface2); }
 .cmp-coop-date { flex: none; width: 88px; color: var(--text-sub); font-size: 0.74rem; }
 .cmp-coop-char { flex: none; width: 30%; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -9419,6 +9432,33 @@ function toggleCoopDetail(dir) {
   _coopExpand = (_coopExpand === dir) ? null : dir;
   _cmpRerender();
 }
+// 로그 1건 → 카테고리 (action/field 기준) 작업본18
+function _coopCategory(r) {
+  const f = r.field || '', a = r.action || '';
+  if (f.startsWith('abyss_')     || a.startsWith('어비스')) return '어비스';
+  if (f.startsWith('deva_xp_')   || a.startsWith('데바패스')) return '데바패스';
+  if (f.startsWith('awakening_') || a.startsWith('각성')) return '각성';
+  if (f === 'ludra_done' || f === 'erosion_done' || f === 'muspell_done' || a.startsWith('성역')) return '성역';
+  if (f === 'supply_done' || a.startsWith('보급')) return '보급';
+  if (a.startsWith('악몽')) return '악몽';
+  if (a.startsWith('슈고')) return '슈고 열쇠';
+  if (a.startsWith('침공')) return '침공 열쇠';
+  if (a.startsWith('일일던전')) return '일일던전';
+  if (a.includes('물질변환')) return '물질변환';
+  if (a.startsWith('상점') || a.includes('상점')) return '상점';
+  if (a.includes('지령')) return '지령서';
+  if (a.includes('사명')) return '사명';
+  if (a.startsWith('휴식')) return '휴식';
+  return '기타';
+}
+// 방향별 카테고리 집계 (많은 순) 작업본18
+function _coopBreakdown(list) {
+  const map = {};
+  list.forEach(r => { const c = _coopCategory(r); map[c] = (map[c] || 0) + 1; });
+  const total = list.length || 1;
+  return Object.entries(map).sort((a, b) => b[1] - a[1])
+    .map(([cat, n]) => ({ cat, n, pct: Math.round(n / total * 100) }));
+}
 
 // ── 렌더 헬퍼 ──
 function _pctStr(p) { return (p === null || p === undefined) ? '—' : p + '%'; }
@@ -9524,23 +9564,28 @@ function _cmpRerender() {
   // 블록: 협력 (대신 해주기) — 카드 클릭 시 아래로 내역 펼침 (작업본16)
   const coopToggle = _cmpSeg([['today', '오늘'], ['7d', '7일'], ['30d', '30일'], ['all', '전체']], _cmpCoopPeriod, 'setCmpCoopPeriod');
   const coop = _coopCounts(_cmpCoopPeriod);
-  const _coopCard = (dir, from, to, num, desc) => {
+  const _coopCard = (dir, from, to, num) => {
     const open = _coopExpand === dir;
     const clickable = num > 0;
     return `<div class="cmp-coop-card${open ? ' open' : ''}${clickable ? ' clickable' : ''}"${clickable ? ` role="button" tabindex="0" onclick="toggleCoopDetail('${dir}')"` : ''}>
       <div class="cmp-coop-flow"><b class="cmp-owner-${from}">${from}</b> → <b class="cmp-owner-${to}">${to}</b></div>
       <div class="cmp-coop-num">${num}<span>회</span></div>
-      <div class="cmp-coop-desc">${desc}${clickable ? ` <span class="cmp-coop-more">${open ? '▲ 접기' : '▼ 자세히'}</span>` : ''}</div>
+      ${clickable ? `<div class="cmp-coop-more">${open ? '▲ 접기' : '▼ 자세히'}</div>` : ''}
     </div>`;
   };
   const coopCards = `<div class="cmp-coop-cards">
-    ${_coopCard('s2c', '설냥', '츄츄', coop.s2c, '설냥이 츄츄 걸 대신 완료')}
-    ${_coopCard('c2s', '츄츄', '설냥', coop.c2s, '츄츄가 설냥 걸 대신 완료')}
+    ${_coopCard('s2c', '설냥', '츄츄', coop.s2c)}
+    ${_coopCard('c2s', '츄츄', '설냥', coop.c2s)}
   </div>`;
   let coopDetail = '';
   if (_coopExpand) {
     const dirTitle = _coopExpand === 's2c' ? '설냥 → 츄츄' : '츄츄 → 설냥';
     const list = _coopList(_cmpCoopPeriod, _coopExpand);
+    const bd = _coopBreakdown(list);
+    const breakdown = bd.length
+      ? `<div class="cmp-coop-breakdown">${bd.map(b =>
+          `<span class="cmp-coop-cat"><b>${escapeHtml(b.cat)}</b> ${b.n}회 <span class="cmp-coop-cat-pct">(${b.pct}%)</span></span>`).join('')}</div>`
+      : '';
     const items = list.length
       ? list.map(r => `<div class="cmp-coop-item">
           <span class="cmp-coop-date">${escapeHtml(r.game_date || '')}</span>
@@ -9550,6 +9595,7 @@ function _cmpRerender() {
       : `<div class="cmp-empty">내역이 없어요</div>`;
     coopDetail = `<div class="cmp-coop-detail">
       <div class="cmp-coop-detail-head"><span>${dirTitle} · ${list.length}건</span><button class="cmp-coop-close" onclick="toggleCoopDetail('${_coopExpand}')">닫기</button></div>
+      ${breakdown}
       ${items}
     </div>`;
   }
