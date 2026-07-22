@@ -5754,6 +5754,111 @@ select.ctodo-select {
 @media (max-width: 640px) {
   .todo-custom-actions { opacity: 1; }   /* 터치 환경: 항상 노출 */
 }
+
+/* ════════════ 완료율 페이지 (작업본14) ════════════ */
+.cmp-wrap { max-width: 960px; margin: 0 auto; }
+
+/* 공개 관리 바 (설냥만 표시) */
+.cmp-manage {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
+  padding: 10px 14px; margin-bottom: 16px;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+.cmp-manage-label { font-family: var(--font-head); font-size: 0.82rem; color: var(--text-sub); }
+.cmp-manage-item { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text); }
+.cmp-acc-toggle {
+  padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text-sub); font-size: 0.75rem;
+  font-family: var(--font-head); cursor: pointer; transition: background .15s, color .15s, border-color .15s;
+}
+.cmp-acc-toggle:hover { background: var(--hover); color: var(--text); }
+.cmp-acc-toggle.on { background: var(--sage-light); border-color: var(--sage); color: var(--text); }
+.cmp-acc-toggle.locked { cursor: default; opacity: 0.7; }
+
+/* 헤더 — 큰 % 카드 2개 */
+.cmp-header {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-sm);
+  padding: 16px 18px; margin-bottom: 18px;
+}
+.cmp-header-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.cmp-header-title { font-family: var(--font-head); font-size: 0.95rem; color: var(--text); }
+.cmp-head-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.cmp-head-card { border-radius: var(--radius-sm); padding: 16px 18px; text-align: center; border: 1px solid var(--border); }
+.cmp-head-card.설냥 { background: var(--sage-light); }
+.cmp-head-card.츄츄 { background: var(--peach-light); }
+.cmp-head-owner { font-family: var(--font-head); font-size: 0.9rem; color: var(--text-sub); margin-bottom: 4px; }
+.cmp-head-pct { font-family: var(--font-head); font-size: 2.6rem; line-height: 1.05; font-weight: 700; color: var(--text); }
+.cmp-head-card.설냥 .cmp-head-pct { color: var(--color-owner-설냥); }
+.cmp-head-card.츄츄 .cmp-head-pct { color: var(--color-owner-츄츄); }
+.cmp-head-sub { font-size: 0.72rem; color: var(--text-sub); margin-top: 4px; }
+
+/* 세그먼트 토글 */
+.cmp-seg { display: inline-flex; gap: 3px; padding: 3px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.cmp-seg-btn {
+  padding: 5px 13px; border: none; background: transparent; border-radius: var(--radius-xs);
+  cursor: pointer; font-family: var(--font-head); font-size: 0.78rem; color: var(--text-sub);
+  transition: background .15s, color .15s, box-shadow .15s;
+}
+.cmp-seg-btn:hover { color: var(--text); }
+.cmp-seg-btn.on { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+
+/* 블록 */
+.cmp-block {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-sm);
+  padding: 14px 16px 16px; margin-bottom: 16px;
+}
+.cmp-block-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.cmp-block-title { font-family: var(--font-head); font-size: 0.95rem; color: var(--text); }
+.cmp-block-toggle-note { font-size: 0.72rem; color: var(--text-sub); }
+
+.cmp-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+@media (max-width: 640px) { .cmp-cols, .cmp-head-cards { grid-template-columns: 1fr; } }
+.cmp-col { }
+.cmp-col-head {
+  display: flex; align-items: center; justify-content: space-between;
+  font-family: var(--font-head); font-size: 0.9rem; color: var(--text);
+  padding: 7px 12px; border-radius: var(--radius-sm); margin-bottom: 10px;
+}
+.cmp-col-head.설냥 { background: var(--sage-light); color: var(--color-owner-설냥); }
+.cmp-col-head.츄츄 { background: var(--peach-light); color: var(--color-owner-츄츄); }
+.cmp-col-acct { font-size: 0.95rem; font-weight: 700; }
+
+/* 캐릭터 행 — 이름 + 바 + % */
+.cmp-char-row { display: flex; align-items: center; gap: 10px; padding: 5px 4px; }
+.cmp-char-row + .cmp-char-row { border-top: 1px solid var(--border); }
+.cmp-char-name { flex: 0 0 26%; font-size: 0.82rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-char-pct { flex: none; width: 42px; text-align: right; font-size: 0.82rem; font-family: var(--font-head); color: var(--text); }
+.cmp-bar { flex: 1 1 auto; height: 8px; border-radius: 999px; background: var(--surface2); overflow: hidden; border: 1px solid var(--border); }
+.cmp-bar-fill { display: block; height: 100%; border-radius: 999px; transition: width .3s ease; }
+.cmp-bar-fill.hi  { background: var(--sage); }
+.cmp-bar-fill.mid { background: var(--sky); }
+.cmp-bar-fill.lo  { background: var(--peach); }
+.cmp-bar-fill.na  { background: var(--border); }
+
+.cmp-empty { text-align: center; padding: 18px 8px; color: var(--text-sub); font-size: 0.82rem; }
+.cmp-note { margin-top: 12px; font-size: 0.72rem; color: var(--text-sub); text-align: center; }
+
+/* 어비스 직접 입력 */
+.cmp-abyss-custom { font-size: 0.76rem; color: var(--text-sub); margin-left: 8px; }
+.cmp-abyss-input {
+  width: 48px; padding: 4px 6px; border-radius: var(--radius-xs);
+  border: 1px solid var(--border); background: var(--surface2); color: var(--text);
+  font-family: var(--font-head); font-size: 0.78rem; text-align: center; outline: none;
+}
+.cmp-abyss-input:focus { border-color: var(--sage); background: var(--surface); }
+
+/* 협력 카드 */
+.cmp-coop-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 640px) { .cmp-coop-cards { grid-template-columns: 1fr; } }
+.cmp-coop-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; text-align: center; }
+.cmp-coop-flow { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 8px; }
+.cmp-coop-num { font-family: var(--font-head); font-size: 2rem; font-weight: 700; color: var(--text); }
+.cmp-coop-num span { font-size: 0.9rem; color: var(--text-sub); margin-left: 3px; }
+.cmp-coop-desc { font-size: 0.72rem; color: var(--text-sub); margin-top: 4px; }
+.cmp-owner-설냥 { color: var(--color-owner-설냥); }
+.cmp-owner-츄츄 { color: var(--color-owner-츄츄); }
 </style>
 </head>
 <body>
@@ -5770,6 +5875,7 @@ select.ctodo-select {
     <button class="tab-pill active" id="tab-overview" onclick="showPage('overview')">전체</button>
     <button class="tab-pill" onclick="showPage('detail-page')" id="detail-tab" style="display:none">상세</button>
     <button class="tab-pill" id="tab-todo" onclick="showPage('todo-page')">할일</button>
+    <button class="tab-pill" id="tab-completion" onclick="showPage('completion-page')" style="display:none">완료율</button>
     <button class="tab-pill" id="tab-deva" onclick="showPage('deva-page')">데바패스</button>
     <button class="tab-pill" id="tab-sanctuary" onclick="showPage('sanctuary-page')">성역</button>
     <button class="tab-pill" id="tab-expedition" onclick="showPage('expedition-page')">원정</button>
@@ -6163,6 +6269,13 @@ select.ctodo-select {
     <div id="todo-content">
       <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ COMPLETION PAGE (완료율) 작업본14 ═══════════════════════════════ -->
+<div id="completion-page" class="page">
+  <div id="completion-content">
+    <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
   </div>
 </div>
 
@@ -6639,6 +6752,7 @@ document.addEventListener('keydown', (e) => {
 const MENU_DEFS = [
   { key: 'overview',   tab: 'tab-overview',   page: 'overview',        label: '전체' },
   { key: 'todo',       tab: 'tab-todo',       page: 'todo-page',       label: '할일' },
+  { key: 'completion', tab: 'tab-completion', page: 'completion-page', label: '완료율' },
   { key: 'deva',       tab: 'tab-deva',       page: 'deva-page',       label: '데바패스' },
   { key: 'sanctuary',  tab: 'tab-sanctuary',  page: 'sanctuary-page',  label: '성역' },
   { key: 'expedition', tab: 'tab-expedition', page: 'expedition-page', label: '원정' },
@@ -6713,18 +6827,22 @@ function setHiddenMenus(set) {
   all[_menuActorKey()] = [...set];
   try { localStorage.setItem(MENU_STORE_KEY, JSON.stringify(all)); } catch (e) {}
 }
+// 완료율 공유 게이트: 허용 안 된 사용자에겐 탭도, 설정 목록에도 아예 없음 (작업본14)
+function _menuGatedOut(key) {
+  return key === 'completion' && (typeof completionAllowed === 'function') && !completionAllowed();
+}
 function applyMenuVisibility() {
   const hidden = getHiddenMenus();
   MENU_DEFS.forEach(m => {
     const el = document.getElementById(m.tab);
-    if (el) el.style.display = hidden.has(m.key) ? 'none' : '';
+    if (el) el.style.display = (_menuGatedOut(m.key) || hidden.has(m.key)) ? 'none' : '';
   });
   // 현재 활성 탭이 숨겨졌다면 첫 보이는 메뉴로 이동
   const activeHidden = MENU_DEFS.find(m =>
-    hidden.has(m.key) && document.getElementById(m.tab) &&
+    (_menuGatedOut(m.key) || hidden.has(m.key)) && document.getElementById(m.tab) &&
     document.getElementById(m.tab).classList.contains('active'));
   if (activeHidden) {
-    const firstVisible = MENU_DEFS.find(m => !hidden.has(m.key));
+    const firstVisible = MENU_DEFS.find(m => !_menuGatedOut(m.key) && !hidden.has(m.key));
     if (firstVisible) showPage(firstVisible.page);
   }
 }
@@ -6732,7 +6850,7 @@ function buildSettingsList() {
   const hidden = getHiddenMenus();
   const list = document.getElementById('settings-menu-list');
   if (!list) return;
-  list.innerHTML = MENU_DEFS.map(m => {
+  list.innerHTML = MENU_DEFS.filter(m => !_menuGatedOut(m.key)).map(m => {
     const on = !hidden.has(m.key);
     return '<div class="settings-row">' +
       '<span class="settings-row-label">' + m.label + '</span>' +
@@ -8190,6 +8308,20 @@ function showPage(id) {
         `</div>`;
     }
   }
+  if (id === 'completion-page') {
+    // 권한 없는 사용자가 어떻게든 진입하면 전체로 되돌림
+    if (!completionAllowed()) { showPage('overview'); return; }
+    document.getElementById('tab-completion').classList.add('active');
+    try {
+      renderCompletionPage();
+    } catch (e) {
+      console.error('[완료율 탭 에러]', e);
+      document.getElementById('completion-content').innerHTML =
+        `<div class="card" style="color:#b85050;font-size:0.85rem;white-space:pre-wrap">` +
+        `완료율 탭 렌더 오류:\n${e.message}\n\n콘솔 로그를 확인해 주세요.` +
+        `</div>`;
+    }
+  }
   if (id === 'deva-page') {
     document.getElementById('tab-deva').classList.add('active');
     try {
@@ -8503,6 +8635,10 @@ async function loadAll() {
   // ── 커스텀 할일 (app_config.custom_todos, 전 사용자 공유) 작업본13 ──
   await loadCustomTodos();
 
+  // ── 완료율 표시 권한 (app_config.completion_visible) 작업본14 ──
+  await loadCompletionAccess();
+  try { applyMenuVisibility(); buildSettingsList(); } catch (e) {}
+
   // ── 시즌 데이터 (Supabase 공유 + 1회 로컬 이관) ──
   await seasonInitLoad();
 }
@@ -8748,6 +8884,12 @@ function renderTodoPage() {
 function refreshTodoIfVisible() {
   if (document.getElementById('todo-page')?.classList.contains('active')) renderTodoPage();
 }
+// 완료율 페이지가 열려 있을 때 라이브(오늘/이번주) 부분 재렌더 (작업본14)
+function refreshCompletionIfVisible() {
+  if (document.getElementById('completion-page')?.classList.contains('active') && _compDaily !== null) {
+    try { _cmpRerender(); } catch (e) {}
+  }
+}
 
 // 데바패스 항목 클릭 → 데바패스 페이지로 이동 + 해당 캐릭터 블록 강조 (작업본13)
 function openDevaFocus(charId) {
@@ -8908,6 +9050,479 @@ async function deleteCustomTodo(id, btn) {
   renderTodoPage();
   const ok = await saveCustomTodos();
   if (!ok) { showToast('저장 실패'); await loadCustomTodos(); renderTodoPage(); }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  완료율 (Completion Rate) — 작업본14
+//   · 오늘/주간: 리셋 직전 스냅샷(completion_daily/weekly)의 원본값으로 프론트에서 % 계산
+//   · 오늘/이번주(진행 중)는 라이브 상태로 계산, 과거 범위는 스냅샷 평균
+//   · 어비스: abyss_corridors(war_date)+abyss_clears로 전쟁별 소급 계산
+//   · 협력: activity_log(actor≠owner의 owner)로 대신 완료 소급 집계
+// ════════════════════════════════════════════════════════════════
+
+// ── 표시 권한 (app_config.completion_visible = {"설냥":true,"츄츄":false}) ──
+let completionAccess = { '설냥': true };
+async function loadCompletionAccess() {
+  try {
+    const { data } = await sb.from('app_config').select('value').eq('key', 'completion_visible');
+    const raw = data && data[0] && data[0].value;
+    const obj = raw ? JSON.parse(raw) : null;
+    completionAccess = (obj && typeof obj === 'object') ? obj : { '설냥': true };
+  } catch (e) { completionAccess = { '설냥': true }; }
+  if (completionAccess['설냥'] === undefined) completionAccess['설냥'] = true;  // 관리 계정은 항상 표시
+}
+async function saveCompletionAccess() {
+  try {
+    const { error } = await sb.from('app_config')
+      .upsert({ key: 'completion_visible', value: JSON.stringify(completionAccess) }, { onConflict: 'key' });
+    return !error;
+  } catch (e) { return false; }
+}
+function _ownerOfActor(actor) {
+  if (!actor || actor === 'guest') return null;
+  const hit = Object.values(accountData).find(a => a && a.actor === actor);
+  if (hit) return hit.owner;
+  return OWNERS.includes(actor) ? actor : null;   // actor명이 owner명과 동일한 배포 대비
+}
+function _myOwner() {
+  return _ownerOfActor((typeof currentActor !== 'undefined') ? currentActor : null);
+}
+function completionAllowed() {
+  try {
+    const o = _myOwner();
+    if (!o) return false;
+    if (o === '설냥') return true;                 // 설냥(관리 계정)은 항상
+    return completionAccess[o] === true;
+  } catch (e) { return false; }
+}
+function completionCanManage() { return _myOwner() === '설냥'; }
+
+async function toggleCompletionAccess(owner) {
+  if (!completionCanManage()) return;
+  if (owner === '설냥') return;                     // 관리 계정 토글 잠금
+  completionAccess[owner] = !(completionAccess[owner] === true);
+  try { applyMenuVisibility(); } catch (e) {}
+  try { buildSettingsList(); } catch (e) {}
+  _cmpRerender();
+  const ok = await saveCompletionAccess();
+  if (!ok) { showToast('저장 실패'); await loadCompletionAccess(); _cmpRerender(); }
+}
+
+// ── 기간 상태 ──
+let _cmpDailyPeriod  = 'today';   // 'today' | '7d' | '30d' | 'all'  (헤더 + 오늘 블록 공용)
+let _cmpWeeklyPeriod = 'week';    // 'week' | 'month' | 'all'
+let _cmpAbyssPeriod  = 4;         // 정수(최근 N회) | 'all'
+let _cmpCoopPeriod   = '7d';      // 'today' | '7d' | '30d' | 'all'
+
+// ── 데이터 캐시 ──
+let _compDaily = null, _compWeekly = null;
+let _abyssWarsCache = null, _abyssClearMap = null;
+let _coopRows = null;
+let _compLoading = false;
+
+async function _fetchAll(table, cols, orderCol, cap) {
+  let out = [], from = 0; const size = 1000;
+  while (out.length < cap) {
+    const { data, error } = await sb.from(table).select(cols)
+      .order(orderCol, { ascending: false }).range(from, from + size - 1);
+    if (error || !data || !data.length) break;
+    out = out.concat(data);
+    if (data.length < size) break;
+    from += size;
+  }
+  return out;
+}
+
+async function loadCompletionData() {
+  // 스냅샷
+  const [d, w] = await Promise.all([
+    sb.from('completion_daily').select('*').order('snap_date', { ascending: false }).limit(400),
+    sb.from('completion_weekly').select('*').order('week_start', { ascending: false }).limit(200),
+  ]);
+  _compDaily = (d.data) || [];
+  _compWeekly = (w.data) || [];
+  // 어비스 — 회랑 + 클리어 (소급)
+  const [cor, clr] = await Promise.all([
+    _fetchAll('abyss_corridors', 'id,war_date,zone,layer,acquired', 'war_date', 4000),
+    _fetchAll('abyss_clears', 'corridor_id,character_id,cleared', 'id', 40000),
+  ]);
+  _abyssClearMap = {};
+  clr.forEach(c => { if (c.cleared) _abyssClearMap[`${c.corridor_id}_${c.character_id}`] = true; });
+  const byWar = {};
+  cor.forEach(c => {
+    if (!c.acquired) return;
+    (byWar[c.war_date] = byWar[c.war_date] || []).push({ id: c.id, layer: c.layer });
+  });
+  _abyssWarsCache = Object.keys(byWar).sort((a, b) => (a < b ? 1 : -1))
+    .map(wd => ({ war_date: wd, corridors: byWar[wd] }));
+  // 협력 — activity_log (경량 컬럼만)
+  _coopRows = await _fetchAll('activity_log', 'actor,owner,game_date', 'game_date', 30000);
+}
+
+// ── 오드 관리점수 (스냅샷 시각 기준) ──
+function _nextChargeMsAsOf(asOf) {
+  const kst = new Date(new Date(asOf).getTime() + 9 * 3600000);
+  const h = kst.getUTCHours(), m = kst.getUTCMinutes(), s = kst.getUTCSeconds(), ms = kst.getUTCMilliseconds();
+  const minutesSince5 = ((h - 5 + 24) % 24) * 60 + m;
+  const minutesInCycle = minutesSince5 % 180;
+  const minutesLeft = 180 - minutesInCycle;
+  return (minutesLeft * 60 - s) * 1000 - ms;
+}
+function _oddEstimateAsOf(base, recordedAtISO, asOf) {
+  if (!recordedAtISO) return null;
+  const recorded = new Date(recordedAtISO);
+  const now = new Date(asOf);
+  const chargeHoursKST = [2, 5, 8, 11, 14, 17, 20, 23];
+  const recKST = new Date(recorded.getTime() + 9 * 3600000);
+  const nowKST = new Date(now.getTime() + 9 * 3600000);
+  const startDay = new Date(Date.UTC(recKST.getUTCFullYear(), recKST.getUTCMonth(), recKST.getUTCDate()));
+  const endDay = new Date(Date.UTC(nowKST.getUTCFullYear(), nowKST.getUTCMonth(), nowKST.getUTCDate()));
+  let count = 0;
+  for (let dd = new Date(startDay); dd <= endDay; dd.setUTCDate(dd.getUTCDate() + 1)) {
+    for (const hh of chargeHoursKST) {
+      const chargeUTC = new Date(dd.getTime() + (hh - 9) * 3600000);
+      if (chargeUTC > recorded && chargeUTC <= now) count++;
+    }
+  }
+  return Math.min(840, (base || 0) + count * 15);
+}
+function _oddDoneAsOf(base, recordedAtISO, asOf) {
+  const E = _oddEstimateAsOf(base, recordedAtISO, asOf);
+  if (E === null) return null;                       // 기록 없음 → 집계 제외
+  const nextMs = _nextChargeMsAsOf(asOf);
+  const K = Math.ceil((24 * 3600000 - nextMs) / 10800000);
+  const target = 840 - 15 * K;
+  return Math.max(0, Math.ceil(E - target)) <= 0;    // 24h 내 낭비 없음 = 관리 OK
+}
+
+// ── 오늘 완료 집계 (스냅샷 1행) ──
+function _dailyCountsSnap(row) {
+  const asOf = row.created_at || (row.snap_date + 'T19:59:00Z');
+  const acct = row.acct || {};
+  const chars = row.chars || [];
+  let done = 0, total = 0; const perChar = {};
+  chars.forEach(ch => {
+    let cd = 0, ct = 0;
+    ct++; if ((ch.nightmare_base || 0) <= 12) cd++;             // 악몽
+    const odd = _oddDoneAsOf(ch.odd_energy_base, ch.odd_recorded_at, asOf);  // 오드(관리)
+    if (odd !== null) { ct++; if (odd) cd++; }
+    perChar[ch.char_id] = { done: cd, total: ct, name: ch.name };
+    done += cd; total += ct;
+  });
+  total++; if ((acct.shugo_key_base || 0) <= 12) done++;        // 슈고
+  total++; if ((acct.invasion_key || 0) <= 6) done++;           // 침공
+  total++; if (acct.daily_mission === true) done++;             // 사명
+  return { acctDone: done, acctTotal: total, perChar };
+}
+// ── 오늘 완료 집계 (라이브, 진행 중) ──
+function _dailyCountsLive() {
+  const res = {};
+  OWNERS.forEach(o => {
+    const acc = accountData[o] || {};
+    const chars = allChars.filter(c => c.owner === o && !c.resting).sort((a, b) => slotOrder(a) - slotOrder(b));
+    let done = 0, total = 0; const perChar = {};
+    chars.forEach(c => {
+      let cd = 0, ct = 0;
+      ct++; if ((c.nightmare_base || 0) <= 12) cd++;
+      const t = computeOddTimer(c);
+      const danger = (t.full || t.ms <= 24 * 3600000) && _todoOddConsume24h(c) > 0;
+      ct++; if (!danger) cd++;
+      perChar[c.id] = { done: cd, total: ct, name: c.name };
+      done += cd; total += ct;
+    });
+    total++; if ((acc.shugo_key_base || 0) <= 12) done++;
+    total++; if ((acc.invasion_key || 0) <= 6) done++;
+    total++; if (acc.daily_mission === true) done++;
+    res[o] = { acctDone: done, acctTotal: total, perChar };
+  });
+  return res;
+}
+// ── 주간 완료 집계 (스냅샷 1행) ──
+function _weeklyCountsSnap(row) {
+  const acct = row.acct || {}; const chars = row.chars || [];
+  let done = 0, total = 0; const perChar = {};
+  chars.forEach(ch => {
+    let cd = 0, ct = 0; const ilvl = ch.item_level || 0;
+    ct++; if ((ch.awakening_done || 0) >= 3) cd++;              // 각성
+    if (ilvl >= 2700) { ct++; if (ch.ludra_done) cd++; }         // 성역
+    if (ilvl >= 3500) { ct++; if (ch.erosion_done) cd++; }
+    if (ilvl >= 4300) { ct++; if (ch.muspell_done) cd++; }
+    ct++; if ((ch.transmutation_count || 0) >= 4) cd++;         // 물질변환
+    ct++; if ((ch.shop_purchase_count || 0) >= 4) cd++;         // 상점
+    perChar[ch.char_id] = { done: cd, total: ct, name: ch.name };
+    done += cd; total += ct;
+  });
+  total++; if ((acct.dungeon_remaining ?? 14) === 0) done++;     // 일일던전
+  total++; if (acct.order_lower && acct.order_middle && acct.order_town && acct.order_morheim) done++;  // 지령서
+  return { acctDone: done, acctTotal: total, perChar };
+}
+// ── 주간 완료 집계 (라이브, 진행 중) ──
+function _weeklyCountsLive() {
+  const res = {};
+  OWNERS.forEach(o => {
+    const acc = accountData[o] || {};
+    const chars = allChars.filter(c => c.owner === o && !c.resting).sort((a, b) => slotOrder(a) - slotOrder(b));
+    let done = 0, total = 0; const perChar = {};
+    chars.forEach(c => {
+      let cd = 0, ct = 0; const ilvl = c.item_level || 0; const wt = weeklyTasks[c.id] || {};
+      ct++; if ((c.awakening_done || 0) >= 3) cd++;
+      if (ilvl >= 2700) { ct++; if (wt.ludra_done) cd++; }
+      if (ilvl >= 3500) { ct++; if (wt.erosion_done) cd++; }
+      if (ilvl >= 4300) { ct++; if (wt.muspell_done) cd++; }
+      ct++; if ((c.transmutation_count || 0) >= 4) cd++;
+      ct++; if ((c.shop_purchase_count || 0) >= 4) cd++;
+      perChar[c.id] = { done: cd, total: ct, name: c.name };
+      done += cd; total += ct;
+    });
+    total++; if ((acc.dungeon_remaining ?? 14) === 0) done++;
+    total++; if (acc.order_lower && acc.order_middle && acc.order_town && acc.order_morheim) done++;
+    res[o] = { acctDone: done, acctTotal: total, perChar };
+  });
+  return res;
+}
+
+// ── 스냅샷 목록 평균 (owner별로 이미 필터·범위 슬라이스된 rows) ──
+function _aggSnap(rows, countsFn) {
+  let acctSum = 0, acctN = 0; const charAgg = {};
+  rows.forEach(r => {
+    const c = countsFn(r);
+    if (c.acctTotal > 0) { acctSum += c.acctDone / c.acctTotal * 100; acctN++; }
+    Object.entries(c.perChar).forEach(([id, v]) => {
+      if (v.total > 0) {
+        const a = (charAgg[id] = charAgg[id] || { sum: 0, n: 0, name: v.name });
+        a.sum += v.done / v.total * 100; a.n++; a.name = v.name;
+      }
+    });
+  });
+  const perChar = {};
+  Object.entries(charAgg).forEach(([id, v]) => perChar[id] = { pct: Math.round(v.sum / v.n), name: v.name, n: v.n });
+  return { acct: acctN ? Math.round(acctSum / acctN) : null, perChar, count: rows.length };
+}
+
+// ── 오늘/주간 owner별 상세 (기간 반영) ──
+function _dailyDetail(owner, period) {
+  if (period === 'today') {
+    const L = _dailyCountsLive()[owner] || { acctDone: 0, acctTotal: 0, perChar: {} };
+    const perChar = {};
+    Object.entries(L.perChar).forEach(([id, v]) => perChar[id] = { pct: v.total ? Math.round(v.done / v.total * 100) : null, name: v.name });
+    return { acct: L.acctTotal ? Math.round(L.acctDone / L.acctTotal * 100) : null, perChar, live: true };
+  }
+  const N = period === '7d' ? 7 : period === '30d' ? 30 : 9999;
+  const rows = (_compDaily || []).filter(r => r.owner === owner).slice(0, N);
+  return _aggSnap(rows, _dailyCountsSnap);
+}
+function _weeklyDetail(owner, period) {
+  if (period === 'week') {
+    const L = _weeklyCountsLive()[owner] || { acctDone: 0, acctTotal: 0, perChar: {} };
+    const perChar = {};
+    Object.entries(L.perChar).forEach(([id, v]) => perChar[id] = { pct: v.total ? Math.round(v.done / v.total * 100) : null, name: v.name });
+    return { acct: L.acctTotal ? Math.round(L.acctDone / L.acctTotal * 100) : null, perChar, live: true };
+  }
+  const N = period === 'month' ? 4 : 9999;
+  const rows = (_compWeekly || []).filter(r => r.owner === owner).slice(0, N);
+  return _aggSnap(rows, _weeklyCountsSnap);
+}
+
+// ── 어비스 owner별 상세 (최근 N회 / 전체) ──
+function _abyssReq(layer) { return layer === '하층' ? 1000 : layer === '중층' ? 3000 : 0; }
+function _abyssDetail(owner, period) {
+  const wars = _abyssWarsCache || [];
+  const sel = (period === 'all') ? wars : wars.slice(0, period);
+  const chars = allChars.filter(c => c.owner === owner && !c.resting).sort((a, b) => slotOrder(a) - slotOrder(b));
+  const perChar = {}; let cSum = 0, eSum = 0;
+  chars.forEach(c => {
+    let sum = 0, n = 0;
+    sel.forEach(w => {
+      const elig = w.corridors.filter(cor => (c.item_level || 0) >= _abyssReq(cor.layer));
+      if (!elig.length) return;
+      const cleared = elig.filter(cor => _abyssClearMap[`${cor.id}_${c.id}`]).length;
+      sum += cleared / elig.length * 100; n++;
+      eSum += elig.length; cSum += cleared;
+    });
+    perChar[c.id] = { pct: n ? Math.round(sum / n) : null, name: c.name, n };
+  });
+  return { acct: eSum ? Math.round(cSum / eSum * 100) : null, perChar, wars: sel.length };
+}
+
+// ── 협력(대신 완료) ──
+function _gameDateMinus(n) {
+  const t = getTodayKST();
+  const d = new Date(t + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+function _coopFilter(period) {
+  const rows = _coopRows || [];
+  if (period === 'all') return rows;
+  if (period === 'today') { const t = getTodayKST(); return rows.filter(r => r.game_date === t); }
+  const start = period === '7d' ? _gameDateMinus(6) : _gameDateMinus(29);
+  return rows.filter(r => r.game_date && r.game_date >= start);
+}
+function _coopCounts(period) {
+  let s2c = 0, c2s = 0;   // 설냥→츄츄, 츄츄→설냥
+  _coopFilter(period).forEach(r => {
+    const ao = _ownerOfActor(r.actor);
+    if (!ao || ao === r.owner) return;
+    if (ao === '설냥' && r.owner === '츄츄') s2c++;
+    else if (ao === '츄츄' && r.owner === '설냥') c2s++;
+  });
+  return { s2c, c2s };
+}
+
+// ── 렌더 헬퍼 ──
+function _pctStr(p) { return (p === null || p === undefined) ? '—' : p + '%'; }
+function _pctCls(p) { const v = (p === null || p === undefined) ? -1 : p; return v < 0 ? 'na' : v >= 80 ? 'hi' : v >= 50 ? 'mid' : 'lo'; }
+function _cmpBar(p) {
+  const v = (p === null || p === undefined) ? 0 : p;
+  return `<span class="cmp-bar"><span class="cmp-bar-fill ${_pctCls(p)}" style="width:${v}%"></span></span>`;
+}
+function _cmpSeg(items, cur, fn) {
+  // items: [[value,label], ...]
+  return `<span class="cmp-seg">` + items.map(([v, l]) =>
+    `<button class="cmp-seg-btn${String(v) === String(cur) ? ' on' : ''}" onclick="${fn}('${v}')">${l}</button>`).join('') + `</span>`;
+}
+function _cmpCharRows(owner, detail) {
+  const chars = allChars.filter(c => c.owner === owner && !c.resting).sort((a, b) => slotOrder(a) - slotOrder(b));
+  if (!chars.length) return `<div class="cmp-empty">표시할 캐릭터가 없어요</div>`;
+  return chars.map(c => {
+    const v = detail.perChar[c.id];
+    const p = v ? v.pct : null;
+    return `<div class="cmp-char-row">
+      <span class="cmp-char-name">${escapeHtml(c.name || '(이름없음)')}</span>
+      ${_cmpBar(p)}
+      <span class="cmp-char-pct ${_pctCls(p)}">${_pctStr(p)}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── 기간 setter ──
+function setCmpDailyPeriod(p) { _cmpDailyPeriod = p; _cmpRerender(); }
+function setCmpWeeklyPeriod(p) { _cmpWeeklyPeriod = p; _cmpRerender(); }
+function setCmpCoopPeriod(p) { _cmpCoopPeriod = p; _cmpRerender(); }
+function setCmpAbyssPeriod(p) { _cmpAbyssPeriod = (p === 'all') ? 'all' : (parseInt(p, 10) || 1); _cmpRerender(); }
+function setCmpAbyssCustom(v) {
+  const n = parseInt(v, 10);
+  if (!n || n < 1) return;
+  _cmpAbyssPeriod = n; _cmpRerender();
+}
+
+// ── 페이지 렌더 ──
+async function renderCompletionPage() {
+  const el = document.getElementById('completion-content');
+  if (!el) return;
+  if (_compLoading) return;
+  if (_compDaily === null) {
+    el.innerHTML = `<div class="loading"><div class="spinner"></div> 완료율 불러오는 중...</div>`;
+    _compLoading = true;
+    try { await loadCompletionData(); }
+    catch (e) { console.error('[완료율 로드]', e); }
+    _compLoading = false;
+  }
+  _cmpRerender();
+}
+
+function _cmpRerender() {
+  const el = document.getElementById('completion-content');
+  if (!el || _compDaily === null) return;
+
+  // 헤더 (설냥/츄츄 큰 %) — 오늘 할일 완료율, 기간 공용
+  const headCards = OWNERS.map(o => {
+    const det = _dailyDetail(o, _cmpDailyPeriod);
+    return `<div class="cmp-head-card ${o}">
+      <div class="cmp-head-owner">${o}</div>
+      <div class="cmp-head-pct ${_pctCls(det.acct)}">${_pctStr(det.acct)}</div>
+      <div class="cmp-head-sub">${det.live ? '진행 중' : (det.count ? det.count + '일 평균' : '기록 없음')}</div>
+    </div>`;
+  }).join('');
+  const headToggle = _cmpSeg([['today', '오늘'], ['7d', '7일'], ['30d', '30일'], ['all', '전체']], _cmpDailyPeriod, 'setCmpDailyPeriod');
+
+  // 블록: 오늘 할일 (헤더 기간 공용) — 2단
+  const todayCols = OWNERS.map(o => {
+    const det = _dailyDetail(o, _cmpDailyPeriod);
+    return `<div class="cmp-col">
+      <div class="cmp-col-head ${o}">${o} <span class="cmp-col-acct ${_pctCls(det.acct)}">${_pctStr(det.acct)}</span></div>
+      ${_cmpCharRows(o, det)}
+    </div>`;
+  }).join('');
+
+  // 블록: 주간 할일
+  const weeklyToggle = _cmpSeg([['week', '이번주'], ['month', '한달'], ['all', '전체']], _cmpWeeklyPeriod, 'setCmpWeeklyPeriod');
+  const weeklyCols = OWNERS.map(o => {
+    const det = _weeklyDetail(o, _cmpWeeklyPeriod);
+    return `<div class="cmp-col">
+      <div class="cmp-col-head ${o}">${o} <span class="cmp-col-acct ${_pctCls(det.acct)}">${_pctStr(det.acct)}</span></div>
+      ${_cmpCharRows(o, det)}
+    </div>`;
+  }).join('');
+
+  // 블록: 어비스
+  const abyssCur = _cmpAbyssPeriod;
+  const abyssToggle = `${_cmpSeg([['1', '최근 1회'], ['4', '최근 4회'], ['all', '전체']], String(abyssCur), 'setCmpAbyssPeriod')}
+    <span class="cmp-abyss-custom">최근 <input type="number" min="1" class="cmp-abyss-input" value="${abyssCur === 'all' ? '' : abyssCur}" onchange="setCmpAbyssCustom(this.value)" onkeydown="if(event.key==='Enter')setCmpAbyssCustom(this.value)">회</span>`;
+  const abyssCols = OWNERS.map(o => {
+    const det = _abyssDetail(o, abyssCur);
+    return `<div class="cmp-col">
+      <div class="cmp-col-head ${o}">${o} <span class="cmp-col-acct ${_pctCls(det.acct)}">${_pctStr(det.acct)}</span></div>
+      ${_cmpCharRows(o, det)}
+    </div>`;
+  }).join('');
+  const abyssNote = (_abyssWarsCache && _abyssWarsCache.length)
+    ? `<div class="cmp-note">집계된 전쟁 ${abyssCur === 'all' ? _abyssWarsCache.length : Math.min(_abyssWarsCache.length, abyssCur)}회 · 자격 회랑 대비 클리어율</div>`
+    : `<div class="cmp-note">아직 집계된 어비스 전쟁이 없어요</div>`;
+
+  // 블록: 협력 (대신 해주기)
+  const coopToggle = _cmpSeg([['today', '오늘'], ['7d', '7일'], ['30d', '30일'], ['all', '전체']], _cmpCoopPeriod, 'setCmpCoopPeriod');
+  const coop = _coopCounts(_cmpCoopPeriod);
+  const coopCards = `<div class="cmp-coop-cards">
+    <div class="cmp-coop-card">
+      <div class="cmp-coop-flow"><b class="cmp-owner-설냥">설냥</b> → <b class="cmp-owner-츄츄">츄츄</b></div>
+      <div class="cmp-coop-num">${coop.s2c}<span>회</span></div>
+      <div class="cmp-coop-desc">설냥이 츄츄 걸 대신 완료</div>
+    </div>
+    <div class="cmp-coop-card">
+      <div class="cmp-coop-flow"><b class="cmp-owner-츄츄">츄츄</b> → <b class="cmp-owner-설냥">설냥</b></div>
+      <div class="cmp-coop-num">${coop.c2s}<span>회</span></div>
+      <div class="cmp-coop-desc">츄츄가 설냥 걸 대신 완료</div>
+    </div>
+  </div>`;
+
+  el.innerHTML = `<div class="cmp-wrap">
+    ${_cmpManageHtml()}
+    <div class="cmp-header">
+      <div class="cmp-header-top"><span class="cmp-header-title">오늘 할일 완료율</span>${headToggle}</div>
+      <div class="cmp-head-cards">${headCards}</div>
+    </div>
+
+    <div class="cmp-block">
+      <div class="cmp-block-head"><span class="cmp-block-title">오늘 할일</span><span class="cmp-block-toggle-note">헤더 기간과 연동</span></div>
+      <div class="cmp-cols">${todayCols}</div>
+    </div>
+
+    <div class="cmp-block">
+      <div class="cmp-block-head"><span class="cmp-block-title">주간 할일</span>${weeklyToggle}</div>
+      <div class="cmp-cols">${weeklyCols}</div>
+    </div>
+
+    <div class="cmp-block">
+      <div class="cmp-block-head"><span class="cmp-block-title">어비스</span>${abyssToggle}</div>
+      <div class="cmp-cols">${abyssCols}</div>
+      ${abyssNote}
+    </div>
+
+    <div class="cmp-block">
+      <div class="cmp-block-head"><span class="cmp-block-title">협력 · 대신 해주기</span>${coopToggle}</div>
+      ${coopCards}
+    </div>
+  </div>`;
+}
+
+function _cmpManageHtml() {
+  if (!completionCanManage()) return '';
+  const chuOn = completionAccess['츄츄'] === true;
+  return `<div class="cmp-manage">
+    <span class="cmp-manage-label">완료율 공개 관리</span>
+    <span class="cmp-manage-item"><span>설냥</span><button class="cmp-acc-toggle on locked" disabled title="관리 계정은 항상 표시">항상</button></span>
+    <span class="cmp-manage-item"><span>츄츄</span><button class="cmp-acc-toggle ${chuOn ? 'on' : ''}" onclick="toggleCompletionAccess('츄츄')">${chuOn ? '표시 중' : '숨김'}</button></span>
+  </div>`;
 }
 
 // ── 할일 딥링크 (v1.7.6) — 항목 클릭 시 실제 해소 UI 위치로 이동 ──
@@ -9094,6 +9709,7 @@ function renderOverview() {
   //    어비스 섹션도 같이 renderOverview의 html에 포함되므로 같이 방어됨.
   const prevKey = el.dataset.renderKey || '';
   refreshTodoIfVisible();   // v1.7.6: 같은 클라이언트의 값 변경(모달 토글 등)도 할일 페이지에 즉시 반영
+  refreshCompletionIfVisible();   // 작업본14: 완료율 라이브(오늘/이번주) 즉시 반영
   const nextKey = html.length + '::' + _fastHash(html);
   if (prevKey === nextKey) return;
   el.innerHTML = html;
@@ -11951,6 +12567,15 @@ function subscribeRealtime() {
           customTodos = Array.isArray(arr) ? arr : [];
         } catch (e) {}
         refreshTodoIfVisible();
+      } else if (row.key === 'completion_visible') {
+        // 완료율 표시 권한 실시간 반영 (작업본14)
+        try {
+          const obj = JSON.parse(row.value || '{}');
+          completionAccess = (obj && typeof obj === 'object') ? obj : { '설냥': true };
+          if (completionAccess['설냥'] === undefined) completionAccess['설냥'] = true;
+        } catch (e) {}
+        try { applyMenuVisibility(); buildSettingsList(); } catch (e) {}
+        if (document.getElementById('completion-page')?.classList.contains('active') && !completionAllowed()) showPage('overview');
       }
     })
     .subscribe(status => {
@@ -12084,6 +12709,8 @@ function scheduleLocalRerender() {
       renderTodoPage();   // v1.7.6: 할일 페이지 실시간 갱신 (다른 기기 변경 반영)
     } else if (document.getElementById('deva-page')?.classList.contains('active')) {
       renderDevaPage();   // 작업본6: 데바패스 실시간 갱신 (다른 기기 변경 반영)
+    } else if (document.getElementById('completion-page')?.classList.contains('active')) {
+      refreshCompletionIfVisible();   // 작업본14: 완료율 라이브 갱신 (다른 기기 변경 반영)
     } else if (currentCharId) {
       // detail 페이지에 포커스된 input/textarea가 있으면 re-render 건너뜀
       const focused = document.activeElement;
