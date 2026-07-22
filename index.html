@@ -9184,8 +9184,8 @@ async function loadCompletionData() {
   });
   _abyssWarsCache = Object.keys(byWar).sort((a, b) => (a < b ? 1 : -1))
     .map(wd => ({ war_date: wd, corridors: byWar[wd] }));
-  // 협력 — activity_log (내역 표시용으로 action·character_name 포함) 작업본16
-  _coopRows = await _fetchAll('activity_log', 'actor,owner,game_date,action,character_name', 'game_date', 30000);
+  // 협력 — activity_log (내역 표시용 action·character_name + 제외판정용 field) 작업본16/17
+  _coopRows = await _fetchAll('activity_log', 'actor,owner,game_date,action,character_name,field', 'game_date', 30000);
 }
 
 // ── 오드 관리점수 (스냅샷 시각 기준) ──
@@ -9386,11 +9386,20 @@ function _coopFilter(period) {
   const start = period === '7d' ? _gameDateMinus(6) : _gameDateMinus(29);
   return rows.filter(r => r.game_date && r.game_date >= start);
 }
+// 협력 집계에서 제외할 로그 — 할일 '대신 완료'가 아닌 것들 (작업본17)
+//   odd_batch = 오드 일괄 적용, memo_read = 메모 열람
+const COOP_EXCLUDE_FIELDS = ['odd_batch', 'memo_read'];
+function _coopCountable(r) {
+  const ao = _ownerOfActor(r.actor);
+  if (!ao || ao === r.owner) return null;                    // 본인 것 or 매핑 불가
+  if (COOP_EXCLUDE_FIELDS.includes(r.field)) return null;    // 제외 대상
+  return ao;
+}
 function _coopCounts(period) {
   let s2c = 0, c2s = 0;   // 설냥→츄츄, 츄츄→설냥
   _coopFilter(period).forEach(r => {
-    const ao = _ownerOfActor(r.actor);
-    if (!ao || ao === r.owner) return;
+    const ao = _coopCountable(r);
+    if (!ao) return;
     if (ao === '설냥' && r.owner === '츄츄') s2c++;
     else if (ao === '츄츄' && r.owner === '설냥') c2s++;
   });
@@ -9399,8 +9408,8 @@ function _coopCounts(period) {
 // 방향별 상세 내역 (dir: 's2c' 설냥→츄츄 | 'c2s' 츄츄→설냥) — 최신순
 function _coopList(period, dir) {
   return _coopFilter(period).filter(r => {
-    const ao = _ownerOfActor(r.actor);
-    if (!ao || ao === r.owner) return false;
+    const ao = _coopCountable(r);
+    if (!ao) return false;
     return dir === 's2c' ? (ao === '설냥' && r.owner === '츄츄')
                          : (ao === '츄츄' && r.owner === '설냥');
   }).sort((a, b) => (a.game_date < b.game_date ? 1 : (a.game_date > b.game_date ? -1 : 0)));
