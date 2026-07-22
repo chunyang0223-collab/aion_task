@@ -5893,8 +5893,13 @@ select.ctodo-select {
 .cmp-coop-cat {
   font-size: 0.78rem; color: var(--text);
   background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 999px; padding: 3px 10px; white-space: nowrap;
+  border-radius: 999px; padding: 4px 11px; white-space: nowrap;
+  cursor: pointer; font-family: 'Gowun Dodum', sans-serif;
+  transition: background .15s, border-color .15s, color .15s;
 }
+.cmp-coop-cat:hover { background: var(--hover); border-color: var(--sage); }
+.cmp-coop-cat.on { background: var(--sage-light); border-color: var(--sage); }
+.cmp-coop-cat.on .cmp-coop-cat-pct { color: var(--color-owner-설냥); }
 .cmp-coop-cat b { font-family: var(--font-head); font-weight: 600; }
 .cmp-coop-cat-pct { color: var(--text-sub); font-size: 0.72rem; }
 .cmp-coop-item:nth-child(even) { background: var(--surface2); }
@@ -9427,9 +9432,15 @@ function _coopList(period, dir) {
                          : (ao === '츄츄' && r.owner === '설냥');
   }).sort((a, b) => (a.game_date < b.game_date ? 1 : (a.game_date > b.game_date ? -1 : 0)));
 }
-let _coopExpand = null;   // null | 's2c' | 'c2s'
+let _coopExpand = null;      // null | 's2c' | 'c2s'
+let _coopCatFilter = null;   // null(전체) | 카테고리명 (작업본19)
 function toggleCoopDetail(dir) {
   _coopExpand = (_coopExpand === dir) ? null : dir;
+  _coopCatFilter = null;     // 방향 바꾸면 카테고리 필터 초기화
+  _cmpRerender();
+}
+function setCoopCatFilter(cat) {
+  _coopCatFilter = (_coopCatFilter === cat) ? null : cat;   // 같은 칩 다시 누르면 전체
   _cmpRerender();
 }
 // 로그 1건 → 카테고리 (action/field 기준) 작업본18
@@ -9489,7 +9500,7 @@ function _cmpCharRows(owner, detail) {
 // ── 기간 setter ──
 function setCmpDailyPeriod(p) { _cmpDailyPeriod = p; _cmpRerender(); }
 function setCmpWeeklyPeriod(p) { _cmpWeeklyPeriod = p; _cmpRerender(); }
-function setCmpCoopPeriod(p) { _cmpCoopPeriod = p; _cmpRerender(); }
+function setCmpCoopPeriod(p) { _cmpCoopPeriod = p; _coopCatFilter = null; _cmpRerender(); }
 function setCmpAbyssPeriod(p) { _cmpAbyssPeriod = (p === 'all') ? 'all' : (parseInt(p, 10) || 1); _cmpRerender(); }
 function setCmpAbyssCustom(v) {
   const n = parseInt(v, 10);
@@ -9584,17 +9595,19 @@ function _cmpRerender() {
     const bd = _coopBreakdown(list);
     const breakdown = bd.length
       ? `<div class="cmp-coop-breakdown">${bd.map(b =>
-          `<span class="cmp-coop-cat"><b>${escapeHtml(b.cat)}</b> ${b.n}회 <span class="cmp-coop-cat-pct">(${b.pct}%)</span></span>`).join('')}</div>`
+          `<button type="button" class="cmp-coop-cat${_coopCatFilter === b.cat ? ' on' : ''}" onclick="setCoopCatFilter('${b.cat.replace(/'/g, "\\'")}')"><b>${escapeHtml(b.cat)}</b> ${b.n}회 <span class="cmp-coop-cat-pct">(${b.pct}%)</span></button>`).join('')}</div>`
       : '';
-    const items = list.length
-      ? list.map(r => `<div class="cmp-coop-item">
+    const shown = _coopCatFilter ? list.filter(r => _coopCategory(r) === _coopCatFilter) : list;
+    const items = shown.length
+      ? shown.map(r => `<div class="cmp-coop-item">
           <span class="cmp-coop-date">${escapeHtml(r.game_date || '')}</span>
           <span class="cmp-coop-char">${escapeHtml(r.character_name || '—')}</span>
           <span class="cmp-coop-act">${escapeHtml(r.action || '')}</span>
         </div>`).join('')
       : `<div class="cmp-empty">내역이 없어요</div>`;
+    const headCount = _coopCatFilter ? `${escapeHtml(_coopCatFilter)} ${shown.length}건 / 전체 ${list.length}건` : `${list.length}건`;
     coopDetail = `<div class="cmp-coop-detail">
-      <div class="cmp-coop-detail-head"><span>${dirTitle} · ${list.length}건</span><button class="cmp-coop-close" onclick="toggleCoopDetail('${_coopExpand}')">닫기</button></div>
+      <div class="cmp-coop-detail-head"><span>${dirTitle} · ${headCount}</span><button class="cmp-coop-close" onclick="toggleCoopDetail('${_coopExpand}')">닫기</button></div>
       ${breakdown}
       ${items}
     </div>`;
