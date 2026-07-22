@@ -5643,6 +5643,117 @@ body.guest-mode .deva-chip:hover { border-color: var(--border); }
   transition: filter 0.15s;
 }
 .deva-form-save:hover { filter: brightness(0.95); }
+
+/* ════════════ 할일 — 커스텀 항목 + 툴바 (작업본13) ════════════ */
+.todo-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.todo-toolbar .todo-subtabs { margin-bottom: 0; }
+.todo-custom-add {
+  flex: none;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px dashed var(--sage);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-family: var(--font-head);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.todo-custom-add:hover { background: var(--sage-light); border-color: var(--sage); }
+body.guest-mode .todo-custom-add { display: none; }
+
+/* 커스텀 할일 섹션 라벨 — 다른 섹션과 시각적으로 구분 */
+.todo-custom-sec .todo-sec2-label { color: var(--sage); }
+
+/* 커스텀 할일 행 — 체크 + 본문(캐릭·내용) + 액션 */
+.todo-custom-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.todo-custom-item + .todo-custom-item { margin-top: 2px; }
+.todo-custom-item:hover { background: var(--hover); }
+.todo-custom-check {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: var(--surface2);
+  color: #fff;
+  font-size: 0.7rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+.todo-custom-item.done .todo-custom-check {
+  background: var(--sage);
+  border-color: var(--sage);
+}
+.todo-custom-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.todo-custom-char {
+  flex: none;
+  font-size: 0.74rem;
+  color: var(--text-sub);
+}
+.todo-custom-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.todo-custom-item.done .todo-custom-text {
+  color: var(--text-sub);
+  text-decoration: line-through;
+}
+.todo-custom-actions {
+  flex: none;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.todo-custom-item:hover .todo-custom-actions { opacity: 1; }
+.todo-custom-actions .deva-icon-btn.arm {
+  background: var(--odd-full);
+  border-color: var(--odd-full);
+  color: #fff;
+}
+
+/* 모달 — 오늘/주간 세그먼트 + 캐릭터 셀렉트 */
+.ctodo-seg { display: inline-flex; }
+.ctodo-seg .deva-seg-btn { padding: 6px 18px; font-size: 0.8rem; }
+.ctodo-seg .deva-seg-btn.on { background: var(--sage-light); color: var(--text); }
+select.ctodo-select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+@media (max-width: 640px) {
+  .todo-custom-actions { opacity: 1; }   /* 터치 환경: 항상 노출 */
+}
 </style>
 </head>
 <body>
@@ -6042,9 +6153,12 @@ body.guest-mode .deva-chip:hover { border-color: var(--border); }
 <!-- ═══════════════════════════════ TODO PAGE (할일) ═══════════════════════════════ -->
 <div id="todo-page" class="page">
   <div class="todo-wrap">
-    <div class="todo-subtabs">
-      <button class="todo-subtab active" id="todo-subtab-today" onclick="setTodoTab('today')">오늘</button>
-      <button class="todo-subtab" id="todo-subtab-weekly" onclick="setTodoTab('weekly')">주간</button>
+    <div class="todo-toolbar">
+      <div class="todo-subtabs">
+        <button class="todo-subtab active" id="todo-subtab-today" onclick="setTodoTab('today')">오늘</button>
+        <button class="todo-subtab" id="todo-subtab-weekly" onclick="setTodoTab('weekly')">주간</button>
+      </div>
+      <button class="todo-custom-add" id="todo-add-btn" onclick="openCustomTodoModal()">＋ 할일 추가</button>
     </div>
     <div id="todo-content">
       <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
@@ -6108,6 +6222,31 @@ body.guest-mode .deva-chip:hover { border-color: var(--border); }
       <input type="text" id="deva-pass-price" class="deva-form-input" placeholder="모르면 비워두고 나중에 수정" maxlength="20" onkeydown="if(event.key==='Enter')saveDevaPassModal()">
     </div>
     <button class="deva-form-save" onclick="saveDevaPassModal()">저장</button>
+  </div>
+</div>
+
+<!-- 커스텀 할일 등록/수정 모달 (작업본13) -->
+<div id="ctodo-modal-overlay" class="alarm-overlay" onclick="closeCustomTodoModal(event)">
+  <div class="alarm-modal" style="max-width:340px" onclick="event.stopPropagation()">
+    <button class="alarm-close" onclick="closeCustomTodoModal()" aria-label="닫기">×</button>
+    <div class="alarm-modal-title" id="ctodo-modal-title">할일 추가</div>
+    <div class="alarm-modal-desc">할일 페이지에서만 관리돼요 · 모든 기기에서 공유</div>
+    <div class="deva-form-field">
+      <label class="deva-form-label">분류</label>
+      <span class="deva-seg ctodo-seg" id="ctodo-tab-seg">
+        <button type="button" class="deva-seg-btn t-today on" onclick="setCtodoTab('today')">오늘</button>
+        <button type="button" class="deva-seg-btn t-weekly" onclick="setCtodoTab('weekly')">주간</button>
+      </span>
+    </div>
+    <div class="deva-form-field">
+      <label class="deva-form-label" for="ctodo-char">캐릭터</label>
+      <select id="ctodo-char" class="deva-form-input ctodo-select"></select>
+    </div>
+    <div class="deva-form-field">
+      <label class="deva-form-label" for="ctodo-text">할 일</label>
+      <input type="text" id="ctodo-text" class="deva-form-input" placeholder="예: 길드 상점 정산" maxlength="60" onkeydown="if(event.key==='Enter')saveCustomTodoModal()">
+    </div>
+    <button class="deva-form-save" onclick="saveCustomTodoModal()">저장</button>
   </div>
 </div>
 
@@ -8361,6 +8500,9 @@ async function loadAll() {
   // ── 데바패스 목록 (app_config.deva_passes, 전 사용자 공유) 작업본6 ──
   await loadDevaPasses();
 
+  // ── 커스텀 할일 (app_config.custom_todos, 전 사용자 공유) 작업본13 ──
+  await loadCustomTodos();
+
   // ── 시즌 데이터 (Supabase 공유 + 1회 로컬 이관) ──
   await seasonInitLoad();
 }
@@ -8569,12 +8711,27 @@ function _todoWeeklyCol(owner) {
   }
   html += _todoSec('지령서', orderItems);
 
+  // 데바패스 — 구매(기본/프리미엄)했으나 이번 주 EXP 미완료인 캐릭·패스만 (미구매 제외)
+  //   구매 상태: char.deva_premium[pid] (basic/premium/both), EXP 완료: weekly_tasks.deva_xp[pid]
+  const devaItems = [];
+  chars.forEach(c => {
+    const remain = devaPasses.filter(p => {
+      const f = (typeof _devaFlags === 'function') ? _devaFlags(c, p.id) : { basic: false, premium: false };
+      const owned = f.basic || f.premium;
+      const xpDone = !!(((weeklyTasks[c.id] || {}).deva_xp || {})[p.id]);
+      return owned && !xpDone;
+    }).map(p => escapeHtml(p.name));
+    if (remain.length) devaItems.push(_todoLine(`${_nm(c)} - ${remain.join(', ')}`, `openDevaFocus('${c.id}')`));
+  });
+  html += _todoSec('데바패스', devaItems);
+
   return html;
 }
 
 function _todoColumn(owner) {
   const body = _todoTab === 'today' ? _todoTodayCol(owner) : _todoWeeklyCol(owner);
-  const inner = body || `<div class="todo-col-empty"><span class="em">🎉</span>할 일 없음</div>`;
+  const custom = _todoCustomSec(owner, _todoTab);
+  const inner = (body + custom) || `<div class="todo-col-empty"><span class="em">🎉</span>할 일 없음</div>`;
   return `<div class="todo-col">
     <div class="todo-col-head ${owner}">${owner}</div>
     ${inner}
@@ -8590,6 +8747,167 @@ function renderTodoPage() {
 // 할일 페이지가 열려 있을 때만 재렌더 — 60초 타이머·renderOverview 훅에서 호출 (v1.7.6)
 function refreshTodoIfVisible() {
   if (document.getElementById('todo-page')?.classList.contains('active')) renderTodoPage();
+}
+
+// 데바패스 항목 클릭 → 데바패스 페이지로 이동 + 해당 캐릭터 블록 강조 (작업본13)
+function openDevaFocus(charId) {
+  showPage('deva-page');
+  _deepFocus(`deva-char-${charId}`);
+}
+
+// ════════════ 커스텀 할일 섹션 렌더 (작업본13) ════════════
+//   할일 페이지에서만 관리. 캐릭터 상세로 연결되지 않음.
+function _todoCustomSec(owner, tab) {
+  const list = customTodos
+    .filter(t => t.owner === owner && (t.tab === 'weekly' ? 'weekly' : 'today') === tab)
+    .sort((a, b) => (a.done === b.done) ? 0 : (a.done ? 1 : -1));   // 미완료 먼저
+  if (!list.length) return '';
+  const rows = list.map(t => {
+    const char = allChars.find(c => c.id === t.charId);
+    const cname = escapeHtml(char ? (char.name || '(이름없음)') : (t.charName || '(캐릭터)'));
+    const guest = currentActor === 'guest';
+    const actions = guest ? '' : `<span class="todo-custom-actions">
+        <button class="deva-icon-btn" title="수정" aria-label="할일 수정" onclick="event.stopPropagation();openCustomTodoModal('${t.id}')">✎</button>
+        <button class="deva-icon-btn" title="삭제" aria-label="할일 삭제" onclick="event.stopPropagation();deleteCustomTodo('${t.id}', this)">🗑</button>
+      </span>`;
+    return `<div class="todo-custom-item${t.done ? ' done' : ''}"${guest ? '' : ` onclick="toggleCustomTodoDone('${t.id}')"`}>
+      <span class="todo-custom-check" aria-hidden="true">${t.done ? '✓' : ''}</span>
+      <span class="todo-custom-body">
+        <span class="todo-custom-char">${cname}</span>
+        <span class="todo-custom-text">${escapeHtml(t.text || '')}</span>
+      </span>
+      ${actions}
+    </div>`;
+  }).join('');
+  return `<div class="todo-sec2 todo-custom-sec"><div class="todo-sec2-label">내 할일</div>${rows}</div>`;
+}
+
+// ════════════ 커스텀 할일 데이터·CRUD (app_config.custom_todos, 전 사용자 공유) 작업본13 ════════════
+//   레코드: { id, owner, charId, charName, tab:'today'|'weekly', text, done }
+let customTodos = [];
+let _ctodoEditId = null;
+let _ctodoTab = 'today';
+let _ctodoDelArm = null;
+
+async function loadCustomTodos() {
+  try {
+    const { data } = await sb.from('app_config').select('value').eq('key', 'custom_todos');
+    const raw = data && data[0] && data[0].value;
+    customTodos = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(customTodos)) customTodos = [];
+  } catch (e) { console.error('[커스텀 할일 로드]', e); customTodos = []; }
+}
+async function saveCustomTodos() {
+  try {
+    const { error } = await sb.from('app_config')
+      .upsert({ key: 'custom_todos', value: JSON.stringify(customTodos) }, { onConflict: 'key' });
+    return !error;
+  } catch (e) { return false; }
+}
+
+// 드롭다운 후보 — 로그인한 본인 계정의 캐릭터 (없으면 안전하게 전체)
+function _ctodoSelectableChars() {
+  const me = (typeof currentActor !== 'undefined') ? currentActor : 'guest';
+  let list = allChars.filter(c => c.owner === me);
+  if (!list.length) list = allChars.slice();
+  return list.sort((a, b) => (a.owner === b.owner)
+    ? slotOrder(a) - slotOrder(b)
+    : OWNERS.indexOf(a.owner) - OWNERS.indexOf(b.owner));
+}
+
+function setCtodoTab(tab) {
+  _ctodoTab = (tab === 'weekly') ? 'weekly' : 'today';
+  const seg = document.getElementById('ctodo-tab-seg');
+  if (seg) {
+    const a = seg.querySelector('.t-today');
+    const b = seg.querySelector('.t-weekly');
+    if (a) a.classList.toggle('on', _ctodoTab === 'today');
+    if (b) b.classList.toggle('on', _ctodoTab === 'weekly');
+  }
+}
+
+function openCustomTodoModal(editId) {
+  if (currentActor === 'guest') return;
+  _ctodoEditId = editId || null;
+  const sel = document.getElementById('ctodo-char');
+  const textEl = document.getElementById('ctodo-text');
+  const titleEl = document.getElementById('ctodo-modal-title');
+  const chars = _ctodoSelectableChars();
+  sel.innerHTML = chars.map(c =>
+    `<option value="${c.id}">${escapeHtml(c.name || '(이름없음)')}${c.resting ? ' (휴식)' : ''}</option>`).join('');
+  if (editId) {
+    const t = customTodos.find(x => x.id === editId);
+    if (t) {
+      setCtodoTab(t.tab);
+      if (!chars.some(c => c.id === t.charId)) {
+        sel.insertAdjacentHTML('afterbegin',
+          `<option value="${t.charId}">${escapeHtml(t.charName || '(캐릭터)')}</option>`);
+      }
+      sel.value = t.charId;
+      textEl.value = t.text || '';
+      titleEl.textContent = '할일 수정';
+    }
+  } else {
+    setCtodoTab(_todoTab);   // 현재 보고 있는 탭을 기본값으로
+    textEl.value = '';
+    titleEl.textContent = '할일 추가';
+  }
+  document.getElementById('ctodo-modal-overlay').classList.add('show');
+  setTimeout(() => textEl.focus(), 50);
+}
+
+function closeCustomTodoModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('ctodo-modal-overlay').classList.remove('show');
+  _ctodoEditId = null;
+}
+
+async function saveCustomTodoModal() {
+  if (currentActor === 'guest') return;
+  const sel = document.getElementById('ctodo-char');
+  const text = document.getElementById('ctodo-text').value.trim();
+  const charId = sel.value;
+  if (!text) { showToast('할 일 내용을 입력해 주세요'); return; }
+  const char = allChars.find(c => c.id === charId);
+  const owner = char ? char.owner : (currentActor !== 'guest' ? currentActor : OWNERS[0]);
+  const charName = char ? (char.name || '') : '';
+  if (_ctodoEditId) {
+    const t = customTodos.find(x => x.id === _ctodoEditId);
+    if (t) { t.tab = _ctodoTab; t.charId = charId; t.charName = charName; t.owner = owner; t.text = text; }
+  } else {
+    customTodos.push({ id: 'ct' + Date.now(), owner, charId, charName, tab: _ctodoTab, text, done: false });
+  }
+  _ctodoEditId = null;
+  document.getElementById('ctodo-modal-overlay').classList.remove('show');
+  renderTodoPage();
+  const ok = await saveCustomTodos();
+  if (!ok) { showToast('저장 실패'); await loadCustomTodos(); renderTodoPage(); }
+}
+
+async function toggleCustomTodoDone(id) {
+  if (currentActor === 'guest') return;
+  const t = customTodos.find(x => x.id === id);
+  if (!t) return;
+  t.done = !t.done;
+  renderTodoPage();
+  const ok = await saveCustomTodos();
+  if (!ok) { showToast('저장 실패'); await loadCustomTodos(); renderTodoPage(); }
+}
+
+async function deleteCustomTodo(id, btn) {
+  if (currentActor === 'guest') return;
+  // 1차 클릭 → "확인" 상태, 2.6초 내 재클릭 시 실제 삭제
+  if (_ctodoDelArm !== id) {
+    _ctodoDelArm = id;
+    if (btn) { btn.textContent = '?'; btn.classList.add('arm'); }
+    setTimeout(() => { if (_ctodoDelArm === id) { _ctodoDelArm = null; refreshTodoIfVisible(); } }, 2600);
+    return;
+  }
+  _ctodoDelArm = null;
+  customTodos = customTodos.filter(x => x.id !== id);
+  renderTodoPage();
+  const ok = await saveCustomTodos();
+  if (!ok) { showToast('저장 실패'); await loadCustomTodos(); renderTodoPage(); }
 }
 
 // ── 할일 딥링크 (v1.7.6) — 항목 클릭 시 실제 해소 UI 위치로 이동 ──
@@ -11429,7 +11747,7 @@ function _devaManageCard(isGuest) {
 // 캐릭터 블록: 캐릭 이름 아래에 등록된 모든 패스를 한 번에 체크
 function _devaCharBlock(c) {
   const rows = devaPasses.map(p => _devaPassRow(c, p)).join('');
-  return `<div class="deva-char-block">
+  return `<div class="deva-char-block" id="deva-char-${c.id}">
     <div class="deva-char-head">${escapeHtml(c.name)}</div>
     ${rows}
   </div>`;
@@ -11556,6 +11874,8 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     const ov = document.getElementById('deva-modal-overlay');
     if (ov && ov.classList.contains('show')) { ov.classList.remove('show'); _devaEditId = null; }
+    const cv = document.getElementById('ctodo-modal-overlay');
+    if (cv && cv.classList.contains('show')) { cv.classList.remove('show'); _ctodoEditId = null; }
   }
 });
 
@@ -11623,6 +11943,14 @@ function subscribeRealtime() {
           devaPasses = Array.isArray(arr) ? arr : [];
         } catch (e) {}
         if (document.getElementById('deva-page')?.classList.contains('active')) renderDevaPage();
+        refreshTodoIfVisible();   // 데바패스 변경 → 할일(주간) 데바패스 항목 반영 (작업본13)
+      } else if (row.key === 'custom_todos') {
+        // 커스텀 할일 실시간 반영 (작업본13) — 내 upsert 에코도 동일 데이터라 무해
+        try {
+          const arr = JSON.parse(row.value || '[]');
+          customTodos = Array.isArray(arr) ? arr : [];
+        } catch (e) {}
+        refreshTodoIfVisible();
       }
     })
     .subscribe(status => {
