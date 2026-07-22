@@ -9404,13 +9404,16 @@ function _coopFilter(period) {
   const start = period === '7d' ? _gameDateMinus(6) : _gameDateMinus(29);
   return rows.filter(r => r.game_date && r.game_date >= start);
 }
-// 협력 집계에서 제외할 로그 — 할일 '대신 완료'가 아닌 것들 (작업본17)
-//   odd_batch = 오드 일괄 적용, memo_read = 메모 열람
+// 협력 집계에서 제외할 로그 — 할일 '대신 완료'가 아닌 것들 (작업본17/20)
+//   field 기준: odd_batch(오드 일괄), memo_read(메모 열람)
+//   category 기준: 휴식(휴식 시작/해제 — field 없음)
 const COOP_EXCLUDE_FIELDS = ['odd_batch', 'memo_read'];
+const COOP_EXCLUDE_CATS = ['휴식'];
 function _coopCountable(r) {
   const ao = _ownerOfActor(r.actor);
-  if (!ao || ao === r.owner) return null;                    // 본인 것 or 매핑 불가
-  if (COOP_EXCLUDE_FIELDS.includes(r.field)) return null;    // 제외 대상
+  if (!ao || ao === r.owner) return null;                       // 본인 것 or 매핑 불가
+  if (COOP_EXCLUDE_FIELDS.includes(r.field)) return null;       // field 기준 제외
+  if (COOP_EXCLUDE_CATS.includes(_coopCategory(r))) return null; // 카테고리 기준 제외
   return ao;
 }
 function _coopCounts(period) {
