@@ -5863,6 +5863,31 @@ select.ctodo-select {
 .cmp-coop-desc { font-size: 0.72rem; color: var(--text-sub); margin-top: 4px; }
 .cmp-owner-설냥 { color: var(--color-owner-설냥); }
 .cmp-owner-츄츄 { color: var(--color-owner-츄츄); }
+.cmp-coop-card.clickable { cursor: pointer; transition: background .15s, border-color .15s, box-shadow .15s; }
+.cmp-coop-card.clickable:hover { background: var(--hover); border-color: var(--sage); }
+.cmp-coop-card.open { border-color: var(--sage); box-shadow: inset 0 0 0 1px var(--sage); }
+.cmp-coop-more { color: var(--sage); font-weight: 600; margin-left: 2px; white-space: nowrap; }
+
+/* 협력 상세 내역 (인라인 펼침) */
+.cmp-coop-detail { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+.cmp-coop-detail-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font-family: var(--font-head); font-size: 0.82rem; color: var(--text); margin-bottom: 8px;
+}
+.cmp-coop-close {
+  padding: 3px 12px; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text-sub); font-size: 0.72rem;
+  font-family: var(--font-head); cursor: pointer; transition: background .15s, color .15s;
+}
+.cmp-coop-close:hover { background: var(--hover); color: var(--text); }
+.cmp-coop-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 6px; font-size: 0.8rem; border-radius: var(--radius-xs);
+}
+.cmp-coop-item:nth-child(even) { background: var(--surface2); }
+.cmp-coop-date { flex: none; width: 88px; color: var(--text-sub); font-size: 0.74rem; }
+.cmp-coop-char { flex: none; width: 30%; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-coop-act { flex: 1 1 auto; color: var(--text-sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -5879,6 +5904,7 @@ select.ctodo-select {
     <button class="tab-pill active" id="tab-overview" onclick="showPage('overview')">전체</button>
     <button class="tab-pill" onclick="showPage('detail-page')" id="detail-tab" style="display:none">상세</button>
     <button class="tab-pill" id="tab-todo" onclick="showPage('todo-page')">할일</button>
+    <button class="tab-pill" id="tab-completion" onclick="showPage('completion-page')" style="display:none">완료율</button>
     <button class="tab-pill" id="tab-deva" onclick="showPage('deva-page')">데바패스</button>
     <button class="tab-pill" id="tab-sanctuary" onclick="showPage('sanctuary-page')">성역</button>
     <button class="tab-pill" id="tab-expedition" onclick="showPage('expedition-page')">원정</button>
@@ -5886,7 +5912,6 @@ select.ctodo-select {
     <button class="tab-pill" id="tab-craft" onclick="showPage('craft-page')">제작</button>
     <button class="tab-pill" id="tab-season" onclick="showPage('season-page')">시즌</button>
     <button class="tab-pill" id="tab-growth" onclick="showPage('growth-page')">성장</button>
-    <button class="tab-pill" id="tab-completion" onclick="showPage('completion-page')" style="display:none">완료율</button>
     <button class="tab-pill" id="tab-log" onclick="showPage('log-page')">로그</button>
     <button class="tab-pill" id="tab-info" onclick="showPage('info-page')">인포</button>
   </div>
@@ -6756,6 +6781,7 @@ document.addEventListener('keydown', (e) => {
 const MENU_DEFS = [
   { key: 'overview',   tab: 'tab-overview',   page: 'overview',        label: '전체' },
   { key: 'todo',       tab: 'tab-todo',       page: 'todo-page',       label: '할일' },
+  { key: 'completion', tab: 'tab-completion', page: 'completion-page', label: '완료율' },
   { key: 'deva',       tab: 'tab-deva',       page: 'deva-page',       label: '데바패스' },
   { key: 'sanctuary',  tab: 'tab-sanctuary',  page: 'sanctuary-page',  label: '성역' },
   { key: 'expedition', tab: 'tab-expedition', page: 'expedition-page', label: '원정' },
@@ -6763,7 +6789,6 @@ const MENU_DEFS = [
   { key: 'craft',      tab: 'tab-craft',      page: 'craft-page',      label: '제작' },
   { key: 'season',     tab: 'tab-season',     page: 'season-page',     label: '시즌' },
   { key: 'growth',     tab: 'tab-growth',     page: 'growth-page',     label: '성장' },
-  { key: 'completion', tab: 'tab-completion', page: 'completion-page', label: '완료율' },
   { key: 'log',        tab: 'tab-log',        page: 'log-page',        label: '로그' },
   { key: 'info',       tab: 'tab-info',       page: 'info-page',       label: '인포' },
 ];
@@ -9159,8 +9184,8 @@ async function loadCompletionData() {
   });
   _abyssWarsCache = Object.keys(byWar).sort((a, b) => (a < b ? 1 : -1))
     .map(wd => ({ war_date: wd, corridors: byWar[wd] }));
-  // 협력 — activity_log (경량 컬럼만)
-  _coopRows = await _fetchAll('activity_log', 'actor,owner,game_date', 'game_date', 30000);
+  // 협력 — activity_log (내역 표시용으로 action·character_name 포함) 작업본16
+  _coopRows = await _fetchAll('activity_log', 'actor,owner,game_date,action,character_name', 'game_date', 30000);
 }
 
 // ── 오드 관리점수 (스냅샷 시각 기준) ──
@@ -9371,6 +9396,20 @@ function _coopCounts(period) {
   });
   return { s2c, c2s };
 }
+// 방향별 상세 내역 (dir: 's2c' 설냥→츄츄 | 'c2s' 츄츄→설냥) — 최신순
+function _coopList(period, dir) {
+  return _coopFilter(period).filter(r => {
+    const ao = _ownerOfActor(r.actor);
+    if (!ao || ao === r.owner) return false;
+    return dir === 's2c' ? (ao === '설냥' && r.owner === '츄츄')
+                         : (ao === '츄츄' && r.owner === '설냥');
+  }).sort((a, b) => (a.game_date < b.game_date ? 1 : (a.game_date > b.game_date ? -1 : 0)));
+}
+let _coopExpand = null;   // null | 's2c' | 'c2s'
+function toggleCoopDetail(dir) {
+  _coopExpand = (_coopExpand === dir) ? null : dir;
+  _cmpRerender();
+}
 
 // ── 렌더 헬퍼 ──
 function _pctStr(p) { return (p === null || p === undefined) ? '—' : p + '%'; }
@@ -9473,21 +9512,38 @@ function _cmpRerender() {
     ? `<div class="cmp-note">집계된 전쟁 ${abyssCur === 'all' ? _abyssWarsCache.length : Math.min(_abyssWarsCache.length, abyssCur)}회 · 자격 회랑 대비 클리어율</div>`
     : `<div class="cmp-note">아직 집계된 어비스 전쟁이 없어요</div>`;
 
-  // 블록: 협력 (대신 해주기)
+  // 블록: 협력 (대신 해주기) — 카드 클릭 시 아래로 내역 펼침 (작업본16)
   const coopToggle = _cmpSeg([['today', '오늘'], ['7d', '7일'], ['30d', '30일'], ['all', '전체']], _cmpCoopPeriod, 'setCmpCoopPeriod');
   const coop = _coopCounts(_cmpCoopPeriod);
+  const _coopCard = (dir, from, to, num, desc) => {
+    const open = _coopExpand === dir;
+    const clickable = num > 0;
+    return `<div class="cmp-coop-card${open ? ' open' : ''}${clickable ? ' clickable' : ''}"${clickable ? ` role="button" tabindex="0" onclick="toggleCoopDetail('${dir}')"` : ''}>
+      <div class="cmp-coop-flow"><b class="cmp-owner-${from}">${from}</b> → <b class="cmp-owner-${to}">${to}</b></div>
+      <div class="cmp-coop-num">${num}<span>회</span></div>
+      <div class="cmp-coop-desc">${desc}${clickable ? ` <span class="cmp-coop-more">${open ? '▲ 접기' : '▼ 자세히'}</span>` : ''}</div>
+    </div>`;
+  };
   const coopCards = `<div class="cmp-coop-cards">
-    <div class="cmp-coop-card">
-      <div class="cmp-coop-flow"><b class="cmp-owner-설냥">설냥</b> → <b class="cmp-owner-츄츄">츄츄</b></div>
-      <div class="cmp-coop-num">${coop.s2c}<span>회</span></div>
-      <div class="cmp-coop-desc">설냥이 츄츄 걸 대신 완료</div>
-    </div>
-    <div class="cmp-coop-card">
-      <div class="cmp-coop-flow"><b class="cmp-owner-츄츄">츄츄</b> → <b class="cmp-owner-설냥">설냥</b></div>
-      <div class="cmp-coop-num">${coop.c2s}<span>회</span></div>
-      <div class="cmp-coop-desc">츄츄가 설냥 걸 대신 완료</div>
-    </div>
+    ${_coopCard('s2c', '설냥', '츄츄', coop.s2c, '설냥이 츄츄 걸 대신 완료')}
+    ${_coopCard('c2s', '츄츄', '설냥', coop.c2s, '츄츄가 설냥 걸 대신 완료')}
   </div>`;
+  let coopDetail = '';
+  if (_coopExpand) {
+    const dirTitle = _coopExpand === 's2c' ? '설냥 → 츄츄' : '츄츄 → 설냥';
+    const list = _coopList(_cmpCoopPeriod, _coopExpand);
+    const items = list.length
+      ? list.map(r => `<div class="cmp-coop-item">
+          <span class="cmp-coop-date">${escapeHtml(r.game_date || '')}</span>
+          <span class="cmp-coop-char">${escapeHtml(r.character_name || '—')}</span>
+          <span class="cmp-coop-act">${escapeHtml(r.action || '')}</span>
+        </div>`).join('')
+      : `<div class="cmp-empty">내역이 없어요</div>`;
+    coopDetail = `<div class="cmp-coop-detail">
+      <div class="cmp-coop-detail-head"><span>${dirTitle} · ${list.length}건</span><button class="cmp-coop-close" onclick="toggleCoopDetail('${_coopExpand}')">닫기</button></div>
+      ${items}
+    </div>`;
+  }
 
   el.innerHTML = `<div class="cmp-wrap">
     ${_cmpManageHtml()}
@@ -9515,6 +9571,7 @@ function _cmpRerender() {
     <div class="cmp-block">
       <div class="cmp-block-head"><span class="cmp-block-title">협력 · 대신 해주기</span>${coopToggle}</div>
       ${coopCards}
+      ${coopDetail}
     </div>
   </div>`;
 }
