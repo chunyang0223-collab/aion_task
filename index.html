@@ -5765,7 +5765,11 @@ select.ctodo-select {
   background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
 }
 .cmp-manage-label { font-family: var(--font-head); font-size: 0.82rem; color: var(--text-sub); }
-.cmp-manage-item { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text); }
+.cmp-manage-item { display: inline-flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text); }
+.cmp-manage-name { font-size: 0.82rem; color: var(--text); }
+.cmp-manage-state { font-size: 0.75rem; color: var(--text-sub); min-width: 48px; }
+.cmp-manage-state.on { color: var(--color-owner-설냥); font-weight: 600; }
+.cmp-manage-hint { font-size: 0.72rem; color: var(--text-sub); margin-left: auto; }
 .cmp-acc-toggle {
   padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border);
   background: var(--surface); color: var(--text-sub); font-size: 0.75rem;
@@ -5875,7 +5879,6 @@ select.ctodo-select {
     <button class="tab-pill active" id="tab-overview" onclick="showPage('overview')">전체</button>
     <button class="tab-pill" onclick="showPage('detail-page')" id="detail-tab" style="display:none">상세</button>
     <button class="tab-pill" id="tab-todo" onclick="showPage('todo-page')">할일</button>
-    <button class="tab-pill" id="tab-completion" onclick="showPage('completion-page')" style="display:none">완료율</button>
     <button class="tab-pill" id="tab-deva" onclick="showPage('deva-page')">데바패스</button>
     <button class="tab-pill" id="tab-sanctuary" onclick="showPage('sanctuary-page')">성역</button>
     <button class="tab-pill" id="tab-expedition" onclick="showPage('expedition-page')">원정</button>
@@ -5883,6 +5886,7 @@ select.ctodo-select {
     <button class="tab-pill" id="tab-craft" onclick="showPage('craft-page')">제작</button>
     <button class="tab-pill" id="tab-season" onclick="showPage('season-page')">시즌</button>
     <button class="tab-pill" id="tab-growth" onclick="showPage('growth-page')">성장</button>
+    <button class="tab-pill" id="tab-completion" onclick="showPage('completion-page')" style="display:none">완료율</button>
     <button class="tab-pill" id="tab-log" onclick="showPage('log-page')">로그</button>
     <button class="tab-pill" id="tab-info" onclick="showPage('info-page')">인포</button>
   </div>
@@ -6752,7 +6756,6 @@ document.addEventListener('keydown', (e) => {
 const MENU_DEFS = [
   { key: 'overview',   tab: 'tab-overview',   page: 'overview',        label: '전체' },
   { key: 'todo',       tab: 'tab-todo',       page: 'todo-page',       label: '할일' },
-  { key: 'completion', tab: 'tab-completion', page: 'completion-page', label: '완료율' },
   { key: 'deva',       tab: 'tab-deva',       page: 'deva-page',       label: '데바패스' },
   { key: 'sanctuary',  tab: 'tab-sanctuary',  page: 'sanctuary-page',  label: '성역' },
   { key: 'expedition', tab: 'tab-expedition', page: 'expedition-page', label: '원정' },
@@ -6760,6 +6763,7 @@ const MENU_DEFS = [
   { key: 'craft',      tab: 'tab-craft',      page: 'craft-page',      label: '제작' },
   { key: 'season',     tab: 'tab-season',     page: 'season-page',     label: '시즌' },
   { key: 'growth',     tab: 'tab-growth',     page: 'growth-page',     label: '성장' },
+  { key: 'completion', tab: 'tab-completion', page: 'completion-page', label: '완료율' },
   { key: 'log',        tab: 'tab-log',        page: 'log-page',        label: '로그' },
   { key: 'info',       tab: 'tab-info',       page: 'info-page',       label: '인포' },
 ];
@@ -9519,9 +9523,13 @@ function _cmpManageHtml() {
   if (!completionCanManage()) return '';
   const chuOn = completionAccess['츄츄'] === true;
   return `<div class="cmp-manage">
-    <span class="cmp-manage-label">완료율 공개 관리</span>
-    <span class="cmp-manage-item"><span>설냥</span><button class="cmp-acc-toggle on locked" disabled title="관리 계정은 항상 표시">항상</button></span>
-    <span class="cmp-manage-item"><span>츄츄</span><button class="cmp-acc-toggle ${chuOn ? 'on' : ''}" onclick="toggleCompletionAccess('츄츄')">${chuOn ? '표시 중' : '숨김'}</button></span>
+    <span class="cmp-manage-label">완료율 공개</span>
+    <span class="cmp-manage-item">
+      <span class="cmp-manage-name">츄츄에게 보여주기</span>
+      <button type="button" class="menu-toggle ${chuOn ? 'on' : ''}" role="switch" aria-checked="${chuOn ? 'true' : 'false'}" aria-label="츄츄에게 완료율 표시" onclick="toggleCompletionAccess('츄츄')"><span class="menu-toggle-knob"></span></button>
+      <span class="cmp-manage-state ${chuOn ? 'on' : ''}">${chuOn ? '보이는 중' : '숨김'}</span>
+    </span>
+    <span class="cmp-manage-hint">설냥은 항상 보여요</span>
   </div>`;
 }
 
