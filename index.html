@@ -12290,6 +12290,36 @@ function escapeHtml(s) {
 }
 function escapeAttr(s) { return escapeHtml(s); }
 
+// 메모창 크기 저장 키 (브라우저별 UI 설정)
+const MEMO_SIZE_KEY = 'aion2_memo_size';
+function restoreMemoSize(ta) {
+  try {
+    const raw = localStorage.getItem(MEMO_SIZE_KEY);
+    if (!raw) return;
+    const { w, h } = JSON.parse(raw);
+    if (w) ta.style.width = w + 'px';
+    if (h) ta.style.height = h + 'px';
+  } catch (e) {}
+}
+function saveMemoSize(ta) {
+  // 모달이 열려 있고 실제 크기가 잡힌 경우만 저장 (복원/숨김 중 오염 방지)
+  if (document.getElementById('memo-modal-overlay').style.display !== 'flex') return;
+  const w = ta.offsetWidth, h = ta.offsetHeight;
+  if (w > 0 && h > 0) {
+    try { localStorage.setItem(MEMO_SIZE_KEY, JSON.stringify({ w, h })); } catch (e) {}
+  }
+}
+// 리사이즈 감지 → 저장 (textarea 존재 확인 후 한 번만 등록)
+function bindMemoResize(ta) {
+  if (window._memoResizeBound || !ta || typeof ResizeObserver === 'undefined') return;
+  window._memoResizeBound = true;
+  let _memoSaveTimer;
+  new ResizeObserver(() => {
+    clearTimeout(_memoSaveTimer);
+    _memoSaveTimer = setTimeout(() => saveMemoSize(ta), 300);
+  }).observe(ta);
+}
+
 function openMemoModal(owner) {
   const acc = accountData[owner] || {};
   const memo = acc.memo || '';
@@ -12297,6 +12327,8 @@ function openMemoModal(owner) {
   const ta = document.getElementById('memo-modal-textarea');
   ta.value = memo;
   ta.dataset.owner = owner;
+  restoreMemoSize(ta);
+  bindMemoResize(ta);
   document.getElementById('memo-modal-overlay').style.display = 'flex';
   setTimeout(() => ta.focus(), 50);
 
@@ -16401,7 +16433,7 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
 " onclick="closeMemoModal()">
   <div id="memo-modal" style="
     background:var(--surface);border-radius:var(--radius);
-    border:1px solid var(--border);padding:20px;width:100%;max-width:360px;
+    border:1px solid var(--border);padding:20px;width:fit-content;min-width:320px;max-width:92vw;
     box-shadow:0 12px 40px rgba(160,150,140,0.18);
     animation:fadeUp 0.2s ease-out;
   " onclick="event.stopPropagation()">
@@ -16418,11 +16450,11 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
     <textarea id="memo-modal-textarea" rows="6" placeholder="계정 관련 메모를 적어주세요"
       autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
       style="
-        width:100%;box-sizing:border-box;
+        width:320px;max-width:calc(92vw - 40px);min-width:280px;box-sizing:border-box;
         background:var(--surface2);border:1px solid var(--border);
         border-radius:var(--radius-sm);padding:10px 12px;
         font-family:'Gowun Dodum',sans-serif;font-size:0.82rem;line-height:1.5;
-        color:var(--text);resize:vertical;min-height:120px;outline:none;
+        color:var(--text);resize:both;min-height:120px;outline:none;
       "></textarea>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
       <button onclick="closeMemoModal()" style="
