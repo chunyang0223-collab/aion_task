@@ -12342,6 +12342,14 @@ function closeMemoModal() {
   document.getElementById('memo-modal-overlay').style.display = 'none';
 }
 
+// 배경 클릭으로 닫기: 누른 지점도 배경일 때만 닫음 (리사이즈 드래그가 배경에서 떼져도 안 닫힘)
+let _memoDownOnOverlay = false;
+function memoOverlayDown(e) { _memoDownOnOverlay = (e.target === e.currentTarget); }
+function memoOverlayClick(e) {
+  if (e.target === e.currentTarget && _memoDownOnOverlay) closeMemoModal();
+  _memoDownOnOverlay = false;
+}
+
 async function saveMemo() {
   const ta = document.getElementById('memo-modal-textarea');
   const owner = ta.dataset.owner;
@@ -16430,7 +16438,7 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
   display:none;position:fixed;inset:0;z-index:210;
   background:rgba(90,82,75,0.35);backdrop-filter:blur(4px);
   align-items:center;justify-content:center;padding:20px;
-" onclick="closeMemoModal()">
+" onmousedown="memoOverlayDown(event)" onclick="memoOverlayClick(event)">
   <div id="memo-modal" style="
     background:var(--surface);border-radius:var(--radius);
     border:1px solid var(--border);padding:20px;width:fit-content;min-width:320px;max-width:92vw;
