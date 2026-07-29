@@ -6497,6 +6497,43 @@ select.ctodo-select {
     #info-page .if-live-bar>i{display:block;height:100%;background:var(--if-accent);transition:width .5s}
     #info-page .if-live-note{margin-top:8px;font-size:0.66rem;color:var(--text-sub)}
     #info-page .if-emoji{font-size:32px;margin-bottom:10px}
+    #info-page{--if-danger:var(--odd-full)}
+    /* ── 수집 제어 (속도 세그먼트 · 토글 · 취소) ── */
+    #info-page .if-ctl{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+    #info-page .if-speed-lab{font-size:0.64rem;font-weight:700;color:var(--text-sub);letter-spacing:.02em}
+    #info-page .if-speed-lab span{font-weight:600;color:var(--if-accent)}
+    #info-page .if-seg{display:inline-flex;gap:2px;padding:3px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm)}
+    #info-page .if-seg-b{display:flex;flex-direction:column;align-items:center;gap:1px;border:none;background:transparent;cursor:pointer;font-family:inherit;color:var(--text-sub);line-height:1.1;padding:5px 9px;border-radius:var(--radius-xs);transition:background .15s,color .15s}
+    #info-page .if-seg-b b{font-size:0.7rem;font-weight:700}
+    #info-page .if-seg-b small{font-size:0.58rem;font-weight:600}
+    #info-page .if-seg-b:hover:not(.on):not(:disabled){background:var(--hover);color:var(--text)}
+    #info-page .if-seg-b.on{background:var(--if-accent);color:var(--surface);box-shadow:var(--shadow-sm)}
+    #info-page .if-seg-b:disabled{cursor:default;color:var(--text-sub)}
+    #info-page .if-seg:has(.if-seg-b:disabled){opacity:.5}
+    #info-page .if-btns{display:flex;align-items:center;gap:6px}
+    #info-page .if-collect.is-pause{background:var(--surface);color:var(--text);border:1px solid var(--border);box-shadow:none}
+    #info-page .if-collect.is-resume{background:var(--sage);color:var(--surface)}
+    #info-page .if-cancel{border:1px solid var(--if-danger);background:var(--surface);color:var(--if-danger);cursor:pointer;font-family:inherit;font-weight:700;font-size:0.82rem;border-radius:var(--radius-sm);padding:9px 14px}
+    #info-page .if-cancel:hover:not(:disabled){background:var(--if-danger);color:var(--surface)}
+    #info-page .if-cancel:disabled{opacity:.5;cursor:default}
+    #info-page .if-cancel[hidden]{display:none}
+    /* ── 잠정(수집중) 표시 ── */
+    #info-page .if-live-eta{font-size:0.7rem;color:var(--text-sub);font-weight:600}
+    #info-page .if-live.paused .if-live-dot{animation:none;opacity:.45}
+    #info-page .if-live.paused .if-live-bar>i{opacity:.5}
+    #info-page .if-live-tag{font-size:0.58rem;font-weight:700;color:var(--if-accent);background:var(--if-accent-l);padding:2px 6px;border-radius:999px;margin-left:5px;vertical-align:middle}
+    #info-page .if-del:disabled{opacity:.35;cursor:default}
+    /* ── 취소 확인 모달 ── */
+    #if-confirm{display:none;position:fixed;inset:0;z-index:400;background:rgba(90,82,75,0.4);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px}
+    #if-confirm .if-cf{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;width:100%;max-width:360px}
+    #if-confirm .if-cf-t{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+    #if-confirm .if-cf-d{font-size:0.82rem;color:var(--text-sub);line-height:1.6}
+    #if-confirm .if-cf-d b{color:var(--text)}
+    #if-confirm .if-cf-hint{display:block;margin-top:8px;font-size:0.74rem;color:var(--text-sub)}
+    #if-confirm .if-cf-btns{display:flex;gap:8px;margin-top:20px}
+    #if-confirm .if-cf-btns button{flex:1;border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:0.85rem;border-radius:var(--radius-sm);padding:11px}
+    #if-confirm .if-cf-no{background:var(--surface2);color:var(--text);border:1px solid var(--border)!important}
+    #if-confirm .if-cf-yes{background:var(--odd-full);color:var(--surface)}
   </style>
   <div class="if-wrap">
     <div class="if-split">
@@ -6507,7 +6544,13 @@ select.ctodo-select {
             <div class="if-name"><span class="if-dot"></span>PVP</div>
             <div class="if-tag">어비스 · 고독의 투기장 · 협력의 투기장</div>
           </div>
-          <button class="if-collect" id="if-collect-pvp" onclick="infoCollect('pvp')">수집 시작</button>
+          <div class="if-ctl">
+            <div class="if-speed" id="if-speed-pvp"></div>
+            <div class="if-btns">
+              <button class="if-cancel" id="if-cancel-pvp" onclick="infoAskCancel('pvp')" hidden>취소</button>
+              <button class="if-collect" id="if-collect-pvp" onclick="infoToggleCollect('pvp')">수집 시작</button>
+            </div>
+          </div>
         </div>
         <div id="if-body-pvp"><div class="if-state">불러오는 중…</div></div>
       </section>
@@ -6518,10 +6561,28 @@ select.ctodo-select {
             <div class="if-name"><span class="if-dot"></span>PVE</div>
             <div class="if-tag">악몽 · 초월 · 각성전</div>
           </div>
-          <button class="if-collect" id="if-collect-pve" onclick="infoCollect('pve')">수집 시작</button>
+          <div class="if-ctl">
+            <div class="if-speed" id="if-speed-pve"></div>
+            <div class="if-btns">
+              <button class="if-cancel" id="if-cancel-pve" onclick="infoAskCancel('pve')" hidden>취소</button>
+              <button class="if-collect" id="if-collect-pve" onclick="infoToggleCollect('pve')">수집 시작</button>
+            </div>
+          </div>
         </div>
         <div id="if-body-pve"><div class="if-state">불러오는 중…</div></div>
       </section>
+    </div>
+  </div>
+
+  <!-- ── 수집 취소 확인 모달 ── -->
+  <div id="if-confirm" onclick="if(event.target===this)infoCloseCancel()">
+    <div class="if-cf">
+      <div class="if-cf-t">⚠️ 수집을 완전히 취소할까요?</div>
+      <div class="if-cf-d" id="if-cancel-desc"></div>
+      <div class="if-cf-btns">
+        <button class="if-cf-no" onclick="infoCloseCancel()">돌아가기</button>
+        <button class="if-cf-yes" onclick="infoConfirmCancel()">완전 취소</button>
+      </div>
     </div>
   </div>
 </div>
@@ -17550,61 +17611,76 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
 (function(){
   const CAT_LABEL = { Active:['액티브','ACTIVE'], Passive:['패시브','PASSIVE'], Dp:['스티그마','STIGMA'] };
   const CAT_ORDER = ['Dp','Active','Passive'];
+
+  // ── 수집 속도 프리셋 (Edge Function SPEEDS 와 키·간격을 반드시 동일하게 유지) ──
+  const SPEEDS = [
+    { key:'turbo',  label:'최고속', sub:'0.8초', ms:800,   note:'가장 빠름 · 서버 부담 큼(차단 위험)' },
+    { key:'fast',   label:'빠름',   sub:'1.5초', ms:1500,  note:'급할 때' },
+    { key:'normal', label:'기본',   sub:'3초',   ms:3000,  note:'권장 · 안정적' },
+    { key:'slow',   label:'느긋',   sub:'6초',   ms:6000,  note:'여유 있을 때' },
+    { key:'gentle', label:'최저속', sub:'12초',  ms:12000, note:'미리 걸어두고 오래 돌릴 때' }
+  ];
+  const DEFAULT_SPEED = 'normal';
+  const speedOf = k => SPEEDS.find(s=>s.key===k) || SPEEDS.find(s=>s.key===DEFAULT_SPEED);
+  const SPEED_LS = b => 'aion2_info_speed_'+b;
+
   const S = {
-    pvp:{ snaps:[], idx:0, cls:null, rows:[], classes:[], job:null, poll:null, sort:{Active:'level',Passive:'level',Dp:'level'} },
-    pve:{ snaps:[], idx:0, cls:null, rows:[], classes:[], job:null, poll:null, sort:{Active:'level',Passive:'level',Dp:'level'} },
-    _boot:false
+    pvp:{ snaps:[], live:null, idx:0, cls:null, rows:[], classes:[], job:null, poll:null, speed:DEFAULT_SPEED, busy:false, sort:{Active:'level',Passive:'level',Dp:'level'} },
+    pve:{ snaps:[], live:null, idx:0, cls:null, rows:[], classes:[], job:null, poll:null, speed:DEFAULT_SPEED, busy:false, sort:{Active:'level',Passive:'level',Dp:'level'} },
+    _boot:false, _cancelTarget:null
   };
+  try{ ['pvp','pve'].forEach(b=>{ const v=localStorage.getItem(SPEED_LS(b)); if(v && SPEEDS.some(s=>s.key===v)) S[b].speed=v; }); }catch(e){}
+
+  const ACTIVE = ['ranking','equipment','aggregating'];
   const nf = n => Number(n).toLocaleString('ko-KR');
   const fmtDate = iso => { const d=new Date(iso), p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; };
   const relDay = iso => { const diff=Math.floor((Date.now()-new Date(iso))/86400000); return diff<=0?'오늘':diff===1?'어제':`${diff}일 전`; };
+  function fmtDur(ms){
+    if(!isFinite(ms) || ms<=0) return '잠시';
+    const m = Math.round(ms/60000);
+    if(m<1) return '1분 미만';
+    if(m<60) return `${m}분`;
+    const h=Math.floor(m/60), r=m%60;
+    return r ? `${h}시간 ${r}분` : `${h}시간`;
+  }
 
-  async function callFn(body){ try{ const { data } = await sb.functions.invoke('collect-skill-stats',{ body }); return data||{}; }catch(e){ console.error('[인포 함수 호출]', e); return {}; } }
+  async function callFn(body){ try{ const { data } = await sb.functions.invoke('collect-skill-stats',{ body }); return data||{}; }catch(e){ console.error('[인포 함수 호출]', e); return { error:String(e) }; } }
+  function toast(m){ if(typeof showToast==='function') showToast(m); else alert(m); }
+
+  // ── 로딩 ────────────────────────────────────────────────────────────
+  async function fetchJob(b){
+    const { data } = await sb.from('skill_collect_job').select('*').eq('bucket',b).in('status',ACTIVE).order('created_at',{ascending:false}).limit(1);
+    return (data && data[0]) || null;
+  }
+  async function fetchLiveSnap(b){
+    const { data } = await sb.from('skill_snapshot').select('*').eq('bucket',b).eq('status','running').order('id',{ascending:false}).limit(1);
+    return (data && data[0]) || null;
+  }
 
   async function loadBucket(b){
     const s = S[b];
     const { data:snaps } = await sb.from('skill_snapshot').select('*').eq('bucket',b).eq('status','done').order('collected_at',{ascending:false});
     s.snaps = snaps || [];
-    const { data:jobs } = await sb.from('skill_collect_job').select('*').eq('bucket',b).in('status',['ranking','equipment','aggregating']).order('created_at',{ascending:false}).limit(1);
-    s.job = (jobs && jobs[0]) || null; s.idx = 0;
-    if(s.job) await loadLive(b);
-    else if(s.snaps.length) await loadRows(b);
+    s.job = await fetchJob(b);
+    if(s.job && s.job.speed) s.speed = s.job.speed;
+    s.live = s.job ? await fetchLiveSnap(b) : null;
+    // 잠정 스냅샷에 아직 데이터가 없고 과거 스냅샷이 있으면 → 과거 최신본을 먼저 보여준다
+    s.idx = (s.live && s.snaps.length && !(s.live.sample_size>0)) ? 1 : 0;
+    await loadRows(b);
     render(b);
-    if(s.job) startPoll(b);
+    if(s.job) startPoll(b); else stopPoll(b);
   }
+
+  // 보이는 스냅샷 목록 = [잠정(수집중)] + [확정본 최신순]
+  function viewItems(b){ const s=S[b]; return (s.live ? [Object.assign({_live:true}, s.live)] : []).concat(s.snaps); }
+  function curItem(b){ const list=viewItems(b); if(!list.length) return null; S[b].idx = Math.min(Math.max(S[b].idx,0), list.length-1); return list[S[b].idx]; }
 
   async function loadRows(b){
-    const s = S[b], snap = s.snaps[s.idx]; if(!snap){ s.rows=[]; return; }
+    const s = S[b], it = curItem(b);
+    if(!it){ s.rows=[]; s.classes=[]; return; }
     let rows=[], from=0; const PAGE=1000;
     for(;;){
-      const { data } = await sb.from('skill_snapshot_row').select('*').eq('snapshot_id',snap.id).order('avg_level',{ascending:false}).range(from,from+PAGE-1);
-      const arr = data||[]; rows.push(...arr);
-      if(arr.length<PAGE) break; from+=PAGE;
-    }
-    s.rows = rows;
-    s.classes = [...new Map(rows.map(r=>[r.class_id, r.class_name])).entries()].sort((a,b)=>a[0]-b[0]);
-    if(s.cls==null || !s.classes.some(c=>c[0]===s.cls)) s.cls = s.classes.length ? s.classes[0][0] : null;
-  }
-
-  function render(b){
-    const s = S[b], el = document.getElementById('if-body-'+b);
-    const btn = document.getElementById('if-collect-'+b);
-    if(btn){ const allowed = infoCanCollect(); btn.disabled = !!s.job || !allowed; btn.title = allowed ? '' : '수집은 설냥만 시작할 수 있어요'; }
-    if(!el) return;
-    if(s.job){ el.innerHTML = liveHTML(b); if(s.rows && s.rows.length) renderTables(b); return; }
-    if(!s.snaps.length){ el.innerHTML = emptyHTML(); return; }
-    el.innerHTML = dataHTML(b);
-    renderTables(b);
-  }
-
-  async function loadLive(b){
-    const s = S[b];
-    const { data:snaps } = await sb.from('skill_snapshot').select('*').eq('bucket',b).eq('status','running').order('id',{ascending:false}).limit(1);
-    const snap = snaps && snaps[0];
-    if(!snap){ s.rows=[]; s.classes=[]; return; }
-    let rows=[], from=0; const PAGE=1000;
-    for(;;){
-      const { data } = await sb.from('skill_snapshot_row').select('*').eq('snapshot_id',snap.id).order('avg_level',{ascending:false}).range(from,from+PAGE-1);
+      const { data } = await sb.from('skill_snapshot_row').select('*').eq('snapshot_id',it.id).order('avg_level',{ascending:false}).range(from,from+PAGE-1);
       const arr = data||[]; rows.push(...arr);
       if(arr.length<PAGE) break; from+=PAGE;
     }
@@ -17613,51 +17689,99 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
     if(s.cls==null || !s.classes.some(c=>c[0]===s.cls)) s.cls = s.classes.length ? s.classes[0][0] : s.cls;
   }
 
-  function liveHTML(b){
-    const s = S[b], job = s.job;
-    const known = job.total>0;
-    const pct = known ? Math.min(100, Math.round(job.processed/job.total*100)) : 6;
-    const cnt = known ? `${nf(job.processed)} / ${nf(job.total)}` : '준비 중…';
-    const phase = job.status==='ranking' ? '대상 목록 수집 중' : job.status==='aggregating' ? '마무리 집계 중' : '스킬 수집 중';
-    const pills = (s.classes||[]).map(([cid,name])=>`<span class="if-pill ${cid===s.cls?'on':''}" data-cid="${cid}" onclick="infoSelectClass('${b}',${cid})">${name}</span>`).join('');
-    const hasData = s.rows && s.rows.length;
-    const banner = `<div class="if-live"><div class="if-live-top"><span class="if-live-dot"></span> 수집 중 (잠정) · <b>${cnt}</b> · ${phase}</div><div class="if-live-bar"><i style="width:${pct}%"></i></div><div class="if-live-note">🖥 브라우저를 닫아도 서버에서 계속 진행 · 숫자는 수집이 진행될수록 안정돼요</div></div>`;
-    return banner + (hasData
-      ? `<div class="if-classes">${pills}</div><div class="if-cats" id="if-cats-${b}"></div>`
-      : `<div class="if-state"><div class="if-spin"></div>첫 데이터를 모으는 중…</div>`);
+  // ── 렌더 ────────────────────────────────────────────────────────────
+  function jobState(b){ const j=S[b].job; return !j ? 'idle' : (j.paused ? 'paused' : 'running'); }
+
+  function renderControls(b){
+    const s = S[b], allowed = infoCanCollect(), st = jobState(b);
+    const btn = document.getElementById('if-collect-'+b);
+    if(btn){
+      btn.textContent = st==='idle' ? '수집 시작' : st==='paused' ? '이어서 수집' : '일시정지';
+      btn.className = 'if-collect' + (st==='running' ? ' is-pause' : '') + (st==='paused' ? ' is-resume' : '');
+      btn.disabled = !allowed || s.busy;
+      btn.title = allowed ? (st==='running' ? '누르면 일시정지 (진행분은 그대로 보관)' : st==='paused' ? '멈춘 지점부터 이어서 수집' : '새 스냅샷 수집을 시작') : '수집은 설냥만 조작할 수 있어요';
+    }
+    const cbtn = document.getElementById('if-cancel-'+b);
+    if(cbtn){ cbtn.hidden = (st==='idle'); cbtn.disabled = !allowed || s.busy; }
+    const sp = document.getElementById('if-speed-'+b);
+    if(sp) sp.innerHTML = speedHTML(b);
   }
 
-  function collectingHTML(job){
-    const known = job.total>0;
-    const pct = known ? Math.min(100, Math.round(job.processed/job.total*100)) : 8;
-    const phase = job.status==='ranking' ? '대상 목록을 모으는 중…' : job.status==='aggregating' ? '집계하는 중…' : '캐릭터 스킬을 수집하는 중…';
-    const count = known ? `<div class="if-count"><b>${nf(job.processed)}</b> / ${nf(job.total)}</div>` : `<div class="if-count">준비 중…</div>`;
-    return `<div class="if-state"><div class="if-spin"></div>${count}<div style="margin-top:6px">${phase}</div>
-      <div class="if-prog"><i style="width:${pct}%"></i></div>
-      <div class="if-note">🖥 브라우저를 닫아도 서버에서 계속 진행됩니다</div></div>`;
+  function speedHTML(b){
+    const s = S[b], allowed = infoCanCollect();
+    const segs = SPEEDS.map(sp=>`<button type="button" class="if-seg-b${sp.key===s.speed?' on':''}" ${allowed?'':'disabled'} onclick="infoSetSpeed('${b}','${sp.key}')" title="${sp.note} · 호출 간격 ${sp.sub}"><b>${sp.label}</b><small>${sp.sub}</small></button>`).join('');
+    return `<div class="if-speed-lab">수집 속도 <span>${speedOf(s.speed).sub}/건</span></div><div class="if-seg">${segs}</div>`;
   }
-  function emptyHTML(){ return `<div class="if-state"><div class="if-emoji">📊</div>아직 수집된 데이터가 없어요.<br>위 <b>수집 시작</b>을 눌러 첫 스냅샷을 만들어보세요.</div>`; }
 
-  function dataHTML(b){
-    const s = S[b], snap = s.snaps[s.idx];
-    const pills = (s.classes||[]).map(([cid,name])=>`<span class="if-pill ${cid===s.cls?'on':''}" data-cid="${cid}" onclick="infoSelectClass('${b}',${cid})">${name}</span>`).join('');
+  function etaText(b){
+    const s = S[b], j = s.job; if(!j) return '';
+    if(!(j.total>0)) return '대상 목록을 파악하는 중';
+    const left = Math.max(0, j.total - (j.processed||0));
+    // 워커는 1분마다 깨어나 55초만 돌므로 가동률(60/55) 보정
+    return `남은 ${nf(left)}건 · 예상 ${fmtDur(left * speedOf(s.speed).ms * (60/55))}`;
+  }
+
+  function liveBannerHTML(b){
+    const s = S[b], j = s.job, paused = !!j.paused;
+    const known = j.total>0;
+    const pct = known ? Math.min(100, Math.round((j.processed||0)/j.total*100)) : 6;
+    const cnt = known ? `${nf(j.processed||0)} / ${nf(j.total)}` : '준비 중…';
+    const phase = j.status==='ranking' ? '대상 목록 수집 중' : j.status==='aggregating' ? '마무리 집계 중' : '스킬 수집 중';
+    const head = paused
+      ? `<span class="if-live-dot"></span> 일시정지됨 · <b>${cnt}</b> · <span class="if-live-eta">‘이어서 수집’을 누르면 이 지점부터 재개돼요</span>`
+      : `<span class="if-live-dot"></span> 수집 중 (잠정) · <b>${cnt}</b> · ${phase} <span class="if-live-eta">${etaText(b)}</span>`;
+    return `<div class="if-live${paused?' paused':''}">
+      <div class="if-live-top">${head}</div>
+      <div class="if-live-bar"><i style="width:${pct}%"></i></div>
+      <div class="if-live-note">🖥 브라우저를 닫아도 서버에서 계속 진행 · 수집 중에도 아래 화살표로 <b>과거 스냅샷</b>을 볼 수 있어요</div>
+    </div>`;
+  }
+
+  function snapHeadHTML(b){
+    const s = S[b], list = viewItems(b), it = curItem(b), last = list.length-1;
+    const label = it._live
+      ? `<b>진행 중 <span class="if-live-tag">잠정</span></b><small>표본 ${nf(it.sample_size||0)}명 · 수집이 끝나면 확정돼요</small>`
+      : `<b>${fmtDate(it.collected_at)}</b><small>${relDay(it.collected_at)} · 표본 ${nf(it.sample_size)}명</small>`;
     return `
       <div class="if-snap">
         <div class="if-nav">
-          <button class="if-arrow" ${s.idx>=s.snaps.length-1?'disabled':''} onclick="infoNav('${b}',1)" title="이전(과거) 수집">◀</button>
-          <div class="if-date"><b>${fmtDate(snap.collected_at)}</b><small>${relDay(snap.collected_at)} · 표본 ${nf(snap.sample_size)}명</small></div>
+          <button class="if-arrow" ${s.idx>=last?'disabled':''} onclick="infoNav('${b}',1)" title="이전(과거) 수집">◀</button>
+          <div class="if-date">${label}</div>
           <button class="if-arrow" ${s.idx<=0?'disabled':''} onclick="infoNav('${b}',-1)" title="다음(최근) 수집">▶</button>
         </div>
-        <div class="if-actions"><span class="if-idx">${s.idx+1}/${s.snaps.length}</span>
-          <button class="if-del" onclick="infoDelete('${b}')" title="이 스냅샷 삭제">🗑</button></div>
-      </div>
-      <div class="if-classes">${pills}</div>
-      <div class="if-cats" id="if-cats-${b}"></div>`;
+        <div class="if-actions"><span class="if-idx">${s.idx+1}/${list.length}</span>
+          <button class="if-del" onclick="infoDelete('${b}')" title="${it._live?'수집 중인 스냅샷은 삭제할 수 없어요 (취소를 사용하세요)':'이 스냅샷 삭제'}" ${it._live?'disabled':''}>🗑</button></div>
+      </div>`;
   }
 
-  function renderTables(b){
-    const box = document.getElementById('if-cats-'+b); if(box) box.innerHTML = catsHTML(b);
+  function pillsHTML(b){
+    const s = S[b];
+    return (s.classes||[]).map(([cid,name])=>`<span class="if-pill ${cid===s.cls?'on':''}" data-cid="${cid}" onclick="infoSelectClass('${b}',${cid})">${name}</span>`).join('');
   }
+
+  function emptyHTML(b){
+    return S[b].job
+      ? `<div class="if-state"><div class="if-spin"></div>첫 데이터를 모으는 중…</div>`
+      : `<div class="if-state"><div class="if-emoji">📊</div>아직 수집된 데이터가 없어요.<br>위 <b>수집 시작</b>을 눌러 첫 스냅샷을 만들어보세요.</div>`;
+  }
+
+  function render(b){
+    const s = S[b], el = document.getElementById('if-body-'+b);
+    renderControls(b);
+    if(!el) return;
+    const list = viewItems(b);
+    const banner = s.job ? liveBannerHTML(b) : '';
+    if(!list.length){ el.innerHTML = banner + emptyHTML(b); return; }
+    el.innerHTML = banner + snapHeadHTML(b) + `<div class="if-classes">${pillsHTML(b)}</div><div class="if-cats" id="if-cats-${b}"></div>`;
+    const box = document.getElementById('if-cats-'+b);
+    if(s.rows && s.rows.length) box.innerHTML = catsHTML(b);
+    else box.innerHTML = curItem(b)._live
+      ? `<div class="if-state"><div class="if-spin"></div>첫 데이터를 모으는 중…</div>`
+      : `<div class="if-state">이 스냅샷에는 표시할 데이터가 없어요.</div>`;
+  }
+
+  function renderTables(b){ const box = document.getElementById('if-cats-'+b); if(box) box.innerHTML = catsHTML(b); }
+
   function catsHTML(b){
     const s = S[b], rows = s.rows.filter(r=>r.class_id===s.cls);
     return CAT_ORDER.map(cat=>{
@@ -17675,25 +17799,122 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
     }).join('');
   }
 
+  // ── 폴링 ────────────────────────────────────────────────────────────
+  function stopPoll(b){ const s=S[b]; if(s.poll){ clearInterval(s.poll); s.poll=null; } }
   function startPoll(b){
-    const s = S[b]; if(s.poll) clearInterval(s.poll);
+    const s = S[b]; stopPoll(b);
     s.poll = setInterval(async ()=>{
-      const { data:jobs } = await sb.from('skill_collect_job').select('*').eq('bucket',b).in('status',['ranking','equipment','aggregating']).order('created_at',{ascending:false}).limit(1);
-      if(jobs && jobs.length){ s.job = jobs[0]; await loadLive(b); render(b); }
-      else { clearInterval(s.poll); s.poll=null; s.job=null; await loadBucket(b); }
+      if(s.busy) return;
+      const job = await fetchJob(b);
+      if(!job){ stopPoll(b); await loadBucket(b); return; }   // 완료/취소 → 전체 재로딩
+      s.job = job;
+      if(job.speed && job.speed!==s.speed) s.speed = job.speed;
+      if(!s.live){
+        const live = await fetchLiveSnap(b);
+        if(live){ s.live = live; if(s.snaps.length) s.idx++; }  // 목록 앞에 끼워도 보던 위치 유지
+      }
+      const it = curItem(b);
+      if(it && it._live && !job.paused){
+        const fresh = await fetchLiveSnap(b);
+        if(fresh) s.live = fresh;                 // 표본 수 등 헤더 갱신
+        await loadRows(b);                        // 잠정 뷰를 보는 중일 때만 표 갱신
+      }
+      render(b);
     }, 5000);
   }
 
-  // 현재 로그인 owner 판별 (currentActor=actor → accountData 로 역매핑) · 수집은 설냥만
+  // ── 권한 ────────────────────────────────────────────────────────────
   function infoCurrentOwner(){ try{ for(const o of OWNERS){ if(accountData && accountData[o] && accountData[o].actor === currentActor) return o; } }catch(e){} return null; }
   function infoCanCollect(){ return infoCurrentOwner() === '설냥'; }
-  function infoDenyToast(){ const m='수집은 설냥만 시작할 수 있어요'; if(typeof showToast==='function') showToast(m); else alert(m); }
+  function infoDenyToast(){ toast('수집은 설냥만 조작할 수 있어요'); }
+
+  // ── 액션 ────────────────────────────────────────────────────────────
   window.renderInfoPage = async function(){ if(S._boot) return; S._boot = true; await Promise.all([loadBucket('pvp'), loadBucket('pve')]); };
-  window.infoCollect = async function(b){ if(!infoCanCollect()){ infoDenyToast(); return; } const btn=document.getElementById('if-collect-'+b); if(btn) btn.disabled=true; await callFn({action:'start',bucket:b}); S[b].job={status:'ranking',total:0,processed:0}; render(b); startPoll(b); };
-  window.infoNav = async function(b,dir){ const s=S[b], ni=s.idx+dir; if(ni<0||ni>=s.snaps.length) return; s.idx=ni; await loadRows(b); render(b); };
+
+  // 시작 / 일시정지 / 재개 (한 버튼 토글)
+  window.infoToggleCollect = async function(b){
+    if(!infoCanCollect()){ infoDenyToast(); return; }
+    const s = S[b]; if(s.busy) return;
+    s.busy = true; renderControls(b);
+    try{
+      const st = jobState(b);
+      if(st==='idle'){
+        const r = await callFn({ action:'start', bucket:b, speed:s.speed });
+        if(r && r.error){ toast('수집을 시작하지 못했어요: '+r.error); return; }
+        s.job = { status:'ranking', total:0, processed:0, paused:false, speed:s.speed };
+        s.live = null; render(b); startPoll(b);
+        toast(`수집을 시작했어요 (${speedOf(s.speed).label} · ${speedOf(s.speed).sub}/건)`);
+      } else if(st==='running'){
+        const r = await callFn({ action:'pause', bucket:b });
+        if(r && r.error){ toast('일시정지에 실패했어요: '+r.error); return; }
+        s.job.paused = true; render(b);
+        toast('일시정지했어요. 진행분은 그대로 보관돼요');
+      } else {
+        const r = await callFn({ action:'resume', bucket:b, speed:s.speed });
+        if(r && r.error){ toast('재개에 실패했어요: '+r.error); return; }
+        s.job.paused = false; render(b); startPoll(b);
+        toast('멈춘 지점부터 이어서 수집해요');
+      }
+    } finally { s.busy = false; renderControls(b); }
+  };
+  window.infoCollect = window.infoToggleCollect; // 구버전 호출 호환
+
+  // 속도 변경 (수집 전 · 수집 중 모두 가능)
+  window.infoSetSpeed = async function(b, key){
+    if(!infoCanCollect()){ infoDenyToast(); return; }
+    const s = S[b]; if(s.speed===key) return;
+    s.speed = key;
+    try{ localStorage.setItem(SPEED_LS(b), key); }catch(e){}
+    renderControls(b);
+    if(s.job){
+      const r = await callFn({ action:'speed', bucket:b, speed:key });
+      if(r && r.error){ toast('속도 변경에 실패했어요: '+r.error); return; }
+      if(s.job) s.job.speed = key;
+      render(b);
+    }
+    const sp = speedOf(key);
+    toast(key==='turbo' ? `최고속(${sp.sub}/건)으로 변경 · 차단 위험이 있어 429 응답이 오면 자동으로 한 단계 낮춰요` : `수집 속도를 ${sp.label}(${sp.sub}/건)으로 변경했어요`);
+  };
+
+  // 완전 취소 (확인창 1회 더)
+  window.infoAskCancel = function(b){
+    if(!infoCanCollect()){ infoDenyToast(); return; }
+    const s = S[b]; if(!s.job) return;
+    S._cancelTarget = b;
+    const done = nf(s.job.processed||0), total = s.job.total>0 ? nf(s.job.total) : '?';
+    const el = document.getElementById('if-cancel-desc');
+    if(el) el.innerHTML = `<b>${b.toUpperCase()}</b> 수집을 완전히 취소합니다.<br>지금까지 진행한 <b>${done} / ${total}</b> 건은 폐기되며, 다시 시작하면 처음부터 수집해요.<br><span class="if-cf-hint">잠깐 멈추고 싶은 거라면 <b>일시정지</b>를 사용하세요.</span>`;
+    const ov = document.getElementById('if-confirm'); if(ov) ov.style.display='flex';
+  };
+  window.infoCloseCancel = function(){ const ov=document.getElementById('if-confirm'); if(ov) ov.style.display='none'; S._cancelTarget=null; };
+  window.infoConfirmCancel = async function(){
+    const b = S._cancelTarget; window.infoCloseCancel();
+    if(!b) return;
+    const s = S[b]; s.busy = true; renderControls(b);
+    try{
+      const r = await callFn({ action:'cancel', bucket:b });
+      if(r && r.error){ toast('취소에 실패했어요: '+r.error); return; }
+      stopPoll(b); s.job=null; s.live=null;
+      await loadBucket(b);
+      toast('수집을 취소했어요');
+    } finally { s.busy=false; renderControls(b); }
+  };
+
+  window.infoNav = async function(b,dir){ const s=S[b], list=viewItems(b), ni=s.idx+dir; if(ni<0||ni>=list.length) return; s.idx=ni; await loadRows(b); render(b); };
   window.infoSelectClass = function(b,cid){ S[b].cls=cid; const el=document.getElementById('if-body-'+b); if(el) el.querySelectorAll('.if-pill').forEach(p=>p.classList.toggle('on', Number(p.dataset.cid)===cid)); renderTables(b); };
   window.infoToggleSort = function(b,cat){ if(!S[b].sort) S[b].sort={}; S[b].sort[cat] = (S[b].sort[cat]==='rate'?'level':'rate'); renderTables(b); };
-  window.infoDelete = async function(b){ const s=S[b], snap=s.snaps[s.idx]; if(!snap) return; const pw=prompt(`${fmtDate(snap.collected_at)} 스냅샷을 삭제하려면 비밀번호를 입력하세요`); if(pw===null||pw==='') return; let stored=null; try{ const { data: cfg } = await sb.from('info_config').select('val').eq('key','delete_pw').maybeSingle(); stored = cfg && cfg.val; }catch(e){} if(!stored){ alert('삭제 비밀번호를 확인할 수 없어요. (SQL 실행 여부 확인) 안전을 위해 삭제를 취소합니다.'); return; } if(pw!==stored){ alert('비밀번호가 틀렸어요'); return; } await callFn({action:'delete',snapshotId:snap.id}); await loadBucket(b); };
+  window.infoDelete = async function(b){
+    const s=S[b], it=curItem(b);
+    if(!it) return;
+    if(it._live){ toast('수집 중인 스냅샷은 삭제할 수 없어요. 취소 버튼을 사용하세요'); return; }
+    const pw=prompt(`${fmtDate(it.collected_at)} 스냅샷을 삭제하려면 비밀번호를 입력하세요`); if(pw===null||pw==='') return;
+    let stored=null;
+    try{ const { data: cfg } = await sb.from('info_config').select('val').eq('key','delete_pw').maybeSingle(); stored = cfg && cfg.val; }catch(e){}
+    if(!stored){ alert('삭제 비밀번호를 확인할 수 없어요. (SQL 실행 여부 확인) 안전을 위해 삭제를 취소합니다.'); return; }
+    if(pw!==stored){ alert('비밀번호가 틀렸어요'); return; }
+    await callFn({action:'delete',snapshotId:it.id, pw});
+    await loadBucket(b);
+  };
 })();
 </script>
 
