@@ -5593,6 +5593,10 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
 }
 .deva-manage-price { font-size: 0.72rem; color: var(--text-sub); }
 .deva-manage-row .deva-card-actions { display: inline-flex; gap: 6px; flex: none; }
+/* 패스 순서 변경 버튼 (작업본26) — devaPasses 배열 순서가 관리목록·캐릭터블록 순서를 함께 결정 */
+.deva-move { display: inline-flex; gap: 4px; flex: none; margin-right: 4px; }
+.deva-icon-btn:disabled { opacity: 0.32; cursor: default; }
+.deva-icon-btn:disabled:hover { background: var(--surface); color: var(--text-sub); border-color: var(--border); }
 body.guest-mode .deva-chip { cursor: default; }
 body.guest-mode .deva-chip:hover { border-color: var(--border); }
 .deva-empty {
@@ -6523,6 +6527,14 @@ select.ctodo-select {
     #info-page .if-live.paused .if-live-bar>i{opacity:.5}
     #info-page .if-live-tag{font-size:0.58rem;font-weight:700;color:var(--if-accent);background:var(--if-accent-l);padding:2px 6px;border-radius:999px;margin-left:5px;vertical-align:middle}
     #info-page .if-del:disabled{opacity:.35;cursor:default}
+    /* ── 오류·경고 배너 ── */
+    #info-page .if-alert{border-radius:var(--radius-sm);padding:11px 13px;margin-bottom:12px;font-size:0.78rem;line-height:1.55;display:flex;gap:8px;align-items:flex-start}
+    #info-page .if-alert.err{background:var(--if-danger);color:var(--surface)}
+    #info-page .if-alert.warn{background:var(--surface2);border:1px solid var(--border);color:var(--text)}
+    #info-page .if-alert b{font-weight:700}
+    #info-page .if-alert-x{margin-left:auto;flex:none;display:flex;gap:6px}
+    #info-page .if-alert-b{border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;font-family:inherit;font-size:0.7rem;font-weight:700;border-radius:var(--radius-xs);padding:4px 8px;white-space:nowrap}
+    #info-page .if-alert-b:hover{opacity:.75}
     /* ── 취소 확인 모달 ── */
     #if-confirm{display:none;position:fixed;inset:0;z-index:400;background:rgba(90,82,75,0.4);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px}
     #if-confirm .if-cf{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;width:100%;max-width:360px}
@@ -12572,7 +12584,7 @@ function renderDevaPage() {
 // 상단: 등록된 패스 목록 + 패스별 집계 + 수정/삭제
 function _devaManageCard(isGuest) {
   const chars = _devaChars();
-  const rows = devaPasses.map(pass => {
+  const rows = devaPasses.map((pass, idx) => {
     const pid = pass.id;
     const xpOn = c => !!(((weeklyTasks[c.id] || {}).deva_xp || {})[pid]);
     const bCnt = chars.filter(c => _devaFlags(c, pid).basic).length;
@@ -12581,6 +12593,11 @@ function _devaManageCard(isGuest) {
     const ownedChars = chars.filter(c => { const f = _devaFlags(c, pid); return f.basic || f.premium; });
     const owned = ownedChars.length;
     const xCnt = ownedChars.filter(xpOn).length;
+    // 순서 변경 — 패스가 2개 이상일 때만 노출 (1개면 의미 없음)
+    const move = (isGuest || devaPasses.length < 2) ? '' : `<span class="deva-move">
+        <button class="deva-icon-btn" title="위로 이동" aria-label="위로 이동"${idx === 0 ? ' disabled' : ''} onclick="moveDevaPass('${pid}',-1)">▲</button>
+        <button class="deva-icon-btn" title="아래로 이동" aria-label="아래로 이동"${idx === devaPasses.length - 1 ? ' disabled' : ''} onclick="moveDevaPass('${pid}',1)">▼</button>
+      </span>`;
     const actions = isGuest ? '' : `<span class="deva-card-actions">
         <button class="deva-icon-btn" title="수정" aria-label="패스 수정" onclick="openDevaPassModal('${pid}')">✎</button>
         <button class="deva-icon-btn" title="삭제" aria-label="패스 삭제" onclick="deleteDevaPass('${pid}', this)">🗑</button>
@@ -12591,7 +12608,7 @@ function _devaManageCard(isGuest) {
       <span class="deva-stat-chip">기본 ${bCnt}</span>
       <span class="deva-stat-chip">프리미엄 ${pCnt}</span>
       <span class="deva-stat-chip${owned && xCnt === owned ? ' full' : ''}">주간 EXP ${xCnt}/${owned}</span>
-      ${actions}
+      ${move}${actions}
     </div>`;
   }).join('');
   return `<div class="deva-pass-card deva-manage-card">${rows}</div>`;
@@ -12703,6 +12720,26 @@ async function saveDevaPassModal() {
   document.getElementById('deva-modal-overlay').classList.remove('show');
   renderDevaPage();
 }
+// 패스 순서 위/아래 교체 (작업본26)
+//   구매상태(deva_premium)·주간EXP(deva_xp)는 passId 키로 저장되므로 배열 순서만 바꿔도 데이터는 그대로 따라온다.
+//   저장 후 app_config 실시간 구독이 다른 접속자 화면에도 같은 순서를 반영한다.
+async function moveDevaPass(passId, dir) {
+  if (currentActor === 'guest') return;
+  const i = devaPasses.findIndex(p => p.id === passId);
+  if (i < 0) return;
+  const j = i + dir;
+  if (j < 0 || j >= devaPasses.length) return;   // 맨 위에서 ▲, 맨 아래에서 ▼ → 무시
+  const prev = devaPasses.slice();               // 저장 실패 시 되돌리기용
+  [devaPasses[i], devaPasses[j]] = [devaPasses[j], devaPasses[i]];
+  renderDevaPage();                              // 먼저 화면 반영(빠른 반응)
+  const ok = await saveDevaPasses();
+  if (!ok) {
+    devaPasses = prev;
+    showToast('순서 저장 실패 — 원래대로 되돌렸어요');
+    renderDevaPage();
+  }
+}
+
 async function deleteDevaPass(passId, btn) {
   if (currentActor === 'guest') return;
   // 1차 클릭 → "삭제?" 확인 상태, 2.6초 내 재클릭 시 실제 삭제
@@ -17625,8 +17662,8 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
   const SPEED_LS = b => 'aion2_info_speed_'+b;
 
   const S = {
-    pvp:{ snaps:[], live:null, idx:0, cls:null, rows:[], classes:[], job:null, poll:null, speed:DEFAULT_SPEED, busy:false, sort:{Active:'level',Passive:'level',Dp:'level'} },
-    pve:{ snaps:[], live:null, idx:0, cls:null, rows:[], classes:[], job:null, poll:null, speed:DEFAULT_SPEED, busy:false, sort:{Active:'level',Passive:'level',Dp:'level'} },
+    pvp:{ snaps:[], live:null, idx:0, cls:null, rows:[], classes:[], job:null, poll:null, speed:DEFAULT_SPEED, busy:false, err:null, warn:null, sort:{Active:'level',Passive:'level',Dp:'level'} },
+    pve:{ snaps:[], live:null, idx:0, cls:null, rows:[], classes:[], job:null, poll:null, speed:DEFAULT_SPEED, busy:false, err:null, warn:null, sort:{Active:'level',Passive:'level',Dp:'level'} },
     _boot:false, _cancelTarget:null
   };
   try{ ['pvp','pve'].forEach(b=>{ const v=localStorage.getItem(SPEED_LS(b)); if(v && SPEEDS.some(s=>s.key===v)) S[b].speed=v; }); }catch(e){}
@@ -17644,24 +17681,52 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
     return r ? `${h}시간 ${r}분` : `${h}시간`;
   }
 
-  async function callFn(body){ try{ const { data } = await sb.functions.invoke('collect-skill-stats',{ body }); return data||{}; }catch(e){ console.error('[인포 함수 호출]', e); return { error:String(e) }; } }
+  async function callFn(body){
+    try{
+      const { data, error } = await sb.functions.invoke('collect-skill-stats',{ body });
+      if(error){
+        // 함수가 4xx/5xx 로 답하면 supabase-js 는 본문을 숨긴다 → 직접 읽어 진짜 이유를 보여준다
+        let detail='';
+        try{ const ctx = error.context; if(ctx && typeof ctx.json==='function'){ const j = await ctx.json(); detail = j && (j.error || j.hint || JSON.stringify(j)); } }catch(_e){}
+        console.error('[인포 함수 호출]', error);
+        return { error: detail || error.message || String(error) };
+      }
+      return data || {};
+    }catch(e){ console.error('[인포 함수 호출]', e); return { error:String(e) }; }
+  }
   function toast(m){ if(typeof showToast==='function') showToast(m); else alert(m); }
 
   // ── 로딩 ────────────────────────────────────────────────────────────
   async function fetchJob(b){
-    const { data } = await sb.from('skill_collect_job').select('*').eq('bucket',b).in('status',ACTIVE).order('created_at',{ascending:false}).limit(1);
-    return (data && data[0]) || null;
+    const { data, error } = await sb.from('skill_collect_job').select('*').eq('bucket',b).in('status',ACTIVE).order('created_at',{ascending:false}).limit(1);
+    if(error){ console.warn('[인포] 작업 조회 실패', error); return undefined; }   // undefined = 조회 실패(화면 유지)
+    return (data && data[0]) || null;                                              // null = 진행 중 작업 없음
   }
+  // 작업이 ACTIVE 에서 사라졌을 때: 마지막 작업 행을 읽어 "왜 끝났는지" 를 남긴다.
+  // (이전에는 아무 설명 없이 버튼만 '수집 시작' 으로 되돌아가서 원인을 알 수 없었음)
+  async function explainEnded(b){
+    const s = S[b];
+    const { data } = await sb.from('skill_collect_job')
+      .select('id,status,total,processed,last_error,updated_at')
+      .eq('bucket',b).order('id',{ascending:false}).limit(1);
+    const j = data && data[0]; if(!j) return;
+    if(j.status==='error'){
+      s.err = `수집이 중단됐어요 · 작업 #${j.id} · 진행 ${nf(j.processed||0)}/${nf(j.total||0)}<br><b>사유:</b> ${j.last_error || '기록 없음'}`;
+    } else if(j.status==='done' && !(j.total>0)){
+      s.err = `수집이 <b>대상 0건</b>으로 끝났어요 · 작업 #${j.id}<br><b>마지막 오류:</b> ${j.last_error || '기록 없음'}`;
+    }
+  }
+
   async function fetchLiveSnap(b){
     const { data } = await sb.from('skill_snapshot').select('*').eq('bucket',b).eq('status','running').order('id',{ascending:false}).limit(1);
     return (data && data[0]) || null;
   }
 
   async function loadBucket(b){
-    const s = S[b];
+    const s = S[b];   // 주의: s.err 는 여기서 지우지 않는다(중단 사유가 재로딩에 덮이면 안 됨)
     const { data:snaps } = await sb.from('skill_snapshot').select('*').eq('bucket',b).eq('status','done').order('collected_at',{ascending:false});
     s.snaps = snaps || [];
-    s.job = await fetchJob(b);
+    s.job = (await fetchJob(b)) || null;
     if(s.job && s.job.speed) s.speed = s.job.speed;
     s.live = s.job ? await fetchLiveSnap(b) : null;
     // 잠정 스냅샷에 아직 데이터가 없고 과거 스냅샷이 있으면 → 과거 최신본을 먼저 보여준다
@@ -17765,12 +17830,19 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
       : `<div class="if-state"><div class="if-emoji">📊</div>아직 수집된 데이터가 없어요.<br>위 <b>수집 시작</b>을 눌러 첫 스냅샷을 만들어보세요.</div>`;
   }
 
+  function alertsHTML(b){
+    const s = S[b]; let out='';
+    if(s.err)  out += `<div class="if-alert err"><span>⚠️</span><span>${s.err}</span><span class="if-alert-x"><button class="if-alert-b" onclick="infoDiagnose('${b}')">진단</button><button class="if-alert-b" onclick="infoClearAlert('${b}')">닫기</button></span></div>`;
+    if(s.warn) out += `<div class="if-alert warn"><span>ℹ️</span><span>${s.warn}</span><span class="if-alert-x"><button class="if-alert-b" onclick="infoClearAlert('${b}')">닫기</button></span></div>`;
+    return out;
+  }
+
   function render(b){
     const s = S[b], el = document.getElementById('if-body-'+b);
     renderControls(b);
     if(!el) return;
     const list = viewItems(b);
-    const banner = s.job ? liveBannerHTML(b) : '';
+    const banner = alertsHTML(b) + (s.job ? liveBannerHTML(b) : '');
     if(!list.length){ el.innerHTML = banner + emptyHTML(b); return; }
     el.innerHTML = banner + snapHeadHTML(b) + `<div class="if-classes">${pillsHTML(b)}</div><div class="if-cats" id="if-cats-${b}"></div>`;
     const box = document.getElementById('if-cats-'+b);
@@ -17806,7 +17878,8 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
     s.poll = setInterval(async ()=>{
       if(s.busy) return;
       const job = await fetchJob(b);
-      if(!job){ stopPoll(b); await loadBucket(b); return; }   // 완료/취소 → 전체 재로딩
+      if(job===undefined) return;                            // 조회 실패 → 이번 회차는 건너뜀
+      if(!job){ stopPoll(b); await explainEnded(b); await loadBucket(b); return; }  // 완료/취소/중단 → 사유 확인 후 재로딩
       s.job = job;
       if(job.speed && job.speed!==s.speed) s.speed = job.speed;
       if(!s.live){
@@ -17839,10 +17912,20 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
     try{
       const st = jobState(b);
       if(st==='idle'){
+        s.err = null; s.warn = null;
         const r = await callFn({ action:'start', bucket:b, speed:s.speed });
-        if(r && r.error){ toast('수집을 시작하지 못했어요: '+r.error); return; }
-        s.job = { status:'ranking', total:0, processed:0, paused:false, speed:s.speed };
-        s.live = null; render(b); startPoll(b);
+        if(r && r.error){ s.err = '수집을 시작하지 못했어요 · ' + r.error; render(b); toast(s.err); return; }
+        if(r && r.warn) s.warn = r.warn;                     // 스키마 미적용 등 반쪽 동작 경고
+        // 작업이 실제로 만들어졌는지 확인 — 안 그러면 "눌러도 조용히 원위치" 가 된다
+        const job = await fetchJob(b);
+        if(!job){
+          s.job = null;
+          s.err = '수집 작업이 생성되지 않았어요. 아래 <b>진단</b>을 눌러 스키마/함수 배포 상태를 확인해 주세요. (함수 응답: ' + JSON.stringify(r) + ')';
+          render(b); toast('수집 시작 실패 — 화면 안내를 확인해 주세요');
+          return;
+        }
+        s.job = job; s.live = null; if(job.speed) s.speed = job.speed;
+        render(b); startPoll(b);
         toast(`수집을 시작했어요 (${speedOf(s.speed).label} · ${speedOf(s.speed).sub}/건)`);
       } else if(st==='running'){
         const r = await callFn({ action:'pause', bucket:b });
@@ -17899,6 +17982,18 @@ window.addSelectedDungeonsToExpedition = addSelectedDungeonsToExpedition;
       toast('수집을 취소했어요');
     } finally { s.busy=false; renderControls(b); }
   };
+
+  // 왜 시작이 안 되는지 서버에 물어본다 (스키마 적용 여부 + 최근 작업 상태)
+  window.infoDiagnose = async function(b){
+    const s = S[b];
+    const r = await callFn({ action:'status', bucket:b });
+    if(r && r.error){ s.warn = '진단 실패 · ' + r.error + ' (함수가 v2.1 로 배포되었는지 확인해 주세요)'; render(b); return; }
+    const j = r.lastJob;
+    s.warn = `진단 결과 — 스키마: ${r.schemaOk ? '<b>정상</b> (paused/speed 있음)' : '<b>미적용</b> → 인포_수집제어_schema_v2.sql 을 먼저 실행해 주세요'}`
+      + (j ? ` · 최근 작업 #${j.id} <b>${j.status}</b> ${nf(j.processed||0)}/${nf(j.total||0)}${j.last_error ? ' · ' + j.last_error : ''}` : ' · 최근 작업 없음');
+    render(b);
+  };
+  window.infoClearAlert = function(b){ S[b].err=null; S[b].warn=null; render(b); };
 
   window.infoNav = async function(b,dir){ const s=S[b], list=viewItems(b), ni=s.idx+dir; if(ni<0||ni>=list.length) return; s.idx=ni; await loadRows(b); render(b); };
   window.infoSelectClass = function(b,cid){ S[b].cls=cid; const el=document.getElementById('if-body-'+b); if(el) el.querySelectorAll('.if-pill').forEach(p=>p.classList.toggle('on', Number(p.dataset.cid)===cid)); renderTables(b); };
