@@ -5802,31 +5802,47 @@ select.ctodo-select {
 .cmp-head-sub { font-size: 0.72rem; color: var(--text-sub); margin-top: 4px; }
 
 /* 날짜 넘기기 — '오늘' 기간에서 하루 단위 이동 (작업본27) */
-.cmp-day-bar { display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+.cmp-day-bar {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-bottom: 6px; flex-wrap: wrap;
+}
 .cmp-day-nav {
-  display: inline-flex; align-items: center; gap: 2px; padding: 3px;
+  display: inline-flex; align-items: stretch; gap: 4px; padding: 4px;
   background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
 }
 .cmp-day-btn {
-  width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
-  border: none; background: transparent; border-radius: var(--radius-xs); cursor: pointer;
-  color: var(--text-sub); font-family: var(--font-head); font-size: 1rem; line-height: 1;
-  transition: background .15s, color .15s, box-shadow .15s;
+  display: inline-flex; align-items: center; gap: 5px;
+  min-height: 36px; padding: 0 14px;
+  border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-xs);
+  cursor: pointer; color: var(--text); font-family: var(--font-head);
+  font-size: 0.82rem; font-weight: 600; line-height: 1; white-space: nowrap;
+  transition: background .15s, color .15s, border-color .15s, box-shadow .15s;
 }
-.cmp-day-btn:hover:not(:disabled) { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
-.cmp-day-btn:disabled { opacity: .3; cursor: default; }
+.cmp-day-chev { font-size: 1.05rem; line-height: 1; color: var(--text-sub); transition: color .15s; }
+.cmp-day-btn:hover:not(:disabled) { background: var(--sage-light); border-color: var(--sage); box-shadow: var(--shadow-sm); }
+.cmp-day-btn:hover:not(:disabled) .cmp-day-chev { color: var(--text); }
+.cmp-day-btn:focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; }
+.cmp-day-btn:disabled {
+  background: var(--surface2); border-color: var(--border); color: var(--text-sub);
+  opacity: .6; cursor: not-allowed; box-shadow: none;
+}
+.cmp-day-btn:disabled .cmp-day-chev { color: var(--text-sub); }
 .cmp-day-label {
-  min-width: 96px; text-align: center; line-height: 1.15;
-  font-family: var(--font-head); font-size: 0.78rem; color: var(--text);
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 118px; padding: 0 10px; text-align: center; line-height: 1.15;
+  font-family: var(--font-head); font-size: 0.86rem; font-weight: 600; color: var(--text);
 }
-.cmp-day-date { display: block; font-size: 0.68rem; color: var(--text-sub); margin-top: 2px; }
+.cmp-day-date { display: block; font-size: 0.7rem; font-weight: 400; color: var(--text-sub); margin-top: 3px; }
 .cmp-day-today {
-  margin-left: 8px; padding: 5px 12px; border-radius: 999px;
-  border: 1px solid var(--border); background: var(--surface); color: var(--text-sub);
-  font-family: var(--font-head); font-size: 0.72rem; cursor: pointer;
-  transition: background .15s, color .15s, border-color .15s;
+  min-height: 36px; padding: 0 14px; border-radius: 999px;
+  border: 1px solid var(--sage); background: var(--sage-light); color: var(--text);
+  font-family: var(--font-head); font-size: 0.78rem; font-weight: 600; cursor: pointer;
+  transition: box-shadow .15s, background .15s;
 }
-.cmp-day-today:hover { background: var(--sage-light); border-color: var(--sage); color: var(--text); }
+.cmp-day-today:hover { box-shadow: var(--shadow-sm); }
+.cmp-day-today:focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; }
+.cmp-day-stat { margin-bottom: 14px; font-size: 0.72rem; color: var(--text-sub); text-align: center; }
+.cmp-day-stat.warn { color: var(--color-owner-츄츄); }
 
 /* 스와이프 영역 */
 .cmp-swipe { touch-action: pan-y; }
@@ -9491,6 +9507,18 @@ function _dailySnapDay(owner, off) {
   const charList = (row.chars || []).map(ch => ({ id: ch.char_id, name: ch.name }));
   return { acct: c.acctTotal ? Math.round(c.acctDone / c.acctTotal * 100) : null, perChar, charList, date, dayText: '마감 기준' };
 }
+// 스냅샷이 저장된 날짜 수 (owner 중복 제외)
+function _cmpSnapDayCount() {
+  const set = {};
+  (_compDaily || []).forEach(r => { if (r.snap_date) set[r.snap_date] = 1; });
+  return Object.keys(set).length;
+}
+// 보고 있는 날짜에 스냅샷이 있는지 (안내문구용)
+function _cmpDayHasSnap(off) {
+  if (off <= 0) return true;
+  const d = _gameDateMinus(off);
+  return (_compDaily || []).some(r => r.snap_date === d);
+}
 function cmpDayShift(delta) {
   if (_cmpDailyPeriod !== 'today') return;
   const next = _cmpDayOffset + delta;
@@ -9744,17 +9772,27 @@ function _cmpRerender() {
   const headToggle = _cmpSeg([['today', '오늘'], ['7d', '7일'], ['30d', '30일'], ['all', '전체']], _cmpDailyPeriod, 'setCmpDailyPeriod');
 
   // 날짜 넘기기 (작업본27) — '오늘' 기간에서만
+  const snapDays = dayMode ? _cmpSnapDayCount() : 0;
   const dayNav = dayMode ? `<div class="cmp-day-bar">
       <span class="cmp-day-nav">
-        <button type="button" class="cmp-day-btn" onclick="cmpDayShift(1)" ${_cmpDayOffset >= maxOff ? 'disabled' : ''} title="이전 날" aria-label="이전 날">‹</button>
+        <button type="button" class="cmp-day-btn" onclick="cmpDayShift(1)" ${_cmpDayOffset >= maxOff ? 'disabled' : ''} title="이전 날 (← 키)" aria-label="이전 날"><span class="cmp-day-chev">‹</span>이전 날</button>
         <span class="cmp-day-label">${_cmpDayLabel(_cmpDayOffset)}<span class="cmp-day-date">${_cmpDayDateStr(_cmpDayOffset)}</span></span>
-        <button type="button" class="cmp-day-btn" onclick="cmpDayShift(-1)" ${_cmpDayOffset <= 0 ? 'disabled' : ''} title="다음 날" aria-label="다음 날">›</button>
+        <button type="button" class="cmp-day-btn" onclick="cmpDayShift(-1)" ${_cmpDayOffset <= 0 ? 'disabled' : ''} title="다음 날 (→ 키)" aria-label="다음 날">다음 날<span class="cmp-day-chev">›</span></button>
       </span>
       ${_cmpDayOffset > 0 ? `<button type="button" class="cmp-day-today" onclick="cmpDayToday()">오늘로</button>` : ''}
-    </div>` : '';
+    </div>
+    <div class="cmp-day-stat${snapDays ? '' : ' warn'}">${
+      snapDays
+        ? `마감 기록 ${snapDays}일치 보관 중 · 최대 ${maxOff}일 전까지 볼 수 있어요`
+        : '저장된 마감 기록이 없어요 — 스냅샷 크론(매일 새벽 04:59)이 도는지 확인이 필요해요'
+    }</div>` : '';
   const headTitle = dayMode ? `${_cmpDayLabel(_cmpDayOffset)} 할일 완료율` : '할일 완료율';
   const dayHint = dayMode
-    ? `<div class="cmp-swipe-hint">${maxOff > 0 ? '왼쪽으로 넘기면 지난 날 · 오른쪽으로 넘기면 오늘 (← → 키도 가능)' : '지난 날 기록은 하루가 마감된 뒤부터 쌓여요'}</div>`
+    ? `<div class="cmp-swipe-hint">${
+        (_cmpDayOffset > 0 && !_cmpDayHasSnap(_cmpDayOffset))
+          ? '이 날짜는 마감 기록이 없어요'
+          : '이전 날 · 다음 날 버튼 또는 ← → 방향키로 날짜를 넘길 수 있어요'
+      }</div>`
     : '';
 
   // 블록: 오늘 할일 (헤더 기간 공용) — 2단
