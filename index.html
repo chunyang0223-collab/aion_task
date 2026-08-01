@@ -9289,6 +9289,7 @@ let _cmpCoopPeriod   = '7d';      // 'today' | '7d' | '30d' | 'all'
 
 // ── 데이터 캐시 ──
 let _compDaily = null, _compWeekly = null;
+let _compLoadErr = null;   // 작업본29: 스냅샷 읽기 실패 사유 (RLS/권한 등) — 조용히 삼키지 않음
 let _abyssWarsCache = null, _abyssClearMap = null;
 let _coopRows = null;
 let _compLoading = false;
@@ -9312,8 +9313,13 @@ async function loadCompletionData() {
     sb.from('completion_daily').select('*').order('snap_date', { ascending: false }).limit(400),
     sb.from('completion_weekly').select('*').order('week_start', { ascending: false }).limit(200),
   ]);
+  // 작업본29: 에러를 `|| []` 로 삼키면 "권한 없음"과 "데이터 없음"이 구분되지 않는다.
+  _compLoadErr = null;
+  if (d.error) { console.error('[완료율] completion_daily 읽기 실패', d.error); _compLoadErr = d.error.message || String(d.error); }
+  if (w.error) { console.error('[완료율] completion_weekly 읽기 실패', w.error); _compLoadErr = _compLoadErr || (w.error.message || String(w.error)); }
   _compDaily = (d.data) || [];
   _compWeekly = (w.data) || [];
+  console.log('[완료율] 스냅샷 로드 — daily', _compDaily.length, '행 / weekly', _compWeekly.length, '행', _compLoadErr ? ('· 오류: ' + _compLoadErr) : '');
   // 어비스 — 회랑 + 클리어 (소급)
   const [cor, clr] = await Promise.all([
     _fetchAll('abyss_corridors', 'id,war_date,zone,layer,acquired', 'war_date', 4000),
@@ -9481,11 +9487,16 @@ function _cmpDayLabel(off) {
   if (off === 2) return '그저께';
   return off + '일 전';
 }
+// 'N월 N일' — 제목용 (작업본30)
+function _cmpDayMD(off) {
+  const dt = new Date(_gameDateMinus(off) + 'T00:00:00Z');
+  return `${dt.getUTCMonth() + 1}월 ${dt.getUTCDate()}일`;
+}
+// 'N월 N일 (요일)' — 날짜 바용
 function _cmpDayDateStr(off) {
-  const d = _gameDateMinus(off);
-  const dt = new Date(d + 'T00:00:00Z');
+  const dt = new Date(_gameDateMinus(off) + 'T00:00:00Z');
   const w = ['일', '월', '화', '수', '목', '금', '토'][dt.getUTCDay()];
-  return `${dt.getUTCMonth() + 1}월 ${dt.getUTCDate()}일 (${w})`;
+  return `${_cmpDayMD(off)} (${w})`;
 }
 // 스냅샷이 남아 있는 가장 오래된 날까지만 이동 허용
 function _cmpMaxDayOffset() {
@@ -9784,9 +9795,13 @@ function _cmpRerender() {
     <div class="cmp-day-stat${snapDays ? '' : ' warn'}">${
       snapDays
         ? `마감 기록 ${snapDays}일치 보관 중 · 최대 ${maxOff}일 전까지 볼 수 있어요`
-        : '저장된 마감 기록이 없어요 — 스냅샷 크론(매일 새벽 04:59)이 도는지 확인이 필요해요'
+        : (_compLoadErr
+            ? `마감 기록을 불러오지 못했어요 — ${escapeHtml(_compLoadErr)}`
+            : '조회된 마감 기록이 0건이에요 — 스냅샷 크론 또는 테이블 읽기 권한(RLS 정책)을 확인해 주세요')
     }</div>` : '';
-  const headTitle = dayMode ? `${_cmpDayLabel(_cmpDayOffset)} 할일 완료율` : '할일 완료율';
+  const headTitle = dayMode
+    ? (_cmpDayOffset > 0 ? `${_cmpDayMD(_cmpDayOffset)} 완료율` : '오늘 할일 완료율')
+    : '할일 완료율';
   const dayHint = dayMode
     ? `<div class="cmp-swipe-hint">${
         (_cmpDayOffset > 0 && !_cmpDayHasSnap(_cmpDayOffset))
@@ -9803,7 +9818,7 @@ function _cmpRerender() {
       ${_cmpCharRows(o, det)}
     </div>`;
   }).join('');
-  const todayTitle = dayMode ? `${_cmpDayLabel(_cmpDayOffset)} 할일` : '오늘 할일';
+  const todayTitle = (dayMode && _cmpDayOffset > 0) ? `${_cmpDayMD(_cmpDayOffset)} 완료율` : '오늘 할일';
 
   // 블록: 주간 할일
   const weeklyToggle = _cmpSeg([['week', '이번주'], ['month', '한달'], ['all', '전체']], _cmpWeeklyPeriod, 'setCmpWeeklyPeriod');
