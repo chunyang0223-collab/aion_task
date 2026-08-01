@@ -43,6 +43,8 @@
   --sky-light: #d4eaf4;
   --done: #a3b18a;
   --undone: #faf8f5;
+  --paw: #e9b3bc;         /* 고양이 발바닥 */
+  --paw-hover: #d98c9a;
   --shadow: 0 4px 20px rgba(160,150,140,0.10);
   --shadow-sm: 0 2px 8px rgba(160,150,140,0.08);
   --radius: 18px;
@@ -86,6 +88,8 @@ html.skin-glc {
   --sky-light: #DCE7FB;
   --done: #6FBE7A;        /* leaf */
   --undone: #F0EBE2;
+  --paw: #F49AC1;         /* 고양이 발바닥 */
+  --paw-hover: #ED5BA0;
   --shadow: 0 6px 18px rgba(89,60,60,0.08);
   --shadow-sm: 0 1px 2px rgba(89,60,60,0.08);
   --radius: 22px;
@@ -5382,6 +5386,8 @@ html.skin-glc .abyss-matrix-row:hover, html.skin-glc .sanctuary-row:hover { back
 }
 .todo-item + .todo-item { margin-top: 2px; }
 .todo-item:hover { background: var(--hover); }
+.todo-item.ro { cursor: default; }                 /* 과거 보기 (작업본31) */
+.todo-item.ro:hover { background: transparent; }
 .todo-item b { color: var(--odd-full); font-weight: 700; }   /* 소모/회수 강조 */
 .todo-item .dim { color: var(--text-sub); font-size: 0.78rem; }
 
@@ -5655,6 +5661,7 @@ body.guest-mode .deva-chip:hover { border-color: var(--border); }
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 18px;
+  flex-wrap: wrap;
 }
 .todo-toolbar .todo-subtabs { margin-bottom: 0; }
 .todo-custom-add {
@@ -5802,15 +5809,17 @@ select.ctodo-select {
 .cmp-head-sub { font-size: 0.72rem; color: var(--text-sub); margin-top: 4px; }
 
 /* 날짜 넘기기 — '오늘' 기간에서 하루 단위 이동 (작업본27) */
-.cmp-day-bar {
+/* ── 기간 네비 (완료율·할일 공용 컴포넌트) 작업본31 ─────────────── */
+.pnav { margin-bottom: 14px; }
+.pnav-bar {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   margin-bottom: 6px; flex-wrap: wrap;
 }
-.cmp-day-nav {
+.pnav-group {
   display: inline-flex; align-items: stretch; gap: 4px; padding: 4px;
   background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
 }
-.cmp-day-btn {
+.pnav-btn {
   display: inline-flex; align-items: center; gap: 5px;
   min-height: 36px; padding: 0 14px;
   border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-xs);
@@ -5818,31 +5827,70 @@ select.ctodo-select {
   font-size: 0.82rem; font-weight: 600; line-height: 1; white-space: nowrap;
   transition: background .15s, color .15s, border-color .15s, box-shadow .15s;
 }
-.cmp-day-chev { font-size: 1.05rem; line-height: 1; color: var(--text-sub); transition: color .15s; }
-.cmp-day-btn:hover:not(:disabled) { background: var(--sage-light); border-color: var(--sage); box-shadow: var(--shadow-sm); }
-.cmp-day-btn:hover:not(:disabled) .cmp-day-chev { color: var(--text); }
-.cmp-day-btn:focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; }
-.cmp-day-btn:disabled {
+.pnav-chev { font-size: 1.05rem; line-height: 1; color: var(--text-sub); transition: color .15s; }
+.pnav-btn:hover:not(:disabled) { background: var(--sage-light); border-color: var(--sage); box-shadow: var(--shadow-sm); }
+.pnav-btn:hover:not(:disabled) .pnav-chev { color: var(--text); }
+.pnav-btn:focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; }
+.pnav-btn:disabled {
   background: var(--surface2); border-color: var(--border); color: var(--text-sub);
   opacity: .6; cursor: not-allowed; box-shadow: none;
 }
-.cmp-day-btn:disabled .cmp-day-chev { color: var(--text-sub); }
-.cmp-day-label {
+.pnav-btn:disabled .pnav-chev { color: var(--text-sub); }
+.pnav-label {
   display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
-  min-width: 118px; padding: 0 10px; text-align: center; line-height: 1.15;
+  min-width: 130px; padding: 0 10px; text-align: center; line-height: 1.15;
   font-family: var(--font-head); font-size: 0.86rem; font-weight: 600; color: var(--text);
 }
-.cmp-day-date { display: block; font-size: 0.7rem; font-weight: 400; color: var(--text-sub); margin-top: 3px; }
-.cmp-day-today {
+.pnav-sub { display: block; font-size: 0.7rem; font-weight: 400; color: var(--text-sub); margin-top: 3px; }
+.pnav-reset {
   min-height: 36px; padding: 0 14px; border-radius: 999px;
   border: 1px solid var(--sage); background: var(--sage-light); color: var(--text);
   font-family: var(--font-head); font-size: 0.78rem; font-weight: 600; cursor: pointer;
   transition: box-shadow .15s, background .15s;
 }
-.cmp-day-today:hover { box-shadow: var(--shadow-sm); }
-.cmp-day-today:focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; }
-.cmp-day-stat { margin-bottom: 14px; font-size: 0.72rem; color: var(--text-sub); text-align: center; }
-.cmp-day-stat.warn { color: var(--color-owner-츄츄); }
+.pnav-reset:hover { box-shadow: var(--shadow-sm); }
+.pnav-reset:focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; }
+.pnav-note { font-size: 0.72rem; color: var(--text-sub); text-align: center; }
+.pnav-note.warn { color: var(--color-owner-츄츄); }
+
+/* compact 변형 — 툴바 한 줄에 들어가는 형태 (작업본32) */
+.pnav.compact { margin-bottom: 0; }
+.pnav.compact .pnav-bar { margin-bottom: 0; gap: 6px; }
+.pnav.compact .pnav-group { gap: 6px; padding: 3px; }
+.pnav.compact .pnav-label { min-width: 108px; font-size: 0.82rem; padding: 0 6px; }
+.pnav.compact .pnav-sub { font-size: 0.68rem; margin-top: 2px; }
+.pnav.compact .pnav-reset { min-height: 32px; padding: 0 12px; font-size: 0.74rem; }
+.pnav-inline-note { font-size: 0.7rem; color: var(--color-owner-츄츄); white-space: nowrap; }
+.pnav-lock { margin-right: 4px; }
+
+/* 발바닥 이동 버튼 */
+.pnav-paw {
+  width: 34px; height: 34px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); background: var(--surface); border-radius: 999px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, box-shadow .15s, transform .12s;
+}
+.pnav-paw:hover:not(:disabled) { background: var(--hover); border-color: var(--paw); box-shadow: var(--shadow-sm); }
+.pnav-paw:active:not(:disabled) { transform: scale(0.93); }
+.pnav-paw:focus-visible { outline: 2px solid var(--paw); outline-offset: 2px; }
+.pnav-paw:disabled { opacity: .3; cursor: not-allowed; box-shadow: none; }
+.paw-ico { width: 19px; height: 19px; fill: var(--paw); transition: fill .15s; }
+.pnav-paw:hover:not(:disabled) .paw-ico { fill: var(--paw-hover); }
+.pnav-paw.prev .paw-ico { transform: rotate(-90deg); }
+.pnav-paw.next .paw-ico { transform: rotate(90deg); }
+
+/* 툴바 슬롯 — 서브탭과 할일추가 사이 가운데 */
+.todo-nav-slot { flex: 1 1 auto; display: flex; justify-content: center; min-width: 0; }
+
+/* 과거 보기 — 기록 없는 섹션 각주 (작업본31) */
+.todo-missing {
+  margin-top: 14px; padding: 10px 14px;
+  background: var(--surface2); border: 1px dashed var(--border); border-radius: var(--radius-sm);
+  font-size: 0.74rem; color: var(--text-sub); text-align: center;
+}
+.todo-slide-past   { animation: cmpSlidePast .22s ease; }
+.todo-slide-future { animation: cmpSlideFuture .22s ease; }
 
 /* 스와이프 영역 */
 .cmp-swipe { touch-action: pan-y; }
@@ -6366,6 +6414,7 @@ select.ctodo-select {
         <button class="todo-subtab active" id="todo-subtab-today" onclick="setTodoTab('today')">오늘</button>
         <button class="todo-subtab" id="todo-subtab-weekly" onclick="setTodoTab('weekly')">주간</button>
       </div>
+      <div class="todo-nav-slot" id="todo-nav-slot"></div>
       <button class="todo-custom-add" id="todo-add-btn" onclick="openCustomTodoModal()">＋ 할일 추가</button>
     </div>
     <div id="todo-content">
@@ -6813,8 +6862,8 @@ function getLastWarDate() {
 }
 
 // 다음 전쟁 시각 (KST) 반환 - UTC Date 객체
-function getNextWarTime() {
-  const now = new Date();
+function getNextWarTime(refNow) {
+  const now = refNow || new Date();   // 작업본31: 기준시각 파라미터 (생략 시 현재)
   const kst = new Date(now.getTime() + 9*3600*1000);
   const warDays = [3,6]; // 수/토
   // i=0 부터 시작 → 오늘도 체크
@@ -8832,8 +8881,182 @@ function isCardLocked(owner) { return !!cardLocked[owner]; }
 // ════════════════════════════════════════════════════════════════
 let _todoTab = 'today';   // 'today' | 'weekly'
 
+// ════════════════════════════════════════════════════════════════
+//  할일 데이터 컨텍스트 (ctx) — 작업본31
+//    섹션 렌더 함수는 전역을 직접 읽지 않고 ctx 하나만 본다.
+//      _todoCtxLive(tab)         현재 상태 (오늘 / 이번주)
+//      _todoCtxSnap(tab, offset) completion_daily / completion_weekly 스냅샷
+//    두 ctx가 같은 모양이므로 섹션 코드는 한 벌만 유지된다.
+//    ※ 과거 ctx는 반드시 readonly. 클릭이 곧 DB 쓰기라서.
+// ════════════════════════════════════════════════════════════════
+let _todoDayOffset  = 0;      // 오늘 탭: 0=오늘, 1=어제 …
+let _todoWeekOffset = 0;      // 주간 탭: 0=이번주, 1=저번주 …
+let _todoRO   = false;        // 렌더 중 읽기 전용 여부 (_todoLine 이 참조)
+let _todoAnim = null;         // 'past' | 'future' | null (렌더 1회용)
+let _snapLoading = false;
+
+function _todoOffset()    { return _todoTab === 'today' ? _todoDayOffset : _todoWeekOffset; }
+function _todoIsPast()    { return _todoOffset() > 0; }
+
+// 주차 시작일(수요일) — n주 전
+function _weekStartMinus(n) {
+  const d = new Date(getWeekStart() + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() - 7 * (n || 0));
+  return d.toISOString().slice(0, 10);
+}
+function _mdStr(iso) {
+  const dt = new Date(iso + 'T00:00:00Z');
+  return `${dt.getUTCMonth() + 1}월 ${dt.getUTCDate()}일`;
+}
+function _todoDayLabel(off) {
+  return off === 0 ? '오늘' : off === 1 ? '어제' : off === 2 ? '그저께' : (off + '일 전');
+}
+function _todoWeekLabel(off) {
+  return off === 0 ? '이번주' : off === 1 ? '저번주' : (off + '주 전');
+}
+function _todoMaxDayOffset() {
+  let oldest = null;
+  (_compDaily || []).forEach(r => { if (r.snap_date && (oldest === null || r.snap_date < oldest)) oldest = r.snap_date; });
+  if (!oldest) return 0;
+  return Math.max(0, Math.round((Date.parse(getTodayKST() + 'T00:00:00Z') - Date.parse(oldest + 'T00:00:00Z')) / 86400000));
+}
+function _todoMaxWeekOffset() {
+  let oldest = null;
+  (_compWeekly || []).forEach(r => { if (r.week_start && (oldest === null || r.week_start < oldest)) oldest = r.week_start; });
+  if (!oldest) return 0;
+  return Math.max(0, Math.round((Date.parse(getWeekStart() + 'T00:00:00Z') - Date.parse(oldest + 'T00:00:00Z')) / (7 * 86400000)));
+}
+
+// ── 현재 상태 ctx ──
+function _todoCtxLive(tab) {
+  return {
+    mode: 'live', tab, readonly: false, asOf: new Date(), date: null, missing: [],
+    charsOf: o => _todoOwnerChars(o),
+    acctOf:  o => accountData[o] || {},
+    wtOf:    id => weeklyTasks[id] || {},
+    passes:  () => devaPasses,
+    customsOf: (o, t) => customTodos.filter(x => x.owner === o && (x.tab === 'weekly' ? 'weekly' : 'today') === t),
+    abyssOf: c => _todoAbyssUncleared(c),
+  };
+}
+
+// ── 스냅샷 ctx ──
+//   스냅샷에 키가 아예 없으면(옛날 행) null 을 돌려주고 '기록 없음'으로 안내한다.
+//   현재 값으로 채우지 않는다 — 과거 화면에 오늘 값이 섞이면 안 되므로.
+function _todoCtxSnap(tab, offset) {
+  const today = (tab === 'today');
+  const key   = today ? 'snap_date' : 'week_start';
+  const date  = today ? _gameDateMinus(offset) : _weekStartMinus(offset);
+  const rows  = (today ? (_compDaily || []) : (_compWeekly || [])).filter(r => r[key] === date);
+  const byOwner = {}; rows.forEach(r => { byOwner[r.owner] = r; });
+
+  // 마감 시각 = 그 구간 리셋 1분 전 (KST 04:59). daily: date+1일, weekly: date+7일
+  const asOf = new Date(Date.parse(date + 'T19:59:00Z') + (today ? 0 : 6 * 86400000));
+
+  const wtMap = {}, abyssMap = {};
+  rows.forEach(r => (r.chars || []).forEach(ch => {
+    wtMap[ch.char_id] = {
+      ludra_done: !!ch.ludra_done, erosion_done: !!ch.erosion_done, muspell_done: !!ch.muspell_done,
+      deva_xp: ch.deva_xp,
+    };
+    abyssMap[ch.char_id] = ch.abyss_uncleared;
+  }));
+  const charsOf = o => {
+    const r = byOwner[o];
+    if (!r) return [];
+    return (r.chars || []).map(ch => {
+      return {
+        id: ch.char_id, name: ch.name, item_level: ch.item_level,
+        nightmare_base: ch.nightmare_base,
+        odd_energy_base: ch.odd_energy_base, odd_recorded_at: ch.odd_recorded_at,
+        awakening_done: ch.awakening_done,
+        transmutation_count: ch.transmutation_count,
+        shop_purchase_count: ch.shop_purchase_count,
+        deva_premium: ch.deva_premium,
+      };
+    });
+  };
+  const anyRow = rows[0] || null;
+  const anyChar = anyRow && (anyRow.chars || [])[0];
+
+  const ctx = {
+    mode: 'snap', tab, readonly: true, asOf, date, rows: rows.length,
+    charsOf,
+    acctOf: o => (byOwner[o] || {}).acct || {},
+    wtOf:   id => wtMap[id] || {},
+    passes: () => (anyRow && anyRow.acct && anyRow.acct.deva_passes) || null,
+    customsOf: (o, t) => {
+      const a = (byOwner[o] || {}).acct;
+      return (a && Array.isArray(a.customs)) ? a.customs : null;
+    },
+    abyssOf: c => (abyssMap[c.id] === undefined ? null : abyssMap[c.id]),
+    missing: [],
+  };
+  // 기록 없는 섹션 판정 (옛 스냅샷 호환)
+  if (anyRow) {
+    if (!anyRow.acct || !Array.isArray(anyRow.acct.customs)) ctx.missing.push('내 할일');
+    if (today) {
+      if (!anyChar || anyChar.abyss_uncleared === undefined) ctx.missing.push('어비스');
+    } else {
+      if (!anyChar || anyChar.deva_premium === undefined) ctx.missing.push('데바패스');
+    }
+  }
+  return ctx;
+}
+
+// ── 오드 상태 (기준시각 반영) ──
+//   live 는 기존 함수를 그대로 써서 동작이 바뀌지 않게 한다.
+//   snap 은 그 시점 추정치. 기록이 없으면 null → 섹션에서 제외.
+function _todoOddState(ctx, c) {
+  if (ctx.mode === 'live') {
+    return { timer: computeOddTimer(c), consume: _todoOddConsume24h(c) };
+  }
+  const E = _oddEstimateAsOf(c.odd_energy_base, c.odd_recorded_at, ctx.asOf);
+  if (E === null) return null;
+  const nextMs = getNextChargeMs(ctx.asOf);
+  const timer = (E >= 840)
+    ? { full: true, ms: 0 }
+    : { full: false, ms: nextMs + Math.floor((840 - E) / 15) * 10800000 };
+  const K = Math.ceil((24 * 3600000 - nextMs) / 10800000);
+  return { timer, consume: Math.max(0, Math.ceil(E - (840 - 15 * K))) };
+}
+// ── 다음 전쟁까지 남은 ms ──
+function _todoNextWarMs(ctx) {
+  const w = getNextWarTime(ctx.mode === 'live' ? undefined : ctx.asOf);
+  return w ? (w - ctx.asOf) : Infinity;
+}
+
+// ── 이동 ──
+function todoShift(delta) {
+  const max = _todoTab === 'today' ? _todoMaxDayOffset() : _todoMaxWeekOffset();
+  const cur = _todoOffset();
+  const next = cur + delta;
+  if (next < 0 || next > max) return;
+  _todoAnim = delta > 0 ? 'past' : 'future';
+  if (_todoTab === 'today') _todoDayOffset = next; else _todoWeekOffset = next;
+  renderTodoPage();
+}
+function todoNow() {
+  if (!_todoIsPast()) return;
+  _todoAnim = 'future';
+  if (_todoTab === 'today') _todoDayOffset = 0; else _todoWeekOffset = 0;
+  renderTodoPage();
+}
+// ← / → 키 (할일 페이지에서만)
+document.addEventListener('keydown', e => {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+  const page = document.getElementById('todo-page');
+  if (!page || !page.classList.contains('active')) return;
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  e.preventDefault();
+  todoShift(e.key === 'ArrowLeft' ? 1 : -1);
+});
+
 function setTodoTab(tab) {
   _todoTab = tab;
+  _todoAnim = null;
   const t = document.getElementById('todo-subtab-today');
   const w = document.getElementById('todo-subtab-weekly');
   if (t) t.classList.toggle('active', tab === 'today');
@@ -8861,6 +9084,7 @@ function _todoOddConsume24h(char) {
 }
 
 // 한 계정의 캐릭 (휴식 제외, 슬롯 순 / 대표 맨 앞)
+//   작업본31: 렌더는 ctx.charsOf 를 쓴다. 이 함수는 live ctx 안에서만 사용.
 function _todoOwnerChars(owner) {
   return allChars.filter(c => c.owner === owner && !c.resting)
     .sort((a, b) => slotOrder(a) - slotOrder(b));
@@ -8881,8 +9105,11 @@ function _todoAbyssUncleared(char) {
 }
 
 // 한 줄 행 (텍스트 + 클릭 이동)
+//   작업본31: 과거 보기(_todoRO)에서는 클릭 동작을 붙이지 않는다.
+//   모든 섹션이 이 함수를 거치므로 여기 한 곳만 막으면 전체가 읽기 전용이 된다.
 function _todoLine(text, onclick) {
-  return `<div class="todo-item"${onclick ? ` onclick="${onclick}"` : ''}>${text}</div>`;
+  const act = _todoRO ? null : onclick;
+  return `<div class="todo-item${_todoRO ? ' ro' : ''}"${act ? ` onclick="${act}"` : ''}>${text}</div>`;
 }
 // 섹션 (라벨 + 아이템). 아이템 없으면 '' (숨김)
 function _todoSec(label, items) {
@@ -8891,18 +9118,20 @@ function _todoSec(label, items) {
 }
 function _nm(c) { return escapeHtml(c.name || '(이름없음)'); }
 
-// ── 계정 하나의 '오늘' 섹션 ──
-function _todoTodayCol(owner) {
-  const acc = accountData[owner] || {};
-  const chars = _todoOwnerChars(owner);
+// ── 계정 하나의 '오늘' 섹션 (ctx 기반) ──
+function _todoTodayCol(owner, ctx) {
+  const acc = ctx.acctOf(owner);
+  const chars = ctx.charsOf(owner);
   let html = '';
 
   // 오드에너지 — 여유 24h 이하 or 가득. "N ↑ 소모필요 (현재 오드 여유 : …)"
   const oddItems = [];
   chars.forEach(c => {
-    const t = computeOddTimer(c);
+    const st = _todoOddState(ctx, c);
+    if (!st) return;                       // 오드 기록 없음 → 제외
+    const t = st.timer;
     if (!(t.full || t.ms <= 24 * 3600000)) return;
-    const consume = _todoOddConsume24h(c);
+    const consume = st.consume;
     if (consume <= 0) return;
     const remain = t.full ? '가득' : _fmtOddDur(t.ms);
     oddItems.push(_todoLine(
@@ -8943,13 +9172,12 @@ function _todoTodayCol(owner) {
   html += _todoSec('사명', missionItems);
 
   // 어비스 — 다음 전쟁 24h 이내 + 미클리어
-  const nextWar = getNextWarTime();
-  const warMsLeft = nextWar ? (nextWar - new Date()) : Infinity;
+  const warMsLeft = _todoNextWarMs(ctx);
   if (warMsLeft <= 24 * 3600000) {
     const abyssItems = [];
     chars.forEach(c => {
-      const names = _todoAbyssUncleared(c);
-      if (names.length) abyssItems.push(_todoLine(
+      const names = ctx.abyssOf(c);
+      if (names && names.length) abyssItems.push(_todoLine(
         `${_nm(c)} - ${names.join(', ')}`, `openDetail('${c.id}','abyss')`));
     });
     html += _todoSec(`어비스 (전쟁까지 ${_fmtOddDur(warMsLeft)})`, abyssItems);
@@ -8959,9 +9187,9 @@ function _todoTodayCol(owner) {
 }
 
 // ── 계정 하나의 '주간' 섹션 ──
-function _todoWeeklyCol(owner) {
-  const acc = accountData[owner] || {};
-  const chars = _todoOwnerChars(owner);
+function _todoWeeklyCol(owner, ctx) {
+  const acc = ctx.acctOf(owner);
+  const chars = ctx.charsOf(owner);
   let html = '';
 
   // 일일던전 — 계정 N회 (주간)
@@ -8984,7 +9212,7 @@ function _todoWeeklyCol(owner) {
   const sanctItems = [];
   chars.forEach(c => {
     const ilvl = c.item_level || 0;
-    const wt = weeklyTasks[c.id] || {};
+    const wt = ctx.wtOf(c.id);
     const remain = [];
     if (ilvl >= 2700 && !wt.ludra_done) remain.push('루드라');
     if (ilvl >= 3500 && !wt.erosion_done) remain.push('침식');
@@ -9020,24 +9248,28 @@ function _todoWeeklyCol(owner) {
 
   // 데바패스 — 구매(기본/프리미엄)했으나 이번 주 EXP 미완료인 캐릭·패스만 (미구매 제외)
   //   구매 상태: char.deva_premium[pid] (basic/premium/both), EXP 완료: weekly_tasks.deva_xp[pid]
-  const devaItems = [];
-  chars.forEach(c => {
-    const remain = devaPasses.filter(p => {
-      const f = (typeof _devaFlags === 'function') ? _devaFlags(c, p.id) : { basic: false, premium: false };
-      const owned = f.basic || f.premium;
-      const xpDone = !!(((weeklyTasks[c.id] || {}).deva_xp || {})[p.id]);
-      return owned && !xpDone;
-    }).map(p => escapeHtml(p.name));
-    if (remain.length) devaItems.push(_todoLine(`${_nm(c)} - ${remain.join(', ')}`, `openDevaFocus('${c.id}')`));
-  });
-  html += _todoSec('데바패스', devaItems);
+  const passes = ctx.passes();
+  if (passes) {
+    const devaItems = [];
+    chars.forEach(c => {
+      if (c.deva_premium === undefined) return;      // 기록 없음 → 제외
+      const remain = passes.filter(p => {
+        const f = (typeof _devaFlags === 'function') ? _devaFlags(c, p.id) : { basic: false, premium: false };
+        const owned = f.basic || f.premium;
+        const xpDone = !!((ctx.wtOf(c.id).deva_xp || {})[p.id]);
+        return owned && !xpDone;
+      }).map(p => escapeHtml(p.name));
+      if (remain.length) devaItems.push(_todoLine(`${_nm(c)} - ${remain.join(', ')}`, `openDevaFocus('${c.id}')`));
+    });
+    html += _todoSec('데바패스', devaItems);
+  }
 
   return html;
 }
 
-function _todoColumn(owner) {
-  const body = _todoTab === 'today' ? _todoTodayCol(owner) : _todoWeeklyCol(owner);
-  const custom = _todoCustomSec(owner, _todoTab);
+function _todoColumn(owner, ctx) {
+  const body = ctx.tab === 'today' ? _todoTodayCol(owner, ctx) : _todoWeeklyCol(owner, ctx);
+  const custom = _todoCustomSec(owner, ctx.tab, ctx);
   const inner = (body + custom) || `<div class="todo-col-empty"><span class="em">🎉</span>할 일 없음</div>`;
   return `<div class="todo-col">
     <div class="todo-col-head ${owner}">${owner}</div>
@@ -9045,10 +9277,86 @@ function _todoColumn(owner) {
   </div>`;
 }
 
+// ── 기간 네비 (오늘=하루 / 주간=한 주) 작업본31 ──
+function _todoNavHtml() {
+  const today = (_todoTab === 'today');
+  const off   = _todoOffset();
+  const max   = today ? _todoMaxDayOffset() : _todoMaxWeekOffset();
+  const loading = (_compDaily === null);
+
+  let sub, note, warn = false;
+  if (today) {
+    const iso = _gameDateMinus(off);
+    const dt = new Date(iso + 'T00:00:00Z');
+    sub = `${_mdStr(iso)} (${['일','월','화','수','목','금','토'][dt.getUTCDay()]})`;
+  } else {
+    const st = _weekStartMinus(off);
+    const en = new Date(Date.parse(st + 'T00:00:00Z') + 6 * 86400000).toISOString().slice(0, 10);
+    sub = `${_mdStr(st)} ~ ${_mdStr(en)}`;
+  }
+  if (loading)            { note = '지난 기록 불러오는 중…'; }
+  else if (_compLoadErr)  { note = `지난 기록을 불러오지 못했어요 — ${escapeHtml(_compLoadErr)}`; warn = true; }
+  else if (max > 0)       { note = today ? `최대 ${max}일 전까지 볼 수 있어요` : `최대 ${max}주 전까지 볼 수 있어요`; }
+  else                    { note = today ? '지난 기록이 아직 없어요 (매일 새벽 04:59 저장)' : '지난 주 기록이 아직 없어요 (매주 수요일 05시 저장)'; warn = true; }
+
+  return _pnav({
+    compact: true, paw: true, lock: off > 0,
+    label: today ? _todoDayLabel(off) : _todoWeekLabel(off),
+    sub,
+    prevLabel: today ? '이전 날' : '저번주',
+    nextLabel: today ? '다음 날' : '다음주',
+    prevTitle: today ? '이전 날 (← 키)' : '저번주 (← 키)',
+    nextTitle: today ? '다음 날 (→ 키)' : '다음주 (→ 키)',
+    prevFn: 'todoShift(1)', nextFn: 'todoShift(-1)',
+    prevDisabled: loading || off >= max,
+    nextDisabled: off <= 0,
+    showReset: off > 0, resetFn: 'todoNow()', resetLabel: today ? '오늘로' : '이번주로',
+    note, noteWarn: warn,
+  });
+}
+
 function renderTodoPage() {
   const el = document.getElementById('todo-content');
   if (!el) return;
-  el.innerHTML = `<div class="todo-cols">${OWNERS.map(o => _todoColumn(o)).join('')}</div>`;
+
+  // 스냅샷은 완료율과 공유하는 캐시. 한 번만 로드한다.
+  if (_compDaily === null && !_snapLoading) {
+    _snapLoading = true;
+    loadSnapCore()
+      .catch(e => console.error('[할일] 스냅샷 로드 실패', e))
+      .finally(() => { _snapLoading = false; refreshTodoIfVisible(); });
+  }
+
+  const past = _todoIsPast();
+  const ctx  = past ? _todoCtxSnap(_todoTab, _todoOffset()) : _todoCtxLive(_todoTab);
+
+  // 과거 보기에서는 할일 추가 버튼도 숨긴다
+  const addBtn = document.getElementById('todo-add-btn');
+  if (addBtn) addBtn.style.display = past ? 'none' : '';
+
+  const anim = _todoAnim ? ` todo-slide-${_todoAnim}` : '';
+  _todoAnim = null;
+
+  let body;
+  if (past && !ctx.rows) {
+    body = `<div class="todo-missing">이 ${_todoTab === 'today' ? '날짜' : '주차'}는 저장된 기록이 없어요</div>`;
+  } else {
+    _todoRO = ctx.readonly;                       // ← 여기부터 읽기 전용
+    try {
+      body = `<div class="todo-cols${anim}">${OWNERS.map(o => _todoColumn(o, ctx)).join('')}</div>`;
+    } finally {
+      _todoRO = false;                            // ← 반드시 해제
+    }
+    if (past && ctx.missing.length) {
+      body += `<div class="todo-missing">${ctx.missing.join(' · ')}은(는) 이 시점 기록이 없어 표시하지 않았어요</div>`;
+    }
+  }
+
+  // 네비는 툴바 한 줄에 함께 놓는다 (세로 공간 절약) — 작업본32
+  const slot = document.getElementById('todo-nav-slot');
+  if (slot) slot.innerHTML = _todoNavHtml();
+
+  el.innerHTML = body;
 }
 
 // 할일 페이지가 열려 있을 때만 재렌더 — 60초 타이머·renderOverview 훅에서 호출 (v1.7.6)
@@ -9070,15 +9378,16 @@ function openDevaFocus(charId) {
 
 // ════════════ 커스텀 할일 섹션 렌더 (작업본13) ════════════
 //   할일 페이지에서만 관리. 캐릭터 상세로 연결되지 않음.
-function _todoCustomSec(owner, tab) {
-  const list = customTodos
-    .filter(t => t.owner === owner && (t.tab === 'weekly' ? 'weekly' : 'today') === tab)
+function _todoCustomSec(owner, tab, ctx) {
+  const src = ctx.customsOf(owner, tab);
+  if (!src) return '';                       // 기록 없음 → 각주에서 안내
+  const list = src.slice()
     .sort((a, b) => (a.done === b.done) ? 0 : (a.done ? 1 : -1));   // 미완료 먼저
   if (!list.length) return '';
   const rows = list.map(t => {
-    const char = allChars.find(c => c.id === t.charId);
+    const char = (ctx.mode === 'live') ? allChars.find(c => c.id === t.charId) : null;
     const cname = escapeHtml(char ? (char.name || '(이름없음)') : (t.charName || '(캐릭터)'));
-    const guest = currentActor === 'guest';
+    const guest = currentActor === 'guest' || ctx.readonly;   // 과거 보기는 편집 불가
     const actions = guest ? '' : `<span class="todo-custom-actions">
         <button class="deva-icon-btn" title="수정" aria-label="할일 수정" onclick="event.stopPropagation();openCustomTodoModal('${t.id}')">✎</button>
         <button class="deva-icon-btn" title="삭제" aria-label="할일 삭제" onclick="event.stopPropagation();deleteCustomTodo('${t.id}', this)">🗑</button>
@@ -9307,8 +9616,8 @@ async function _fetchAll(table, cols, orderCol, cap) {
   return out;
 }
 
-async function loadCompletionData() {
-  // 스냅샷
+// 스냅샷 코어 로더 — completion_daily/weekly 만. 완료율·할일 두 메뉴가 공유한다. (작업본31)
+async function loadSnapCore() {
   const [d, w] = await Promise.all([
     sb.from('completion_daily').select('*').order('snap_date', { ascending: false }).limit(400),
     sb.from('completion_weekly').select('*').order('week_start', { ascending: false }).limit(200),
@@ -9319,7 +9628,11 @@ async function loadCompletionData() {
   if (w.error) { console.error('[완료율] completion_weekly 읽기 실패', w.error); _compLoadErr = _compLoadErr || (w.error.message || String(w.error)); }
   _compDaily = (d.data) || [];
   _compWeekly = (w.data) || [];
-  console.log('[완료율] 스냅샷 로드 — daily', _compDaily.length, '행 / weekly', _compWeekly.length, '행', _compLoadErr ? ('· 오류: ' + _compLoadErr) : '');
+  console.log('[스냅샷] daily', _compDaily.length, '행 / weekly', _compWeekly.length, '행', _compLoadErr ? ('· 오류: ' + _compLoadErr) : '');
+}
+
+async function loadCompletionData() {
+  await loadSnapCore();
   // 어비스 — 회랑 + 클리어 (소급)
   const [cor, clr] = await Promise.all([
     _fetchAll('abyss_corridors', 'id,war_date,zone,layer,acquired', 'war_date', 4000),
@@ -9476,6 +9789,45 @@ function _aggSnap(rows, countsFn) {
   const perChar = {};
   Object.entries(charAgg).forEach(([id, v]) => perChar[id] = { pct: Math.round(v.sum / v.n), name: v.name, n: v.n });
   return { acct: acctN ? Math.round(acctSum / acctN) : null, perChar, count: rows.length };
+}
+
+// ── 기간 네비 공용 컴포넌트 (완료율·할일 공용) 작업본31 ──────────
+//   o = { label, sub, prevLabel, nextLabel, prevFn, nextFn,
+//         prevDisabled, nextDisabled, resetFn, resetLabel, showReset,
+//         note, noteWarn, compact, paw, lock }
+//   compact=true  : 툴바 한 줄에 들어가는 납작한 형태. 일반 안내는 툴팁으로 내림.
+//   paw=true      : 좌우 버튼을 텍스트 없이 고양이 발바닥 아이콘으로.
+const _PAW_SVG = `<svg class="paw-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <ellipse cx="6.6"  cy="10.6" rx="2.5" ry="3.0"/>
+  <ellipse cx="10.7" cy="7.2"  rx="2.4" ry="2.9"/>
+  <ellipse cx="15.2" cy="7.2"  rx="2.4" ry="2.9"/>
+  <ellipse cx="19.3" cy="10.6" rx="2.5" ry="3.0"/>
+  <path d="M12 12.1c3.4 0 6.2 2.5 6.2 5.3 0 2.3-2 3.8-4.4 3.8-1.1 0-1.4-.35-1.8-.35s-.7.35-1.8.35c-2.4 0-4.4-1.5-4.4-3.8 0-2.8 2.8-5.3 6.2-5.3z"/>
+</svg>`;
+function _pnav(o) {
+  const btn = (dir, fn, disabled, title, label) => o.paw
+    ? `<button type="button" class="pnav-paw ${dir}" onclick="${fn}" ${disabled ? 'disabled' : ''} title="${title}" aria-label="${label}">${_PAW_SVG}</button>`
+    : (dir === 'prev'
+        ? `<button type="button" class="pnav-btn" onclick="${fn}" ${disabled ? 'disabled' : ''} title="${title}" aria-label="${label}"><span class="pnav-chev">‹</span>${label}</button>`
+        : `<button type="button" class="pnav-btn" onclick="${fn}" ${disabled ? 'disabled' : ''} title="${title}" aria-label="${label}">${label}<span class="pnav-chev">›</span></button>`);
+  // compact 에서는 일반 안내문을 툴팁으로 내리고, 경고만 한 줄에 표시한다.
+  const tip = (o.compact && o.note && !o.noteWarn) ? ` title="${o.note}"` : '';
+  const inlineNote = (o.compact && o.note && o.noteWarn)
+    ? `<span class="pnav-inline-note">${o.note}</span>` : '';
+  const blockNote = (!o.compact && o.note)
+    ? `<div class="pnav-note${o.noteWarn ? ' warn' : ''}">${o.note}</div>` : '';
+  return `<div class="pnav${o.compact ? ' compact' : ''}">
+    <div class="pnav-bar">
+      <span class="pnav-group">
+        ${btn('prev', o.prevFn, o.prevDisabled, o.prevTitle || '', o.prevLabel)}
+        <span class="pnav-label"${tip}>${o.lock ? '<span class="pnav-lock" title="지난 기록은 읽기 전용이에요">🔒</span>' : ''}${o.label}<span class="pnav-sub">${o.sub}</span></span>
+        ${btn('next', o.nextFn, o.nextDisabled, o.nextTitle || '', o.nextLabel)}
+      </span>
+      ${o.showReset ? `<button type="button" class="pnav-reset" onclick="${o.resetFn}">${o.resetLabel}</button>` : ''}
+      ${inlineNote}
+    </div>
+    ${blockNote}
+  </div>`;
 }
 
 // ── 하루 단위 되돌아보기 (작업본27) ─────────────────────────────
@@ -9750,7 +10102,9 @@ async function renderCompletionPage() {
   const el = document.getElementById('completion-content');
   if (!el) return;
   if (_compLoading) return;
-  if (_compDaily === null) {
+  // 작업본31: 할일 탭이 loadSnapCore()로 _compDaily 만 먼저 채웠을 수 있으므로,
+  //           어비스·협력 캐시(_abyssWarsCache)도 함께 확인한다.
+  if (_compDaily === null || _abyssWarsCache === null) {
     el.innerHTML = `<div class="loading"><div class="spinner"></div> 완료율 불러오는 중...</div>`;
     _compLoading = true;
     try { await loadCompletionData(); }
@@ -9784,21 +10138,21 @@ function _cmpRerender() {
 
   // 날짜 넘기기 (작업본27) — '오늘' 기간에서만
   const snapDays = dayMode ? _cmpSnapDayCount() : 0;
-  const dayNav = dayMode ? `<div class="cmp-day-bar">
-      <span class="cmp-day-nav">
-        <button type="button" class="cmp-day-btn" onclick="cmpDayShift(1)" ${_cmpDayOffset >= maxOff ? 'disabled' : ''} title="이전 날 (← 키)" aria-label="이전 날"><span class="cmp-day-chev">‹</span>이전 날</button>
-        <span class="cmp-day-label">${_cmpDayLabel(_cmpDayOffset)}<span class="cmp-day-date">${_cmpDayDateStr(_cmpDayOffset)}</span></span>
-        <button type="button" class="cmp-day-btn" onclick="cmpDayShift(-1)" ${_cmpDayOffset <= 0 ? 'disabled' : ''} title="다음 날 (→ 키)" aria-label="다음 날">다음 날<span class="cmp-day-chev">›</span></button>
-      </span>
-      ${_cmpDayOffset > 0 ? `<button type="button" class="cmp-day-today" onclick="cmpDayToday()">오늘로</button>` : ''}
-    </div>
-    <div class="cmp-day-stat${snapDays ? '' : ' warn'}">${
-      snapDays
-        ? `마감 기록 ${snapDays}일치 보관 중 · 최대 ${maxOff}일 전까지 볼 수 있어요`
-        : (_compLoadErr
-            ? `마감 기록을 불러오지 못했어요 — ${escapeHtml(_compLoadErr)}`
-            : '조회된 마감 기록이 0건이에요 — 스냅샷 크론 또는 테이블 읽기 권한(RLS 정책)을 확인해 주세요')
-    }</div>` : '';
+  const dayNav = dayMode ? _pnav({
+    label: _cmpDayLabel(_cmpDayOffset),
+    sub: _cmpDayDateStr(_cmpDayOffset),
+    prevLabel: '이전 날', nextLabel: '다음 날',
+    prevTitle: '이전 날 (← 키)', nextTitle: '다음 날 (→ 키)',
+    prevFn: 'cmpDayShift(1)', nextFn: 'cmpDayShift(-1)',
+    prevDisabled: _cmpDayOffset >= maxOff, nextDisabled: _cmpDayOffset <= 0,
+    showReset: _cmpDayOffset > 0, resetFn: 'cmpDayToday()', resetLabel: '오늘로',
+    noteWarn: !snapDays,
+    note: snapDays
+      ? `마감 기록 ${snapDays}일치 보관 중 · 최대 ${maxOff}일 전까지 볼 수 있어요`
+      : (_compLoadErr
+          ? `마감 기록을 불러오지 못했어요 — ${escapeHtml(_compLoadErr)}`
+          : '조회된 마감 기록이 0건이에요 — 스냅샷 크론 또는 테이블 읽기 권한(RLS 정책)을 확인해 주세요'),
+  }) : '';
   const headTitle = dayMode
     ? (_cmpDayOffset > 0 ? `${_cmpDayMD(_cmpDayOffset)} 완료율` : '오늘 할일 완료율')
     : '할일 완료율';
@@ -14035,10 +14389,11 @@ function updateOddEstimateUI(charId) {
   if (el) el.textContent = estimated;
 }
 
-function getNextChargeMs() {
+function getNextChargeMs(refNow) {
   // 다음 충전 시각까지 남은 ms
   // KST 05시 기준 3시간마다: 05,08,11,14,17,20,23,02
-  const now = new Date();
+  // refNow 생략 시 현재 시각 (작업본31: 과거 스냅샷 계산용 파라미터 추가)
+  const now = refNow || new Date();
   const kst = new Date(now.getTime() + 9*3600*1000);
   const h = kst.getUTCHours();
   const m = kst.getUTCMinutes();
