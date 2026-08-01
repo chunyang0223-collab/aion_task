@@ -5838,7 +5838,7 @@ select.ctodo-select {
 .pnav-btn:disabled .pnav-chev { color: var(--text-sub); }
 .pnav-label {
   display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
-  min-width: 130px; padding: 0 10px; text-align: center; line-height: 1.15;
+  min-width: 130px; padding: 0 10px; text-align: center; line-height: 1.15; flex: none;
   font-family: var(--font-head); font-size: 0.86rem; font-weight: 600; color: var(--text);
 }
 .pnav-sub { display: block; font-size: 0.7rem; font-weight: 400; color: var(--text-sub); margin-top: 3px; }
@@ -5857,11 +5857,29 @@ select.ctodo-select {
 .pnav.compact { margin-bottom: 0; }
 .pnav.compact .pnav-bar { margin-bottom: 0; gap: 6px; }
 .pnav.compact .pnav-group { gap: 6px; padding: 3px; }
-.pnav.compact .pnav-label { min-width: 108px; font-size: 0.82rem; padding: 0 6px; }
+.pnav.compact .pnav-label { font-size: 0.82rem; padding: 0 6px; }
 .pnav.compact .pnav-sub { font-size: 0.68rem; margin-top: 2px; }
 .pnav.compact .pnav-reset { min-height: 32px; padding: 0 12px; font-size: 0.74rem; }
+
+/* 좌우 버튼이 절대 움직이지 않도록 라벨 폭을 고정한다 (작업본33).
+   자물쇠·날짜 길이가 바뀌어도 폭은 그대로 유지된다. */
+.pnav-w-day  { width: 7.5rem; }
+.pnav-w-week { width: 10rem; }
+.pnav-label { overflow: hidden; }
+.pnav-label > span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 툴바 오른쪽 버튼 — '＋ 할일 추가' ↔ '오늘로' 로 내용만 바뀌고 폭은 고정 (작업본34) */
+.todo-custom-add {
+  min-width: 8.25rem;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.todo-custom-add.is-back {
+  border-style: solid;
+  border-color: var(--sage);
+  background: var(--sage-light);
+  font-weight: 600;
+}
 .pnav-inline-note { font-size: 0.7rem; color: var(--color-owner-츄츄); white-space: nowrap; }
-.pnav-lock { margin-right: 4px; }
 
 /* 발바닥 이동 버튼 */
 .pnav-paw {
@@ -6415,7 +6433,8 @@ select.ctodo-select {
         <button class="todo-subtab" id="todo-subtab-weekly" onclick="setTodoTab('weekly')">주간</button>
       </div>
       <div class="todo-nav-slot" id="todo-nav-slot"></div>
-      <button class="todo-custom-add" id="todo-add-btn" onclick="openCustomTodoModal()">＋ 할일 추가</button>
+      <!-- 동작·문구는 renderTodoPage() 가 지정한다 (＋ 할일 추가 ↔ 오늘로) -->
+      <button class="todo-custom-add" id="todo-add-btn" type="button">＋ 할일 추가</button>
     </div>
     <div id="todo-content">
       <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
@@ -9300,7 +9319,7 @@ function _todoNavHtml() {
   else                    { note = today ? '지난 기록이 아직 없어요 (매일 새벽 04:59 저장)' : '지난 주 기록이 아직 없어요 (매주 수요일 05시 저장)'; warn = true; }
 
   return _pnav({
-    compact: true, paw: true, lock: off > 0,
+    compact: true, paw: true,
     label: today ? _todoDayLabel(off) : _todoWeekLabel(off),
     sub,
     prevLabel: today ? '이전 날' : '저번주',
@@ -9310,7 +9329,8 @@ function _todoNavHtml() {
     prevFn: 'todoShift(1)', nextFn: 'todoShift(-1)',
     prevDisabled: loading || off >= max,
     nextDisabled: off <= 0,
-    showReset: off > 0, resetFn: 'todoNow()', resetLabel: today ? '오늘로' : '이번주로',
+    size: today ? 'day' : 'week',
+    showReset: false,          // 되돌아가기는 툴바 오른쪽 버튼이 담당 (작업본34)
     note, noteWarn: warn,
   });
 }
@@ -9330,9 +9350,19 @@ function renderTodoPage() {
   const past = _todoIsPast();
   const ctx  = past ? _todoCtxSnap(_todoTab, _todoOffset()) : _todoCtxLive(_todoTab);
 
-  // 과거 보기에서는 할일 추가 버튼도 숨긴다
+  // 툴바 오른쪽 버튼 — 현재: '＋ 할일 추가' / 과거: '오늘로' (작업본34)
+  //   버튼을 없애지 않고 내용만 바꾸므로 발바닥 버튼 위치가 흔들리지 않는다.
+  //   동작도 여기서 교체하므로 과거 보기에서 할일이 추가될 일이 없다.
   const addBtn = document.getElementById('todo-add-btn');
-  if (addBtn) addBtn.style.display = past ? 'none' : '';
+  if (addBtn) {
+    const backLabel = (_todoTab === 'today') ? '오늘로' : '이번주로';
+    addBtn.classList.toggle('is-back', past);
+    addBtn.textContent = past ? backLabel : '＋ 할일 추가';
+    addBtn.title = past ? '지금 기간으로 돌아가기' : '할일 추가';
+    //  주의: 함수를 그대로 대입하면 클릭 이벤트가 첫 인자로 들어간다.
+    //        openCustomTodoModal(editId) 가 이벤트를 editId 로 받아 수정 모드가 되므로 반드시 감싼다.
+    addBtn.onclick = past ? (() => todoNow()) : (() => openCustomTodoModal());
+  }
 
   const anim = _todoAnim ? ` todo-slide-${_todoAnim}` : '';
   _todoAnim = null;
@@ -9794,7 +9824,7 @@ function _aggSnap(rows, countsFn) {
 // ── 기간 네비 공용 컴포넌트 (완료율·할일 공용) 작업본31 ──────────
 //   o = { label, sub, prevLabel, nextLabel, prevFn, nextFn,
 //         prevDisabled, nextDisabled, resetFn, resetLabel, showReset,
-//         note, noteWarn, compact, paw, lock }
+//         note, noteWarn, compact, paw, size }
 //   compact=true  : 툴바 한 줄에 들어가는 납작한 형태. 일반 안내는 툴팁으로 내림.
 //   paw=true      : 좌우 버튼을 텍스트 없이 고양이 발바닥 아이콘으로.
 const _PAW_SVG = `<svg class="paw-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -9820,7 +9850,7 @@ function _pnav(o) {
     <div class="pnav-bar">
       <span class="pnav-group">
         ${btn('prev', o.prevFn, o.prevDisabled, o.prevTitle || '', o.prevLabel)}
-        <span class="pnav-label"${tip}>${o.lock ? '<span class="pnav-lock" title="지난 기록은 읽기 전용이에요">🔒</span>' : ''}${o.label}<span class="pnav-sub">${o.sub}</span></span>
+        <span class="pnav-label${o.size ? ' pnav-w-' + o.size : ''}"${tip}><span>${o.label}</span><span class="pnav-sub">${o.sub}</span></span>
         ${btn('next', o.nextFn, o.nextDisabled, o.nextTitle || '', o.nextLabel)}
       </span>
       ${o.showReset ? `<button type="button" class="pnav-reset" onclick="${o.resetFn}">${o.resetLabel}</button>` : ''}
