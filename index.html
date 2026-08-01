@@ -5801,6 +5801,41 @@ select.ctodo-select {
 .cmp-head-card.츄츄 .cmp-head-pct { color: var(--color-owner-츄츄); }
 .cmp-head-sub { font-size: 0.72rem; color: var(--text-sub); margin-top: 4px; }
 
+/* 날짜 넘기기 — '오늘' 기간에서 하루 단위 이동 (작업본27) */
+.cmp-day-bar { display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+.cmp-day-nav {
+  display: inline-flex; align-items: center; gap: 2px; padding: 3px;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+.cmp-day-btn {
+  width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
+  border: none; background: transparent; border-radius: var(--radius-xs); cursor: pointer;
+  color: var(--text-sub); font-family: var(--font-head); font-size: 1rem; line-height: 1;
+  transition: background .15s, color .15s, box-shadow .15s;
+}
+.cmp-day-btn:hover:not(:disabled) { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+.cmp-day-btn:disabled { opacity: .3; cursor: default; }
+.cmp-day-label {
+  min-width: 96px; text-align: center; line-height: 1.15;
+  font-family: var(--font-head); font-size: 0.78rem; color: var(--text);
+}
+.cmp-day-date { display: block; font-size: 0.68rem; color: var(--text-sub); margin-top: 2px; }
+.cmp-day-today {
+  margin-left: 8px; padding: 5px 12px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-sub);
+  font-family: var(--font-head); font-size: 0.72rem; cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.cmp-day-today:hover { background: var(--sage-light); border-color: var(--sage); color: var(--text); }
+
+/* 스와이프 영역 */
+.cmp-swipe { touch-action: pan-y; }
+.cmp-slide-past   { animation: cmpSlidePast .22s ease; }
+.cmp-slide-future { animation: cmpSlideFuture .22s ease; }
+@keyframes cmpSlidePast   { from { opacity: 0; transform: translateX(20px); }  to { opacity: 1; transform: none; } }
+@keyframes cmpSlideFuture { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: none; } }
+.cmp-swipe-hint { margin-top: 12px; font-size: 0.7rem; color: var(--text-sub); text-align: center; }
+
 /* 세그먼트 토글 */
 .cmp-seg { display: inline-flex; gap: 3px; padding: 3px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); }
 .cmp-seg-btn {
@@ -9230,6 +9265,8 @@ async function toggleCompletionAccess(owner) {
 
 // ── 기간 상태 ──
 let _cmpDailyPeriod  = 'today';   // 'today' | '7d' | '30d' | 'all'  (헤더 + 오늘 블록 공용)
+let _cmpDayOffset    = 0;         // 작업본27: 'today' 기간에서 0=오늘, 1=어제, 2=그저께 …
+let _cmpDayAnim      = null;      // 'past' | 'future' | null (렌더 1회용 슬라이드 방향)
 let _cmpWeeklyPeriod = 'week';    // 'week' | 'month' | 'all'
 let _cmpAbyssPeriod  = 4;         // 정수(최근 N회) | 'all'
 let _cmpCoopPeriod   = '7d';      // 'today' | '7d' | '30d' | 'all'
@@ -9419,9 +9456,89 @@ function _aggSnap(rows, countsFn) {
   return { acct: acctN ? Math.round(acctSum / acctN) : null, perChar, count: rows.length };
 }
 
+// ── 하루 단위 되돌아보기 (작업본27) ─────────────────────────────
+//   completion_daily 스냅샷(snap_date = 게임일)을 하루씩 넘겨 보는 기능.
+//   스와이프 왼쪽 / ← 키 = 과거로, 오른쪽 / → 키 = 오늘 방향으로.
+function _cmpDayLabel(off) {
+  if (off === 0) return '오늘';
+  if (off === 1) return '어제';
+  if (off === 2) return '그저께';
+  return off + '일 전';
+}
+function _cmpDayDateStr(off) {
+  const d = _gameDateMinus(off);
+  const dt = new Date(d + 'T00:00:00Z');
+  const w = ['일', '월', '화', '수', '목', '금', '토'][dt.getUTCDay()];
+  return `${dt.getUTCMonth() + 1}월 ${dt.getUTCDate()}일 (${w})`;
+}
+// 스냅샷이 남아 있는 가장 오래된 날까지만 이동 허용
+function _cmpMaxDayOffset() {
+  const rows = _compDaily || [];
+  let oldest = null;
+  rows.forEach(r => { if (r.snap_date && (oldest === null || r.snap_date < oldest)) oldest = r.snap_date; });
+  if (!oldest) return 0;
+  const diff = Math.round((Date.parse(getTodayKST() + 'T00:00:00Z') - Date.parse(oldest + 'T00:00:00Z')) / 86400000);
+  return Math.max(0, diff);
+}
+// 과거 하루 1건 상세 (스냅샷 그대로 — 캐릭 목록도 그날 기준)
+function _dailySnapDay(owner, off) {
+  const date = _gameDateMinus(off);
+  const row = (_compDaily || []).find(r => r.owner === owner && r.snap_date === date);
+  if (!row) return { acct: null, perChar: {}, charList: [], date, missing: true, dayText: '기록 없음' };
+  const c = _dailyCountsSnap(row);
+  const perChar = {};
+  Object.entries(c.perChar).forEach(([id, v]) => perChar[id] = { pct: v.total ? Math.round(v.done / v.total * 100) : null, name: v.name });
+  const charList = (row.chars || []).map(ch => ({ id: ch.char_id, name: ch.name }));
+  return { acct: c.acctTotal ? Math.round(c.acctDone / c.acctTotal * 100) : null, perChar, charList, date, dayText: '마감 기준' };
+}
+function cmpDayShift(delta) {
+  if (_cmpDailyPeriod !== 'today') return;
+  const next = _cmpDayOffset + delta;
+  if (next < 0 || next > _cmpMaxDayOffset()) return;
+  _cmpDayAnim = delta > 0 ? 'past' : 'future';
+  _cmpDayOffset = next;
+  _cmpRerender();
+}
+function cmpDayToday() {
+  if (_cmpDailyPeriod !== 'today' || _cmpDayOffset === 0) return;
+  _cmpDayAnim = 'future'; _cmpDayOffset = 0; _cmpRerender();
+}
+// 스와이프 바인딩 — 렌더마다 새 노드에 붙이므로 누수 없음
+function _cmpBindSwipe() {
+  document.querySelectorAll('#completion-content .cmp-swipe').forEach(el => {
+    let sx = 0, sy = 0, on = false;
+    const start = e => { const t = e.touches ? e.touches[0] : e; sx = t.clientX; sy = t.clientY; on = true; };
+    const end = e => {
+      if (!on) return; on = false;
+      const t = e.changedTouches ? e.changedTouches[0] : e;
+      const dx = t.clientX - sx, dy = t.clientY - sy;
+      if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      cmpDayShift(dx < 0 ? 1 : -1);
+    };
+    el.addEventListener('touchstart', start, { passive: true });
+    el.addEventListener('touchend', end, { passive: true });
+    el.addEventListener('mousedown', start);
+    el.addEventListener('mouseup', end);
+  });
+}
+// ← / → 키로도 이동 (완료율 페이지 + 오늘 기간일 때만)
+document.addEventListener('keydown', e => {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+  const page = document.getElementById('completion-page');
+  if (!page || !page.classList.contains('active')) return;
+  if (_cmpDailyPeriod !== 'today') return;
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  e.preventDefault();
+  cmpDayShift(e.key === 'ArrowLeft' ? 1 : -1);
+});
+
 // ── 오늘/주간 owner별 상세 (기간 반영) ──
 function _dailyDetail(owner, period) {
   if (period === 'today') {
+    // 작업본27: 오프셋 0 = 오늘(라이브), 1 이상 = 과거 하루 스냅샷
+    if (_cmpDayOffset > 0) return _dailySnapDay(owner, _cmpDayOffset);
     const L = _dailyCountsLive()[owner] || { acctDone: 0, acctTotal: 0, perChar: {} };
     const perChar = {};
     Object.entries(L.perChar).forEach(([id, v]) => perChar[id] = { pct: v.total ? Math.round(v.done / v.total * 100) : null, name: v.name });
@@ -9560,8 +9677,13 @@ function _cmpSeg(items, cur, fn) {
     `<button class="cmp-seg-btn${String(v) === String(cur) ? ' on' : ''}" onclick="${fn}('${v}')">${l}</button>`).join('') + `</span>`;
 }
 function _cmpCharRows(owner, detail) {
-  const chars = allChars.filter(c => c.owner === owner && !c.resting).sort((a, b) => slotOrder(a) - slotOrder(b));
-  if (!chars.length) return `<div class="cmp-empty">표시할 캐릭터가 없어요</div>`;
+  // 작업본27: 과거 하루 보기는 그날 스냅샷의 캐릭 목록을 그대로 사용
+  const chars = (detail && detail.charList)
+    ? detail.charList
+    : allChars.filter(c => c.owner === owner && !c.resting).sort((a, b) => slotOrder(a) - slotOrder(b));
+  if (!chars.length) {
+    return `<div class="cmp-empty">${(detail && detail.missing) ? '이 날짜는 기록이 없어요' : '표시할 캐릭터가 없어요'}</div>`;
+  }
   return chars.map(c => {
     const v = detail.perChar[c.id];
     const p = v ? v.pct : null;
@@ -9574,7 +9696,7 @@ function _cmpCharRows(owner, detail) {
 }
 
 // ── 기간 setter ──
-function setCmpDailyPeriod(p) { _cmpDailyPeriod = p; _cmpRerender(); }
+function setCmpDailyPeriod(p) { _cmpDailyPeriod = p; _cmpDayOffset = 0; _cmpDayAnim = null; _cmpRerender(); }
 function setCmpWeeklyPeriod(p) { _cmpWeeklyPeriod = p; _cmpRerender(); }
 function setCmpCoopPeriod(p) { _cmpCoopPeriod = p; _coopCatFilter = null; _cmpRerender(); }
 function setCmpAbyssPeriod(p) { _cmpAbyssPeriod = (p === 'all') ? 'all' : (parseInt(p, 10) || 1); _cmpRerender(); }
@@ -9603,16 +9725,37 @@ function _cmpRerender() {
   const el = document.getElementById('completion-content');
   if (!el || _compDaily === null) return;
 
-  // 헤더 (설냥/츄츄 큰 %) — 오늘 할일 완료율, 기간 공용
+  // 헤더 (설냥/츄츄 큰 %) — 오늘/과거 하루 완료율, 기간 공용
+  const dayMode = (_cmpDailyPeriod === 'today');
+  const maxOff  = dayMode ? _cmpMaxDayOffset() : 0;
+  const animCls = _cmpDayAnim ? ` cmp-slide-${_cmpDayAnim}` : '';
+  _cmpDayAnim = null;                                   // 1회용
+
   const headCards = OWNERS.map(o => {
     const det = _dailyDetail(o, _cmpDailyPeriod);
+    const sub = det.live ? '진행 중'
+              : (det.dayText || (det.count ? det.count + '일 평균' : '기록 없음'));
     return `<div class="cmp-head-card ${o}">
       <div class="cmp-head-owner">${o}</div>
       <div class="cmp-head-pct ${_pctCls(det.acct)}">${_pctStr(det.acct)}</div>
-      <div class="cmp-head-sub">${det.live ? '진행 중' : (det.count ? det.count + '일 평균' : '기록 없음')}</div>
+      <div class="cmp-head-sub">${sub}</div>
     </div>`;
   }).join('');
   const headToggle = _cmpSeg([['today', '오늘'], ['7d', '7일'], ['30d', '30일'], ['all', '전체']], _cmpDailyPeriod, 'setCmpDailyPeriod');
+
+  // 날짜 넘기기 (작업본27) — '오늘' 기간에서만
+  const dayNav = dayMode ? `<div class="cmp-day-bar">
+      <span class="cmp-day-nav">
+        <button type="button" class="cmp-day-btn" onclick="cmpDayShift(1)" ${_cmpDayOffset >= maxOff ? 'disabled' : ''} title="이전 날" aria-label="이전 날">‹</button>
+        <span class="cmp-day-label">${_cmpDayLabel(_cmpDayOffset)}<span class="cmp-day-date">${_cmpDayDateStr(_cmpDayOffset)}</span></span>
+        <button type="button" class="cmp-day-btn" onclick="cmpDayShift(-1)" ${_cmpDayOffset <= 0 ? 'disabled' : ''} title="다음 날" aria-label="다음 날">›</button>
+      </span>
+      ${_cmpDayOffset > 0 ? `<button type="button" class="cmp-day-today" onclick="cmpDayToday()">오늘로</button>` : ''}
+    </div>` : '';
+  const headTitle = dayMode ? `${_cmpDayLabel(_cmpDayOffset)} 할일 완료율` : '할일 완료율';
+  const dayHint = dayMode
+    ? `<div class="cmp-swipe-hint">${maxOff > 0 ? '왼쪽으로 넘기면 지난 날 · 오른쪽으로 넘기면 오늘 (← → 키도 가능)' : '지난 날 기록은 하루가 마감된 뒤부터 쌓여요'}</div>`
+    : '';
 
   // 블록: 오늘 할일 (헤더 기간 공용) — 2단
   const todayCols = OWNERS.map(o => {
@@ -9622,6 +9765,7 @@ function _cmpRerender() {
       ${_cmpCharRows(o, det)}
     </div>`;
   }).join('');
+  const todayTitle = dayMode ? `${_cmpDayLabel(_cmpDayOffset)} 할일` : '오늘 할일';
 
   // 블록: 주간 할일
   const weeklyToggle = _cmpSeg([['week', '이번주'], ['month', '한달'], ['all', '전체']], _cmpWeeklyPeriod, 'setCmpWeeklyPeriod');
@@ -9692,13 +9836,15 @@ function _cmpRerender() {
   el.innerHTML = `<div class="cmp-wrap">
     ${_cmpManageHtml()}
     <div class="cmp-header">
-      <div class="cmp-header-top"><span class="cmp-header-title">오늘 할일 완료율</span>${headToggle}</div>
-      <div class="cmp-head-cards">${headCards}</div>
+      <div class="cmp-header-top"><span class="cmp-header-title">${headTitle}</span>${headToggle}</div>
+      ${dayNav}
+      <div class="cmp-head-cards cmp-swipe${animCls}">${headCards}</div>
+      ${dayHint}
     </div>
 
     <div class="cmp-block">
-      <div class="cmp-block-head"><span class="cmp-block-title">오늘 할일</span><span class="cmp-block-toggle-note">헤더 기간과 연동</span></div>
-      <div class="cmp-cols">${todayCols}</div>
+      <div class="cmp-block-head"><span class="cmp-block-title">${todayTitle}</span><span class="cmp-block-toggle-note">헤더 기간과 연동</span></div>
+      <div class="cmp-cols cmp-swipe${animCls}">${todayCols}</div>
     </div>
 
     <div class="cmp-block">
@@ -9718,6 +9864,8 @@ function _cmpRerender() {
       ${coopDetail}
     </div>
   </div>`;
+
+  _cmpBindSwipe();   // 작업본27: 날짜 스와이프 재바인딩
 }
 
 function _cmpManageHtml() {
