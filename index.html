@@ -4023,6 +4023,375 @@ body.guest-mode .page .fetch-pill {
   .sanctuary-lock { font-size: 0.66rem; }
 }
 
+/* ══════════════════════ 캐릭 레벨 (작업본35) ══════════════════════ */
+/* 상세 기본정보의 "Lv.[드롭다운] 캐릭터명" 한 줄 */
+
+.name-lv-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lv-tag {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* 레벨 입력 (1~50) — 드롭다운이 재렌더 때 닫히는 문제로 텍스트 입력으로 전환 */
+.lv-input {
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 0.8rem;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 4px 6px;
+  width: 46px;
+  text-align: center;
+  font-feature-settings: 'tnum';
+}
+.lv-input:focus { outline: none; border-color: var(--sage); }
+/* 스피너 화살표 숨김 (.alarm-num과 동일 처리) */
+.lv-input::-webkit-outer-spin-button,
+.lv-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.lv-input[type=number] { -moz-appearance: textfield; }
+
+/* 캐릭터명 입력 — 상자 안 가운데정렬 */
+.name-input { text-align: center; }
+
+/* ══════════════════════ 시련 (작업본35) ══════════════════════ */
+/* 주간 리셋 · 입장컷 Lv.50 + 템 4800 — 성역 보드와 동일 구조를 따른다 */
+
+.trial-page-wrap {
+  padding: 14px 16px 80px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.trial-header {
+  margin-bottom: 14px;
+  padding: 12px 14px 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.trial-header-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.trial-header-top .card-title-icon { flex-shrink: 0; }
+
+.trial-header-title {
+  font-size: 0.92rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.trial-header-meta {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  white-space: nowrap;
+}
+
+.trial-header-bottom {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--border);
+}
+
+.trial-criteria {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 0.74rem;
+  color: var(--text-sub);
+}
+.trial-criteria-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.trial-criteria-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--peach);
+  display: inline-block;
+}
+.trial-criteria-item.shop .trial-criteria-dot { background: var(--sky); }
+.trial-criteria-name { color: var(--text); }
+
+.trial-header-progress {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 200px;
+}
+.trial-progress-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.trial-progress-fill {
+  height: 100%;
+  background: var(--sage);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.trial-progress-text {
+  font-size: 0.78rem;
+  color: var(--text);
+  white-space: nowrap;
+  font-feature-settings: 'tnum';
+}
+.trial-progress-text .muted { color: var(--text-sub); }
+
+@media (max-width: 600px) {
+  .trial-header-meta { margin-left: 0; width: 100%; }
+  .trial-header-progress { margin-left: 0; width: 100%; min-width: 0; }
+}
+
+.trial-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 860px) {
+  .trial-grid { grid-template-columns: 1fr; }
+}
+
+.trial-col {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.trial-col-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.trial-col-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.trial-col[data-owner="설냥"] .trial-col-dot { background: var(--color-owner-설냥); }
+.trial-col[data-owner="츄츄"] .trial-col-dot { background: var(--color-owner-츄츄); }
+
+.trial-col-name {
+  font-size: 0.88rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+.trial-col-count {
+  margin-left: auto;
+  font-size: 0.74rem;
+  color: var(--text-sub);
+  font-feature-settings: 'tnum';
+}
+.trial-col-count strong { color: var(--text); font-weight: normal; }
+.trial-col-count.done strong { color: var(--sage); }
+
+/* ── 캐릭 행: 이름 / 완료 토글 / 단계 / 상점 ── */
+.trial-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  transition: background 0.15s;
+}
+.trial-row::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 8px; bottom: 8px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: transparent;
+  transition: background 0.15s;
+}
+.trial-row:last-child { border-bottom: none; }
+.trial-row.all-done::before { background: var(--sage); }
+.trial-row.all-done { background: rgba(212, 226, 196, 0.25); }
+.trial-row.resting { opacity: 0.55; }
+.trial-row.resting::before { background: transparent !important; }
+
+.trial-row-name {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  cursor: pointer;
+  padding: 2px 0;
+}
+.trial-row-name:hover .trial-row-name-main {
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: 3px;
+}
+.trial-row-name-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  color: var(--text);
+  min-width: 0;
+}
+.trial-row-name-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.trial-row-name-meta {
+  font-size: 0.7rem;
+  color: var(--text-sub);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.trial-rest-tag {
+  display: inline-block;
+  font-size: 0.62rem;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-sub);
+  margin-left: 2px;
+  flex-shrink: 0;
+}
+
+.trial-toggle {
+  min-width: 64px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--undone);
+  color: var(--text-sub);
+  font-size: 0.78rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  user-select: none;
+  text-align: center;
+}
+.trial-toggle:hover:not(:disabled):not(.done) {
+  background: var(--sage-light);
+  border-color: var(--sage-light);
+  color: var(--text);
+}
+.trial-toggle.done {
+  background: var(--sage);
+  border-color: var(--sage);
+  color: #ffffff;
+}
+.trial-toggle.done:hover:not(:disabled) { background: #8a9a72; border-color: #8a9a72; }
+.trial-toggle.shop.done { background: var(--sky); border-color: var(--sky); }
+.trial-toggle.shop.done:hover:not(:disabled) { background: #7fb0c6; border-color: #7fb0c6; }
+.trial-toggle:disabled { cursor: not-allowed; }
+
+/* 단계 드롭다운 — 미완료면 '—' */
+.trial-stage-select {
+  min-width: 72px;
+  padding: 5px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  cursor: pointer;
+  text-align: center;
+  text-align-last: center;
+  font-feature-settings: 'tnum';
+}
+.trial-stage-select option { text-align: center; }
+.trial-stage-select:focus { outline: none; border-color: var(--peach); }
+.trial-stage-select.filled {
+  background: var(--peach-light);
+  border-color: var(--peach-light);
+  color: var(--text);
+}
+.trial-stage-select:disabled { cursor: not-allowed; opacity: 0.6; }
+
+/* 입장컷 미달 — 성역 lock 칩과 동일 */
+.trial-lock {
+  min-width: 64px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.7rem;
+  font-family: 'Gowun Dodum', sans-serif;
+  white-space: nowrap;
+  text-align: center;
+  user-select: none;
+  opacity: 0.7;
+}
+
+.trial-empty {
+  padding: 30px 14px;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-sub);
+}
+
+/* 입장컷 미달 캐릭 접이식 섹션 */
+.trial-locked-head {
+  padding: 9px 14px;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  background: var(--surface2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.trial-locked-head:hover { background: var(--hover); }
+.trial-locked-body { display: none; }
+.trial-locked-body.open { display: block; }
+.trial-locked-arrow { font-size: 0.62rem; transition: transform 0.15s; }
+.trial-locked-head.open .trial-locked-arrow { transform: rotate(90deg); }
+
+@media (max-width: 480px) {
+  .trial-row { padding: 10px 12px; gap: 6px; }
+  .trial-toggle, .trial-lock { min-width: 54px; padding: 5px 10px; font-size: 0.72rem; }
+  .trial-stage-select { min-width: 62px; font-size: 0.72rem; }
+  .trial-lock { font-size: 0.64rem; }
+}
+
 /* ══════════════════════ SUPPLY BOARD (v1.5.1) ══════════════════════ */
 /* 보급의뢰 보드 — 슬롯 카드 그리드, 도감 모달, 진행도 칩 */
 
@@ -6046,6 +6415,7 @@ select.ctodo-select {
     <button class="tab-pill" id="tab-completion" onclick="showPage('completion-page')" style="display:none">완료율</button>
     <button class="tab-pill" id="tab-deva" onclick="showPage('deva-page')">데바패스</button>
     <button class="tab-pill" id="tab-sanctuary" onclick="showPage('sanctuary-page')">성역</button>
+    <button class="tab-pill" id="tab-trial" onclick="showPage('trial-page')">시련</button>
     <button class="tab-pill" id="tab-expedition" onclick="showPage('expedition-page')">원정</button>
     <button class="tab-pill" id="tab-supply" onclick="showPage('supply-page')">보급</button>
     <button class="tab-pill" id="tab-craft" onclick="showPage('craft-page')">제작</button>
@@ -6457,6 +6827,13 @@ select.ctodo-select {
 <!-- ═══════════════════════════════ SANCTUARY PAGE (v1.5.7) ═══════════════════════════════ -->
 <div id="sanctuary-page" class="page">
   <div id="sanctuary-content">
+    <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ TRIAL PAGE (시련) 작업본35 ═══════════════════════════════ -->
+<div id="trial-page" class="page">
+  <div id="trial-content">
     <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
   </div>
 </div>
@@ -8586,6 +8963,18 @@ function showPage(id) {
         `</div>`;
     }
   }
+  if (id === 'trial-page') {
+    document.getElementById('tab-trial').classList.add('active');
+    try {
+      renderTrialPage();
+    } catch (e) {
+      console.error('[시련 탭 에러]', e);
+      document.getElementById('trial-content').innerHTML =
+        `<div class="card" style="color:#b85050;font-size:0.85rem;white-space:pre-wrap">` +
+        `시련 탭 렌더 오류:\n${e.message}\n\n콘솔 로그를 확인해 주세요.` +
+        `</div>`;
+    }
+  }
   if (id === 'expedition-page') {
     document.getElementById('tab-expedition').classList.add('active');
     try {
@@ -9239,6 +9628,18 @@ function _todoWeeklyCol(owner, ctx) {
     if (remain.length) sanctItems.push(_todoLine(`${_nm(c)} - ${remain.join(', ')}`, `openDetail('${c.id}','weekly')`));
   });
   html += _todoSec('성역', sanctItems);
+
+  // 시련 (작업본36) — 입장컷(Lv.50 + 템 4800) 충족 캐릭만, 남은 것만 나열
+  const trialItems = [];
+  chars.forEach(c => {
+    if (!trialEligible(c)) return;
+    const wt = ctx.wtOf(c.id);
+    const remain = [];
+    if (!wt.trial_done) remain.push('시련 클리어');
+    if (!wt.trial_shop) remain.push('시련상점 구매');
+    if (remain.length) trialItems.push(_todoLine(`${_nm(c)} - ${remain.join(', ')}`, `openDetail('${c.id}','weekly')`));
+  });
+  html += _todoSec('시련', trialItems);
 
   // 물질변환 — 캐릭 N회 (남은 = 4 - 완료)
   const tmItems = [];
@@ -10064,6 +10465,8 @@ function _coopCategory(r) {
   if (f.startsWith('deva_xp_')   || a.startsWith('데바패스')) return '데바패스';
   if (f.startsWith('awakening_') || a.startsWith('각성')) return '각성';
   if (f === 'ludra_done' || f === 'erosion_done' || f === 'muspell_done' || a.startsWith('성역')) return '성역';
+  // 작업본35: '시련상점 구매'가 아래 '상점' 규칙에 먼저 걸리지 않도록 앞에 둔다
+  if (f === 'trial_done' || f === 'trial_shop' || a.startsWith('시련')) return '시련';
   if (f === 'supply_done' || a.startsWith('보급')) return '보급';
   if (a.startsWith('악몽')) return '악몽';
   if (a.startsWith('슈고')) return '슈고 열쇠';
@@ -10771,7 +11174,13 @@ function openAddChar(owner, slot) {
   let formHtml = `<div class="add-char-form open" id="add-char-form">
     <div class="card-title"><div class="card-title-icon icon-info">✎</div>${owner} ${slot}번 캐릭터 추가</div>
     <div class="form-row">
-      <div><div class="form-label">캐릭터명</div><input class="text-input" id="fc-name" placeholder="캐릭명" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"></div>
+      <div><div class="form-label">캐릭터명</div>
+        <div class="name-lv-group">
+          <span class="lv-tag">Lv.</span>
+          <input class="lv-input" id="fc-level" type="number" inputmode="numeric" min="1" max="${CHAR_LEVEL_MAX}" step="1" value="1" title="캐릭터 레벨 (1~${CHAR_LEVEL_MAX})" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true" onfocus="this.select()">
+          <input class="text-input name-input" id="fc-name" placeholder="캐릭명" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true">
+        </div>
+      </div>
       <div><div class="form-label">템레벨</div><input class="text-input" id="fc-ilvl" type="number" placeholder="0" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"></div>
     </div>
     <div class="form-row">
@@ -10796,12 +11205,13 @@ async function submitAddChar(owner, slot) {
   if (currentActor === 'guest') return;
 
   const name = document.getElementById('fc-name').value.trim();
+  const level = Math.min(CHAR_LEVEL_MAX, Math.max(1, parseInt(document.getElementById('fc-level')?.value, 10) || 1));
   const ilvl = parseInt(document.getElementById('fc-ilvl').value) || 0;
   const cp = Math.round((parseFloat(document.getElementById('fc-cp').value.replace(',','.')) || 0) * 10);
   const odd = parseInt(document.getElementById('fc-odd').value) || 0;
   if (!name) { showToast('캐릭터명을 입력해줘!'); return; }
   const { error } = await sb.from('characters').insert({
-    owner, slot, name, item_level: ilvl, combat_power: cp, odd_energy_base: odd, boss_kill_count: 35
+    owner, slot, name, level, item_level: ilvl, combat_power: cp, odd_energy_base: odd, boss_kill_count: 35
   });
   if (error) { showToast('저장 실패 😢'); console.error(error); return; }
   showToast(`${name} 추가 완료!`);
@@ -10817,7 +11227,7 @@ async function openDetail(charId, focus) {
   if (!char) return;
 
   document.getElementById('subbar-char-name').textContent = char.name || '(이름없음)';
-  document.getElementById('subbar-char-meta').textContent = `템 ${char.item_level||0} · ${formatCp(char.combat_power||0)}`;
+  document.getElementById('subbar-char-meta').textContent = `Lv.${getCharLevel(char)} · 템 ${char.item_level||0} · ${formatCp(char.combat_power||0)}`;
   const badge = document.getElementById('subbar-owner-badge');
   badge.textContent = char.owner;
   badge.className = `detail-owner-badge badge-${char.owner}`;
@@ -10879,10 +11289,14 @@ function renderDetail(char) {
     </div>
     <div class="stat-row">
       <span class="stat-label">캐릭터명</span>
-      <input class="text-input" style="width:130px" tabindex="0" value="${char.name||''}"
-        autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
-        onfocus="this.select()"
-        onchange="updateCharField('${char.id}','name',this.value)">
+      <div class="name-lv-group">
+        <span class="lv-tag">Lv.</span>
+        ${levelInput(char.id, getCharLevel(char))}
+        <input class="text-input name-input" style="width:130px" tabindex="0" value="${escapeHtml(char.name||'')}"
+          autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+          onfocus="this.select()"
+          onchange="updateCharField('${char.id}','name',this.value)">
+      </div>
     </div>
     <div class="stat-row">
       <span class="stat-label">템레벨</span>
@@ -11009,6 +11423,23 @@ function renderDetail(char) {
     <span class="stat-label">성역 - 무스펠 ${muspellLocked?`<span class="lock-badge">4300↑</span>`:''}</span>
     <button class="toggle-btn ${wt.muspell_done?'done':''}"
       onclick="toggleWeekly('${char.id}','muspell_done',${!wt.muspell_done},'${week}')">${wt.muspell_done?'완료':'미완'}</button>
+  </div>`;
+
+  // 시련 (작업본35) — 입장컷 Lv.50 + 템 4800
+  const trialLocked = !trialEligible(char);
+  const ts = trialState(char.id);
+  html += `<div class="stat-row ${trialLocked?'locked-row':''}">
+    <span class="stat-label">시련 ${trialLocked?`<span class="lock-badge">${trialLockReason(char)}</span>`:''}</span>
+    <div class="stat-inputs">
+      ${trialStageSelect(char.id, ts.stage, trialLocked)}
+      <button class="toggle-btn ${ts.done?'done':''}"
+        onclick="toggleTrialDone('${char.id}',${!ts.done})">${ts.done?'완료':'미완'}</button>
+    </div>
+  </div>`;
+  html += `<div class="stat-row ${trialLocked?'locked-row':''}">
+    <span class="stat-label">시련상점 구매 ${trialLocked?`<span class="lock-badge">${trialLockReason(char)}</span>`:''}</span>
+    <button class="toggle-btn ${ts.shop?'done-sky':''}"
+      onclick="toggleWeekly('${char.id}','trial_shop',${!ts.shop},'${week}')">${ts.shop?'구매':'미구매'}</button>
   </div>`;
 
   html += `</div>`;
@@ -11589,7 +12020,7 @@ async function commitCpInput(charId, input) {
   if (char) {
     char.combat_power = stored;
     document.getElementById('subbar-char-meta').textContent =
-      `템 ${char.item_level||0} · ${formatCp(stored)}`;
+      `Lv.${getCharLevel(char)} · 템 ${char.item_level||0} · ${formatCp(stored)}`;
   }
   markSelfChange('characters', charId);
   const { error } = await sb.from('characters').update({combat_power: stored}).eq('id', charId);
@@ -11618,6 +12049,52 @@ async function saveNumInput(charId, field, newVal) {
 }
 
 // ── DB ACTIONS ──
+// ── 캐릭터 레벨 (작업본35) ──
+// characters.level : 1~50, 기본 1. 컬럼 추가 전(마이그레이션 미실행) 행도 1로 읽는다.
+const CHAR_LEVEL_MAX = 50;
+
+function getCharLevel(char) {
+  const n = parseInt(char && char.level, 10);
+  if (!Number.isFinite(n)) return 1;
+  return Math.min(CHAR_LEVEL_MAX, Math.max(1, n));
+}
+
+// 1~50 직접 입력.
+//   드롭다운은 backupSync(5초)·realtime 재렌더가 detail-content를 통째로 갈아끼울 때
+//   열린 채로 닫혀버려서 선택이 풀렸다. INPUT은 scheduleLocalRerender의 포커스 가드에
+//   걸려 재렌더를 건너뛰므로 입력 중에도 안전하다.
+function levelInput(charId, cur) {
+  return `<input class="lv-input" id="lv-${charId}" type="number" inputmode="numeric"
+    min="1" max="${CHAR_LEVEL_MAX}" step="1" value="${cur}" tabindex="0" title="캐릭터 레벨 (1~${CHAR_LEVEL_MAX})"
+    autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true"
+    onfocus="this.select()"
+    onchange="updateCharLevel('${charId}', this.value)">`;
+}
+
+async function updateCharLevel(charId, raw) {
+  const lv = Math.min(CHAR_LEVEL_MAX, Math.max(1, parseInt(raw, 10) || 1));
+  // 범위 밖을 입력했으면 보정값을 입력창에 즉시 되돌려 준다
+  const lvEl = document.getElementById(`lv-${charId}`);
+  if (lvEl && String(lvEl.value) !== String(lv)) lvEl.value = lv;
+  await updateCharField(charId, 'level', lv);
+  // 입장컷(레벨 50)이 걸린 화면들을 즉시 반영
+  if (document.getElementById('trial-page')?.classList.contains('active')) {
+    try { renderTrialPage(); } catch (e) { console.error('[시련 재렌더 에러]', e); }
+  }
+  const char = allChars.find(c => c.id === charId);
+  if (char) {
+    const meta = document.getElementById('subbar-char-meta');
+    if (meta && currentCharId === charId) {
+      meta.textContent = `Lv.${getCharLevel(char)} · 템 ${char.item_level||0} · ${formatCp(char.combat_power||0)}`;
+    }
+    // 레벨이 시련 입장컷(50)을 넘나들면 상세의 잠금 표시가 바뀌므로 다시 그린다
+    if (currentCharId === charId &&
+        document.getElementById('detail-page')?.classList.contains('active')) {
+      renderDetail(char);
+    }
+  }
+}
+
 async function updateCharField(charId, field, value) {
   if (currentActor === 'guest') return;
 
@@ -12235,7 +12712,12 @@ async function toggleWeekly(charId, field, value, week) {
     if (document.getElementById('sanctuary-page')?.classList.contains('active')) {
       try { renderSanctuaryPage(); } catch (e) { console.error('[성역 재렌더 에러]', e); }
     }
-    const actionMap = { ludra_done:'성역-루드라 완료', erosion_done:'성역-침식 완료', muspell_done:'성역-무스펠 완료' };
+    // 작업본35: 시련 페이지가 활성 상태면 즉시 반영
+    if (document.getElementById('trial-page')?.classList.contains('active')) {
+      try { renderTrialPage(); } catch (e) { console.error('[시련 재렌더 에러]', e); }
+    }
+    const actionMap = { ludra_done:'성역-루드라 완료', erosion_done:'성역-침식 완료', muspell_done:'성역-무스펠 완료',
+                        trial_done:'시련 완료', trial_shop:'시련상점 구매' };
     if (actionMap[field]) {
       if (value) writeLog(char.owner, char.name, actionMap[field], char.id, field);
       else deleteLog(char.id, field);
@@ -13550,6 +14032,13 @@ function scheduleLocalRerender() {
     } else if (document.getElementById('sanctuary-page')?.classList.contains('active')) {
       // v1.5.7: 성역 페이지 실시간 갱신 (다른 사용자 토글 반영)
       renderSanctuaryPage();
+    } else if (document.getElementById('trial-page')?.classList.contains('active')) {
+      // 작업본35: 시련 페이지 실시간 갱신 (다른 기기 토글 반영)
+      // 단계 드롭다운을 조작 중이면 선택이 튕기지 않게 건너뜀
+      const tf = document.activeElement;
+      if (!(tf && tf.tagName === 'SELECT' && document.getElementById('trial-page').contains(tf))) {
+        renderTrialPage();
+      }
     } else if (document.getElementById('expedition-page').classList.contains('active')) {
       renderExpeditionPage();
     } else if (document.getElementById('supply-page').classList.contains('active')) {
@@ -13571,11 +14060,13 @@ function scheduleLocalRerender() {
     } else if (document.getElementById('completion-page')?.classList.contains('active')) {
       refreshCompletionIfVisible();   // 작업본14: 완료율 라이브 갱신 (다른 기기 변경 반영)
     } else if (currentCharId) {
-      // detail 페이지에 포커스된 input/textarea가 있으면 re-render 건너뜀
+      // detail 페이지에 포커스된 input/textarea/select가 있으면 re-render 건너뜀
+      //   작업본36: SELECT 추가 — 열려 있는 드롭다운(시련 단계)이 innerHTML 교체로
+      //   닫혀버려 선택이 풀리던 문제.
       const focused = document.activeElement;
       const detailPage = document.getElementById('detail-page');
       if (focused && detailPage && detailPage.contains(focused) &&
-          (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA')) return;
+          (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA' || focused.tagName === 'SELECT')) return;
       const char = allChars.find(c => c.id === currentCharId);
       if (char) renderDetail(char);
     }
@@ -15119,6 +15610,235 @@ function expToggleResults() {
 // ══════════════════════ SANCTUARY PAGE RENDER (v1.5.7) ══════════════════════
 // 성역 페이지 — 좌측 설냥, 우측 츄츄. 캐릭별 루드라(2700+)/침식(3500+) 토글.
 // 토글은 toggleWeekly() 를 호출하여 상세뷰/미니닷/오버뷰와 동일하게 연동된다.
+/* ══════════════════════════════════════════════════════════════
+   시련 (작업본35)
+   · 입장컷: 레벨 50 + 템레벨 4800 이상
+   · 주간 리셋(수 05:00 KST) — weekly_tasks 재사용
+   · 추적 항목 3가지: 진행 여부 / 클리어 단계(1~16) / 시련상점 구매
+   ══════════════════════════════════════════════════════════════ */
+const TRIAL_LEVEL_REQ = 50;
+const TRIAL_ILVL_REQ  = 4800;
+const TRIAL_STAGE_MAX = 16;
+
+// 입장컷 미달 섹션 접기/펼치기 (오너별 · 화면 상태라 DB 저장 안 함)
+const _trialLockedOpen = {};
+
+function trialEligible(char) {
+  return getCharLevel(char) >= TRIAL_LEVEL_REQ && (char.item_level || 0) >= TRIAL_ILVL_REQ;
+}
+
+// 입장컷 미달 사유 (짧은 칩 문구)
+function trialLockReason(char) {
+  const lvOk = getCharLevel(char) >= TRIAL_LEVEL_REQ;
+  const ilOk = (char.item_level || 0) >= TRIAL_ILVL_REQ;
+  if (!lvOk && !ilOk) return `Lv.50 · 4800↑`;
+  if (!lvOk) return `Lv.50↑`;
+  return `4800↑`;
+}
+
+// 캐릭 1명의 시련 상태
+function trialState(charId) {
+  const wt = weeklyTasks[charId] || {};
+  const stage = Math.min(TRIAL_STAGE_MAX, Math.max(0, parseInt(wt.trial_stage, 10) || 0));
+  return { done: !!wt.trial_done, stage, shop: !!wt.trial_shop };
+}
+
+// 단계 드롭다운 (— / 1~16)
+function trialStageSelect(charId, stage, disabled) {
+  let opts = `<option value="0"${stage === 0 ? ' selected' : ''}>—</option>`;
+  for (let i = 1; i <= TRIAL_STAGE_MAX; i++) {
+    opts += `<option value="${i}"${stage === i ? ' selected' : ''}>${i}단계</option>`;
+  }
+  return `<select class="trial-stage-select ${stage > 0 ? 'filled' : ''}"
+    ${disabled ? 'disabled' : ''}
+    title="클리어한 최고 단계"
+    onchange="setTrialStage('${charId}', this.value)">${opts}</select>`;
+}
+
+// 단계 선택 → 단계 저장 + 완료 상태 동기화 (1단계 이상 = 진행함)
+async function setTrialStage(charId, raw) {
+  if (currentActor === 'guest') return;
+  const stage = Math.min(TRIAL_STAGE_MAX, Math.max(0, parseInt(raw, 10) || 0));
+  const cur = trialState(charId);
+  await toggleWeekly(charId, 'trial_stage', stage, getWeekStart());
+  // 단계를 넣으면 자동 완료, 단계를 지우면(—) 자동 미완료
+  if (stage > 0 && !cur.done)      await toggleWeekly(charId, 'trial_done', true,  getWeekStart());
+  else if (stage === 0 && cur.done) await toggleWeekly(charId, 'trial_done', false, getWeekStart());
+}
+
+// 완료 토글 → 미완료로 되돌리면 단계 기록도 함께 비운다 (표시 불일치 방지)
+async function toggleTrialDone(charId, next) {
+  if (currentActor === 'guest') return;
+  const week = getWeekStart();
+  await toggleWeekly(charId, 'trial_done', next, week);
+  if (!next && trialState(charId).stage > 0) await toggleWeekly(charId, 'trial_stage', 0, week);
+}
+
+function renderTrialPage() {
+  const el = document.getElementById('trial-content');
+  if (!el) return;
+  if (typeof allChars === 'undefined' || !Array.isArray(allChars)) {
+    el.innerHTML = `<div class="loading"><div class="spinner"></div> 불러오는 중...</div>`;
+    el.dataset.renderKey = '';
+    return;
+  }
+
+  const week = getWeekStart();
+
+  const buildOwnerCard = (owner) => {
+    const ownerChars = allChars
+      .filter(c => c.owner === owner)
+      .slice()
+      .sort((a, b) => slotOrder(a) - slotOrder(b));
+
+    const eligible = ownerChars.filter(c => trialEligible(c));
+    const locked   = ownerChars.filter(c => !trialEligible(c));
+
+    // 진행도: 자격 충족 + 휴식 아닌 캐릭당 2칸 (시련 / 상점)
+    let total = 0, done = 0;
+    eligible.forEach(ch => {
+      if (ch.resting) return;
+      const st = trialState(ch.id);
+      total += 2;
+      if (st.done) done++;
+      if (st.shop) done++;
+    });
+
+    const buildRow = (ch, isLocked) => {
+      const st = trialState(ch.id);
+      const isResting = !!ch.resting;
+      const lv = getCharLevel(ch);
+      const ilvl = ch.item_level || 0;
+      const allDone = !isLocked && !isResting && st.done && st.shop;
+
+      const metaHtml = `Lv.${lv} · 템 ${ilvl}`;
+      const restTag = isResting ? `<span class="trial-rest-tag">💤 휴식</span>` : '';
+
+      let cells;
+      if (isLocked) {
+        cells = `<span class="trial-lock" style="grid-column: span 3" title="레벨 50 · 템레벨 4800 이상부터 입장 가능">${trialLockReason(ch)}</span>`;
+      } else {
+        cells = `
+          <button class="trial-toggle ${st.done ? 'done' : ''}"
+            ${isResting ? 'disabled' : ''}
+            onclick="toggleTrialDone('${ch.id}', ${!st.done})"
+            title="이번 주 시련 진행 여부">${st.done ? '완료' : '미완'}</button>
+          ${trialStageSelect(ch.id, st.stage, isResting)}
+          <button class="trial-toggle shop ${st.shop ? 'done' : ''}"
+            ${isResting ? 'disabled' : ''}
+            onclick="toggleWeekly('${ch.id}','trial_shop',${!st.shop},'${week}')"
+            title="시련상점 아이템 구매 여부">시련상점</button>`;
+      }
+
+      return `<div class="trial-row ${isResting ? 'resting' : ''} ${allDone ? 'all-done' : ''}">
+        <div class="trial-row-name" onclick="openDetail('${ch.id}')" title="상세 보기">
+          <div class="trial-row-name-main">
+            <span class="trial-row-name-text">${escapeHtml(ch.name || '—')}</span>
+            ${restTag}
+          </div>
+          <div class="trial-row-name-meta">${metaHtml}</div>
+        </div>
+        ${cells}
+      </div>`;
+    };
+
+    let rows = eligible.length === 0
+      ? `<div class="trial-empty">입장 가능한 캐릭터가 없어요<br><span style="font-size:0.7rem;opacity:0.7">레벨 50 · 템레벨 4800 이상부터</span></div>`
+      : eligible.map(ch => buildRow(ch, false)).join('');
+
+    // 입장컷 미달 캐릭 — 접어서 보관 (왜 목록에 없는지 알 수 있게)
+    let lockedBlock = '';
+    if (locked.length > 0) {
+      const open = _trialLockedOpen[owner] ? 'open' : '';
+      lockedBlock = `
+        <div class="trial-locked-head ${open}" onclick="toggleTrialLocked('${owner}')">
+          <span class="trial-locked-arrow">▶</span>
+          <span>입장컷 미달 ${locked.length}명</span>
+        </div>
+        <div class="trial-locked-body ${open}">
+          ${locked.map(ch => buildRow(ch, true)).join('')}
+        </div>`;
+    }
+
+    const doneClass = (total > 0 && done === total) ? 'done' : '';
+
+    return `<div class="trial-col" data-owner="${owner}">
+      <div class="trial-col-head">
+        <span class="trial-col-dot"></span>
+        <span class="trial-col-name">${owner}</span>
+        <span class="trial-col-count ${doneClass}"><strong>${done}</strong> / ${total}</span>
+      </div>
+      ${rows}
+      ${lockedBlock}
+    </div>`;
+  };
+
+  // 전체 진행도
+  let totalAll = 0, doneAll = 0;
+  allChars.forEach(ch => {
+    if (ch.resting || !trialEligible(ch)) return;
+    const st = trialState(ch.id);
+    totalAll += 2;
+    if (st.done) doneAll++;
+    if (st.shop) doneAll++;
+  });
+  const pctAll = totalAll > 0 ? Math.round((doneAll / totalAll) * 100) : 0;
+
+  const ownerOrder = (typeof OWNERS !== 'undefined' && Array.isArray(OWNERS)) ? OWNERS : ['설냥', '츄츄'];
+
+  const html = `<div class="trial-page-wrap">
+    <div class="trial-header">
+      <div class="trial-header-top">
+        <div class="card-title-icon" style="background:var(--peach-light)">시</div>
+        <span class="trial-header-title">시련 점검</span>
+        <span class="trial-header-meta">수요일 05:00 리셋 · 주 1회</span>
+      </div>
+      <div class="trial-header-bottom">
+        <div class="trial-criteria">
+          <span class="trial-criteria-item">
+            <span class="trial-criteria-dot"></span>
+            <span class="trial-criteria-name">입장컷</span>
+            <span>Lv.50 · 템 4800↑</span>
+          </span>
+          <span class="trial-criteria-item shop">
+            <span class="trial-criteria-dot"></span>
+            <span class="trial-criteria-name">단계</span>
+            <span>1 ~ 16</span>
+          </span>
+        </div>
+        <div class="trial-header-progress">
+          <div class="trial-progress-bar">
+            <div class="trial-progress-fill" style="width:${pctAll}%"></div>
+          </div>
+          <span class="trial-progress-text">${doneAll}<span class="muted">/${totalAll}</span> · ${pctAll}%</span>
+        </div>
+      </div>
+    </div>
+    <div class="trial-grid">
+      ${ownerOrder.map(o => buildOwnerCard(o)).join('')}
+    </div>
+  </div>`;
+
+  // 동일 키면 재렌더 스킵 (깜빡임 방지)
+  const renderKey = JSON.stringify({
+    week,
+    open: OWNERS.map(o => _trialLockedOpen[o] ? 1 : 0),
+    chars: allChars.map(c => [c.id, c.name, c.level, c.item_level, c.resting, c.slot, c.owner]),
+    weekly: allChars.map(c => {
+      const st = trialState(c.id);
+      return [c.id, st.done ? 1 : 0, st.stage, st.shop ? 1 : 0];
+    })
+  });
+  if (el.dataset.renderKey === renderKey) return;
+  el.dataset.renderKey = renderKey;
+  el.innerHTML = html;
+}
+
+function toggleTrialLocked(owner) {
+  _trialLockedOpen[owner] = !_trialLockedOpen[owner];
+  renderTrialPage();
+}
+
 function renderSanctuaryPage() {
   const el = document.getElementById('sanctuary-content');
   if (!el) return;
