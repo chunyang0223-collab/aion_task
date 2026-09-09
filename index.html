@@ -3689,6 +3689,10 @@ body.guest-mode .page .fetch-pill {
   padding: 14px 16px 80px;
   max-width: 1280px;
   margin: 0 auto;
+
+  /* 토글 칸 너비 토큰 — 비탄은 "비탄(어려움)"까지 들어가야 해서 한 단계 넓다 */
+  --sanct-cell: 4.5rem;
+  --sanct-cell-bitan: 6.75rem;
 }
 
 /* ── 상단 헤더 카드 ── */
@@ -3766,6 +3770,10 @@ body.guest-mode .page .fetch-pill {
 
 .sanctuary-criteria-item.muspell .sanctuary-criteria-dot {
   background: var(--sky);
+}
+
+.sanctuary-criteria-item.bitan .sanctuary-criteria-dot {
+  background: var(--sage);
 }
 
 .sanctuary-criteria-name {
@@ -3872,8 +3880,15 @@ body.guest-mode .page .fetch-pill {
 /* ── 캐릭 행 ── */
 .sanctuary-row {
   display: grid;
-  /* 이름 영역(가변) + 토글 세 칸 (루드라·침식·무스펠) */
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  /* 이름 영역(가변) + 토글 네 칸 (루드라·침식·무스펠·비탄)
+     행마다 독립 그리드라 auto 로 두면 칸 너비가 행마다 달라져 세로줄이 어긋난다.
+     토큰 고정 폭으로 잠가 모든 행의 토글이 같은 자리에 오게 한다. */
+  grid-template-columns:
+    minmax(0, 1fr)
+    var(--sanct-cell)
+    var(--sanct-cell)
+    var(--sanct-cell)
+    var(--sanct-cell-bitan);
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
@@ -3955,8 +3970,9 @@ body.guest-mode .page .fetch-pill {
 
 /* ── 토글 (pill 스타일, 단일 행) ── */
 .sanctuary-toggle {
-  min-width: 64px;
-  padding: 5px 14px;
+  width: 100%;
+  min-width: 0;
+  padding: 5px 10px;
   border-radius: 20px;
   border: 1px solid var(--border);
   background: var(--undone);
@@ -3992,8 +4008,9 @@ body.guest-mode .page .fetch-pill {
 
 /* 잠금 (자격 미달) — 토글 대신 동일 폭의 lock 칩 표시 */
 .sanctuary-lock {
-  min-width: 64px;
-  padding: 5px 14px;
+  width: 100%;
+  min-width: 0;
+  padding: 5px 10px;
   border-radius: 20px;
   border: 1px dashed var(--border);
   background: transparent;
@@ -4013,15 +4030,109 @@ body.guest-mode .page .fetch-pill {
   color: var(--text-sub);
 }
 
+/* 토글이 네 칸이라 폰 화면에선 한 줄에 안 들어간다.
+   → 이름을 윗줄로 올리고 토글 넷을 그 아래 2칸×2줄로 깐다. */
+@media (max-width: 560px) {
+  .sanctuary-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 8px;
+  }
+  .sanctuary-row-name { grid-column: 1 / -1; }
+}
+
 @media (max-width: 480px) {
   .sanctuary-row { padding: 10px 12px; gap: 6px; }
-  .sanctuary-toggle, .sanctuary-lock {
-    min-width: 56px;
-    padding: 5px 10px;
-    font-size: 0.74rem;
-  }
+  .sanctuary-toggle, .sanctuary-lock { font-size: 0.74rem; }
   .sanctuary-lock { font-size: 0.66rem; }
 }
+
+/* ── 비탄 난이도 선택 모달 (작업본38) ── */
+/*    성역 보드·상세뷰 양쪽에서 같은 모달을 쓴다. 잠금 표현은 .sanctuary-lock 규칙을 따름 */
+.bitan-modal-char {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  margin: -10px 0 14px;
+  font-feature-settings: 'tnum';
+}
+
+.bitan-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bitan-opt {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.bitan-opt:hover:not(:disabled):not(.on) {
+  background: var(--sage-light);
+  border-color: var(--sage-light);
+}
+.bitan-opt.on {
+  background: var(--sage);
+  border-color: var(--sage);
+  color: #ffffff;
+}
+.bitan-opt.on .bitan-opt-req { color: #ffffff; }
+
+/* 입장컷 미달 — 성역 lock 칩과 같은 dashed·연한 처리 */
+.bitan-opt.locked {
+  cursor: not-allowed;
+  background: transparent;
+  border-style: dashed;
+  color: var(--text-sub);
+  opacity: 0.55;
+}
+
+.bitan-opt-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.bitan-opt-req {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  white-space: nowrap;
+  font-feature-settings: 'tnum';
+}
+.bitan-opt-lock {
+  font-size: 0.66rem;
+  padding: 2px 9px;
+  border-radius: 20px;
+  border: 1px dashed var(--border);
+  color: var(--text-sub);
+  white-space: nowrap;
+}
+
+.bitan-clear {
+  margin-top: 12px;
+  width: 100%;
+  padding: 9px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-sub);
+  font-family: 'Gowun Dodum', sans-serif;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.bitan-clear:hover { background: var(--hover); color: var(--text); }
 
 /* ══════════════════════ 캐릭 레벨 (작업본35) ══════════════════════ */
 /* 상세 기본정보의 "Lv.[드롭다운] 캐릭터명" 한 줄 */
@@ -6910,6 +7021,18 @@ select.ctodo-select {
   </div>
 </div>
 
+<!-- 성역 · 비탄 난이도 선택 모달 (작업본38) -->
+<div id="bitan-modal-overlay" class="alarm-overlay" onclick="closeBitanModal(event)">
+  <div class="alarm-modal" style="max-width:340px" onclick="event.stopPropagation()">
+    <button class="alarm-close" onclick="closeBitanModal()" aria-label="닫기">×</button>
+    <div class="alarm-modal-title">비탄 난이도 선택</div>
+    <div class="alarm-modal-desc">클리어한 난이도를 골라주세요 · 수요일 05:00 리셋</div>
+    <div class="bitan-modal-char" id="bitan-modal-char"></div>
+    <div class="bitan-opts" id="bitan-modal-opts"></div>
+    <div id="bitan-modal-clear"></div>
+  </div>
+</div>
+
 <div id="craft-page" class="page">
   <div id="craft-content">
     <div class="loading"><div class="spinner"></div> 불러오는 중...</div>
@@ -9059,6 +9182,7 @@ document.addEventListener('keydown', (e) => {
 
   // 1) 닫을 수 있는 모달들 (z-index 높은 것부터 우선 닫기)
   const closableModals = [
+    { id: 'bitan-modal-overlay',        close: () => window.closeBitanModal          && window.closeBitanModal() },
     { id: 'supply-slot-modal-overlay',  close: () => window.closeSupplySlotModal     && window.closeSupplySlotModal() },
     { id: 'supply-dict-modal-overlay',  close: () => window.closeSupplyDictModal     && window.closeSupplyDictModal() },
     { id: 'memo-modal-overlay',         close: () => window.closeMemoModal           && window.closeMemoModal() },
@@ -9365,6 +9489,8 @@ function _todoCtxSnap(tab, offset) {
   rows.forEach(r => (r.chars || []).forEach(ch => {
     wtMap[ch.char_id] = {
       ludra_done: !!ch.ludra_done, erosion_done: !!ch.erosion_done, muspell_done: !!ch.muspell_done,
+      bitan_diff: ch.bitan_diff || null,
+      trial_done: !!ch.trial_done, trial_shop: !!ch.trial_shop,
       deva_xp: ch.deva_xp,
     };
     abyssMap[ch.char_id] = ch.abyss_uncleared;
@@ -9374,7 +9500,7 @@ function _todoCtxSnap(tab, offset) {
     if (!r) return [];
     return (r.chars || []).map(ch => {
       return {
-        id: ch.char_id, name: ch.name, item_level: ch.item_level,
+        id: ch.char_id, name: ch.name, item_level: ch.item_level, level: ch.level,
         nightmare_base: ch.nightmare_base,
         odd_energy_base: ch.odd_energy_base, odd_recorded_at: ch.odd_recorded_at,
         awakening_done: ch.awakening_done,
@@ -9625,6 +9751,7 @@ function _todoWeeklyCol(owner, ctx) {
     if (ilvl >= 2700 && !wt.ludra_done) remain.push('루드라');
     if (ilvl >= 3500 && !wt.erosion_done) remain.push('침식');
     if (ilvl >= 4300 && !wt.muspell_done) remain.push('무스펠');
+    if (bitanEligible(c) && !wt.bitan_diff) remain.push('비탄');
     if (remain.length) sanctItems.push(_todoLine(`${_nm(c)} - ${remain.join(', ')}`, `openDetail('${c.id}','weekly')`));
   });
   html += _todoSec('성역', sanctItems);
@@ -10170,6 +10297,11 @@ function _weeklyCountsSnap(row) {
     if (ilvl >= 2700) { ct++; if (ch.ludra_done) cd++; }         // 성역
     if (ilvl >= 3500) { ct++; if (ch.erosion_done) cd++; }
     if (ilvl >= 4300) { ct++; if (ch.muspell_done) cd++; }
+    if (bitanEligible(ch)) { ct++; if (ch.bitan_diff) cd++; }   // 비탄 — 갈 수 있는 캐릭만
+    if (trialEligible(ch)) {                                    // 시련 — 갈 수 있는 캐릭만 (클리어 + 시련상점)
+      ct++; if (ch.trial_done) cd++;
+      ct++; if (ch.trial_shop) cd++;
+    }
     ct++; if ((ch.transmutation_count || 0) >= 4) cd++;         // 물질변환
     ct++; if ((ch.shop_purchase_count || 0) >= 4) cd++;         // 상점
     perChar[ch.char_id] = { done: cd, total: ct, name: ch.name };
@@ -10192,6 +10324,11 @@ function _weeklyCountsLive() {
       if (ilvl >= 2700) { ct++; if (wt.ludra_done) cd++; }
       if (ilvl >= 3500) { ct++; if (wt.erosion_done) cd++; }
       if (ilvl >= 4300) { ct++; if (wt.muspell_done) cd++; }
+      if (bitanEligible(c)) { ct++; if (wt.bitan_diff) cd++; }   // 비탄 — 갈 수 있는 캐릭만
+      if (trialEligible(c)) {                                    // 시련 — 갈 수 있는 캐릭만 (클리어 + 시련상점)
+        ct++; if (wt.trial_done) cd++;
+        ct++; if (wt.trial_shop) cd++;
+      }
       ct++; if ((c.transmutation_count || 0) >= 4) cd++;
       ct++; if ((c.shop_purchase_count || 0) >= 4) cd++;
       perChar[c.id] = { done: cd, total: ct, name: c.name };
@@ -10464,7 +10601,7 @@ function _coopCategory(r) {
   if (f.startsWith('abyss_')     || a.startsWith('어비스')) return '어비스';
   if (f.startsWith('deva_xp_')   || a.startsWith('데바패스')) return '데바패스';
   if (f.startsWith('awakening_') || a.startsWith('각성')) return '각성';
-  if (f === 'ludra_done' || f === 'erosion_done' || f === 'muspell_done' || a.startsWith('성역')) return '성역';
+  if (f === 'ludra_done' || f === 'erosion_done' || f === 'muspell_done' || f === 'bitan_diff' || a.startsWith('성역')) return '성역';
   // 작업본35: '시련상점 구매'가 아래 '상점' 규칙에 먼저 걸리지 않도록 앞에 둔다
   if (f === 'trial_done' || f === 'trial_shop' || a.startsWith('시련')) return '시련';
   if (f === 'supply_done' || a.startsWith('보급')) return '보급';
@@ -10940,6 +11077,7 @@ function renderRepCard(char, owner) {
     sanctDot(ilvl >= 2700, wt.ludra_done, '루드라', 2700),
     sanctDot(ilvl >= 3500, wt.erosion_done, '침식', 3500),
     sanctDot(ilvl >= 4300, wt.muspell_done, '무스펠', 4300),
+    bitanDot(char, wt),
   ].join('');
   const awakeDot = `<div class="mini-dot ${aw >= 3 ? 'done-weekly' : ''}" title="각성 ${aw}/3"></div>`;
   const nmDot = `<div class="mini-dot ${nm <= 12 ? 'done' : 'partial'}" title="악몽 ${nm}장${nm > 12 ? ' (주의)' : ''}"></div>`;
@@ -10976,7 +11114,7 @@ function buildMiniDots(char, dt, wt) {
   const nm = char.nightmare_base || 0;
   const aw = char.awakening_done || 0;
 
-  // 성역 (상단, 가로 3개): 루드라(2700+) · 침식(3500+) · 무스펠(4300+)
+  // 성역 (상단, 가로 4개): 루드라(2700+) · 침식(3500+) · 무스펠(4300+) · 비탄(Lv.50+5800+)
   //   자격 미달은 잠금(연회색) dot으로 위치 고정 — 라벨 없음
   const sanctDot = (avail, done, name, req) => avail
     ? `<div class="mini-dot ${done?'done-weekly':''}" title="성역 - ${name}${done?' (완료)':''}"></div>`
@@ -10985,6 +11123,7 @@ function buildMiniDots(char, dt, wt) {
     sanctDot(ilvl >= 2700, wt.ludra_done,   '루드라', 2700),
     sanctDot(ilvl >= 3500, wt.erosion_done, '침식',   3500),
     sanctDot(ilvl >= 4300, wt.muspell_done, '무스펠', 4300),
+    bitanDot(char, wt),
   ].join('');
 
   // 각성 (중단): 3/3 완료 / 악몽 (하단): 기본 12 이하 양호, 초과 시 주의(빨강)
@@ -11008,6 +11147,7 @@ function calcCompletionPct(char, dt, wt) {
   if (ilvl >= 2700) { total++; if (wt.ludra_done) done++; }   // 성역-루드라
   if (ilvl >= 3500) { total++; if (wt.erosion_done) done++; } // 성역-침식
   if (ilvl >= 4300) { total++; if (wt.muspell_done) done++; } // 성역-무스펠
+  if (bitanEligible(char)) { total++; if (wt.bitan_diff) done++; } // 성역-비탄 (Lv.50 + 템 5800↑)
 
   return total > 0 ? Math.round(done/total*100) : 0;
 }
@@ -11425,6 +11565,16 @@ function renderDetail(char) {
       onclick="toggleWeekly('${char.id}','muspell_done',${!wt.muspell_done},'${week}')">${wt.muspell_done?'완료':'미완'}</button>
   </div>`;
 
+  // 성역 - 비탄 (작업본38) — 입장컷 Lv.50 + 난이도별 템레벨. 버튼을 누르면 난이도 모달
+  const bitanLocked = !bitanEligible(char);
+  const bitanCur = bitanDiffOf(char.id);
+  html += `<div class="stat-row ${bitanLocked?'locked-row':''}">
+    <span class="stat-label">성역 - 비탄 ${bitanLocked?`<span class="lock-badge">${bitanLockReason(char)}</span>`:''}</span>
+    <button class="toggle-btn ${bitanCur?'done':''}"
+      ${bitanLocked?'disabled':''}
+      onclick="openBitanModal('${char.id}')">${bitanCur?bitanCur.label:'미완'}</button>
+  </div>`;
+
   // 시련 (작업본35) — 입장컷 Lv.50 + 템 4800
   const trialLocked = !trialEligible(char);
   const ts = trialState(char.id);
@@ -11683,6 +11833,9 @@ const SANCTUARY_GATES = [
   { ilvl: 2700, name: '루드라' },
   { ilvl: 3500, name: '침식' },
   { ilvl: 4300, name: '무스펠' },
+  { ilvl: 5800, name: '비탄 쉬움' },
+  { ilvl: 6000, name: '비탄 보통' },
+  { ilvl: 6200, name: '비탄 어려움' },
 ];
 function _parseLogDate(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
 function _fmtEtaDuration(days) {
@@ -15608,7 +15761,7 @@ function expToggleResults() {
 }
 
 // ══════════════════════ SANCTUARY PAGE RENDER (v1.5.7) ══════════════════════
-// 성역 페이지 — 좌측 설냥, 우측 츄츄. 캐릭별 루드라(2700+)/침식(3500+) 토글.
+// 성역 페이지 — 좌측 설냥, 우측 츄츄. 캐릭별 루드라(2700+)/침식(3500+)/무스펠(4300+)/비탄(Lv.50+5800+) 토글.
 // 토글은 toggleWeekly() 를 호출하여 상세뷰/미니닷/오버뷰와 동일하게 연동된다.
 /* ══════════════════════════════════════════════════════════════
    시련 (작업본35)
@@ -15839,6 +15992,135 @@ function toggleTrialLocked(owner) {
   renderTrialPage();
 }
 
+/* ══════════════════════════════════════════════════════════════
+   비탄 (작업본38) — 성역의 네 번째 던전
+   · 입장컷: 레벨 50 + 난이도별 템레벨 (쉬움 5800 / 보통 6000 / 어려움 6200)
+   · 저장: weekly_tasks.bitan_diff  ('easy' | 'normal' | 'hard' | null)
+     값이 있으면 그 난이도로 클리어한 것 — 별도 done 플래그를 두지 않아 어긋날 일이 없다.
+   · 클릭 흐름: 비탄 버튼 → 난이도 모달 → 난이도 클릭 → "비탄(보통)" + 초록 채움
+   ══════════════════════════════════════════════════════════════ */
+const BITAN_LEVEL_REQ = 50;
+const BITAN_DIFFS = [
+  { key: 'easy',   label: '쉬움',   ilvl: 5800 },
+  { key: 'normal', label: '보통',   ilvl: 6000 },
+  { key: 'hard',   label: '어려움', ilvl: 6200 },
+];
+const BITAN_MIN_ILVL = BITAN_DIFFS[0].ilvl;
+
+// 해당 난이도에 들어갈 수 있는가 (레벨 50 + 난이도별 템레벨)
+function bitanDiffOpen(char, diff) {
+  if (!char || !diff) return false;
+  return getCharLevel(char) >= BITAN_LEVEL_REQ && (char.item_level || 0) >= diff.ilvl;
+}
+// 제일 낮은 난이도(쉬움)라도 열려 있으면 비탄 입장 가능
+function bitanEligible(char) {
+  return bitanDiffOpen(char, BITAN_DIFFS[0]);
+}
+// 성역 보드 잠금 칩 — 다른 항목(2700↑·3500↑·4300↑)과 같은 폭을 지키려고 템레벨만 적는다.
+// 레벨 미달 사유는 툴팁으로 안내.
+function bitanLockChip() {
+  return `${BITAN_MIN_ILVL}↑`;
+}
+// 입장컷 미달 사유 (상세뷰 배지·툴팁용) — 시련의 trialLockReason 과 같은 규칙
+function bitanLockReason(char) {
+  const lvOk = getCharLevel(char) >= BITAN_LEVEL_REQ;
+  const ilOk = (char.item_level || 0) >= BITAN_MIN_ILVL;
+  if (!lvOk && !ilOk) return `Lv.${BITAN_LEVEL_REQ} · ${BITAN_MIN_ILVL}↑`;
+  if (!lvOk) return `Lv.${BITAN_LEVEL_REQ}↑`;
+  return `${BITAN_MIN_ILVL}↑`;
+}
+// 이번 주 저장된 난이도 객체 (미완이면 null)
+function bitanDiffOf(charId) {
+  const raw = (weeklyTasks[charId] || {}).bitan_diff;
+  return BITAN_DIFFS.find(d => d.key === raw) || null;
+}
+// 토글 라벨 — 미완 "비탄", 완료 "비탄(보통)"
+function bitanLabel(charId) {
+  const d = bitanDiffOf(charId);
+  return d ? `비탄(${d.label})` : '비탄';
+}
+// 미니닷 1칸 (입장 불가면 성역 다른 항목과 같은 일자 바)
+function bitanDot(char, wt) {
+  if (!bitanEligible(char)) {
+    return `<div class="mini-dot-bar" title="성역 - 비탄 (Lv.${BITAN_LEVEL_REQ} · 템 ${BITAN_MIN_ILVL}↑ 필요)"></div>`;
+  }
+  const d = bitanDiffOf(char.id);
+  return `<div class="mini-dot ${d ? 'done-weekly' : ''}" title="성역 - 비탄${d ? ` (${d.label} 완료)` : ''}"></div>`;
+}
+
+// ── 난이도 선택 모달 ──
+let _bitanModalCharId = null;
+
+function openBitanModal(charId) {
+  if (currentActor === 'guest') return;
+  const char = allChars.find(c => c.id === charId);
+  if (!char || char.resting) return;
+  if (!bitanEligible(char)) {
+    showToast(`비탄은 Lv.${BITAN_LEVEL_REQ} · 템레벨 ${BITAN_MIN_ILVL} 이상부터 들어갈 수 있어요`);
+    return;
+  }
+
+  _bitanModalCharId = charId;
+  const cur = bitanDiffOf(charId);
+
+  const charEl = document.getElementById('bitan-modal-char');
+  if (charEl) charEl.textContent = `${char.name || '—'} · Lv.${getCharLevel(char)} · 템 ${char.item_level || 0}`;
+
+  const optsEl = document.getElementById('bitan-modal-opts');
+  if (optsEl) {
+    optsEl.innerHTML = BITAN_DIFFS.map(d => {
+      // 입장컷 미달 난이도 — 비활성 + 연한 dashed 칩으로 왜 못 고르는지 보여준다
+      if (!bitanDiffOpen(char, d)) {
+        return `<button type="button" class="bitan-opt locked" disabled
+          title="템레벨 ${d.ilvl} 이상부터 입장 가능">
+          <span class="bitan-opt-name">${d.label}</span>
+          <span class="bitan-opt-lock">템 ${d.ilvl}↑</span>
+        </button>`;
+      }
+      const on = !!cur && cur.key === d.key;
+      return `<button type="button" class="bitan-opt ${on ? 'on' : ''}"
+        onclick="setBitanDiff('${charId}','${d.key}')"
+        title="비탄 ${d.label} 완료로 기록">
+        <span class="bitan-opt-name">${d.label}${on ? ' ✓' : ''}</span>
+        <span class="bitan-opt-req">템 ${d.ilvl}↑</span>
+      </button>`;
+    }).join('');
+  }
+
+  const clearEl = document.getElementById('bitan-modal-clear');
+  if (clearEl) {
+    clearEl.innerHTML = cur
+      ? `<button type="button" class="bitan-clear" onclick="setBitanDiff('${charId}', null)">미완료로 되돌리기</button>`
+      : '';
+  }
+
+  const ov = document.getElementById('bitan-modal-overlay');
+  if (ov) ov.classList.add('show');
+}
+
+function closeBitanModal(e) {
+  if (e && e.target !== e.currentTarget) return;   // 모달 내부 클릭은 무시 (오버레이 직접 클릭만 닫힘)
+  const ov = document.getElementById('bitan-modal-overlay');
+  if (ov) ov.classList.remove('show');
+  _bitanModalCharId = null;
+}
+
+// 난이도 저장 (diffKey = null 이면 미완료로 되돌림). 로그에 난이도까지 남긴다.
+async function setBitanDiff(charId, diffKey) {
+  if (currentActor === 'guest') return;
+  const char = allChars.find(c => c.id === charId);
+  const d = diffKey ? (BITAN_DIFFS.find(x => x.key === diffKey) || null) : null;
+  if (diffKey && !d) return;
+  if (d && !bitanDiffOpen(char, d)) { showToast(`템레벨 ${d.ilvl} 이상부터 들어갈 수 있어요`); return; }
+
+  closeBitanModal();
+  await toggleWeekly(charId, 'bitan_diff', d ? d.key : null, getWeekStart());
+  if (!char) return;
+  // 난이도를 바꿔도 로그가 쌓이지 않도록 오늘 기록을 먼저 지우고 다시 남긴다
+  await deleteLog(charId, 'bitan_diff');
+  if (d) await writeLog(char.owner, char.name, `성역-비탄(${d.label}) 완료`, charId, 'bitan_diff');
+}
+
 function renderSanctuaryPage() {
   const el = document.getElementById('sanctuary-content');
   if (!el) return;
@@ -15868,6 +16150,7 @@ function renderSanctuaryPage() {
       if (ilvl >= 2700) { total++; if (wt.ludra_done) done++; }
       if (ilvl >= 3500) { total++; if (wt.erosion_done) done++; }
       if (ilvl >= 4300) { total++; if (wt.muspell_done) done++; }
+      if (bitanEligible(ch)) { total++; if (wt.bitan_diff) done++; }
     });
 
     let rows = '';
@@ -15883,13 +16166,15 @@ function renderSanctuaryPage() {
         const ludraDone = !!wt.ludra_done;
         const erosionDone = !!wt.erosion_done;
         const muspellDone = !!wt.muspell_done;
+        const bitanLocked = !bitanEligible(ch);          // 비탄만 레벨 50 조건이 함께 걸린다
+        const bitanCur = bitanDiffOf(ch.id);
         const isResting = !!ch.resting;
 
         // "전부 완료" — 자격 있는 항목을 모두 클리어한 경우
         const eligibleCount =
-          (ludraLocked ? 0 : 1) + (erosionLocked ? 0 : 1) + (muspellLocked ? 0 : 1);
+          (ludraLocked ? 0 : 1) + (erosionLocked ? 0 : 1) + (muspellLocked ? 0 : 1) + (bitanLocked ? 0 : 1);
         const clearedCount =
-          (!ludraLocked && ludraDone ? 1 : 0) + (!erosionLocked && erosionDone ? 1 : 0) + (!muspellLocked && muspellDone ? 1 : 0);
+          (!ludraLocked && ludraDone ? 1 : 0) + (!erosionLocked && erosionDone ? 1 : 0) + (!muspellLocked && muspellDone ? 1 : 0) + (!bitanLocked && bitanCur ? 1 : 0);
         const allDone = !isResting && eligibleCount > 0 && eligibleCount === clearedCount;
 
         // 자격 충족: pill 토글 / 미달: dashed lock 칩 (동일 폭 유지)
@@ -15914,6 +16199,14 @@ function renderSanctuaryPage() {
               onclick="toggleWeekly('${ch.id}','muspell_done',${!muspellDone},'${week}')"
               title="성역 - 무스펠${muspellDone?' (완료)':''}">무스펠</button>`;
 
+        // 비탄 — 클릭하면 바로 완료가 아니라 난이도 모달을 먼저 띄운다
+        const bitanCell = bitanLocked
+          ? `<span class="sanctuary-lock" title="성역 - 비탄 (Lv.${BITAN_LEVEL_REQ} · 템 ${BITAN_MIN_ILVL}↑ 필요) — 지금 ${bitanLockReason(ch)}">${bitanLockChip()}</span>`
+          : `<button class="sanctuary-toggle ${bitanCur?'done':''}"
+              ${isResting?'disabled':''}
+              onclick="openBitanModal('${ch.id}')"
+              title="성역 - 비탄${bitanCur?` (${bitanCur.label} 완료)`:' — 난이도 선택'}">${bitanLabel(ch.id)}</button>`;
+
         const charClass = (ch.class || '').toString();
         const metaParts = [];
         if (charClass) metaParts.push(escapeHtml(charClass));
@@ -15935,6 +16228,7 @@ function renderSanctuaryPage() {
           ${ludraCell}
           ${erosionCell}
           ${muspellCell}
+          ${bitanCell}
         </div>`;
       });
     }
@@ -15960,6 +16254,7 @@ function renderSanctuaryPage() {
     if (ilvl >= 2700) { totalAll++; if (wt.ludra_done) doneAll++; }
     if (ilvl >= 3500) { totalAll++; if (wt.erosion_done) doneAll++; }
     if (ilvl >= 4300) { totalAll++; if (wt.muspell_done) doneAll++; }
+    if (bitanEligible(ch)) { totalAll++; if (wt.bitan_diff) doneAll++; }
   });
   const pctAll = totalAll > 0 ? Math.round((doneAll / totalAll) * 100) : 0;
 
@@ -15990,6 +16285,11 @@ function renderSanctuaryPage() {
             <span class="sanctuary-criteria-name">무스펠</span>
             <span>템 4300↑</span>
           </span>
+          <span class="sanctuary-criteria-item bitan">
+            <span class="sanctuary-criteria-dot"></span>
+            <span class="sanctuary-criteria-name">비탄</span>
+            <span>Lv.50 · 템 5800 / 6000 / 6200</span>
+          </span>
         </div>
         <div class="sanctuary-header-progress">
           <div class="sanctuary-progress-bar">
@@ -16007,10 +16307,10 @@ function renderSanctuaryPage() {
   // 동일 키일 경우 재렌더 스킵 (깜빡임 방지)
   const renderKey = JSON.stringify({
     week,
-    chars: allChars.map(c => [c.id, c.name, c.item_level, c.resting, c.slot, c.class, c.owner]),
+    chars: allChars.map(c => [c.id, c.name, c.item_level, c.level, c.resting, c.slot, c.class, c.owner]),
     weekly: allChars.map(c => {
       const wt = weeklyTasks[c.id] || {};
-      return [c.id, wt.ludra_done?1:0, wt.erosion_done?1:0, wt.muspell_done?1:0];
+      return [c.id, wt.ludra_done?1:0, wt.erosion_done?1:0, wt.muspell_done?1:0, wt.bitan_diff || ''];
     })
   });
   if (el.dataset.renderKey === renderKey) return;
