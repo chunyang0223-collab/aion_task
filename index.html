@@ -3690,9 +3690,9 @@ body.guest-mode .page .fetch-pill {
   max-width: 1280px;
   margin: 0 auto;
 
-  /* 토글 칸 너비 토큰 — 비탄은 "비탄(어려움)"까지 들어가야 해서 한 단계 넓다 */
-  --sanct-cell: 4.5rem;
-  --sanct-cell-bitan: 6.75rem;
+  /* 성역 토글 칸 크기 — 네 항목·잠금칩 모두 동일. 미리보기에서 확정한 값 */
+  --sanct-cell: 5.45rem;    /* 가로 87.2px — 가장 긴 "비탄(어려움)" 기준 */
+  --sanct-cell-h: 2.5rem;   /* 세로 40px */
 }
 
 /* ── 상단 헤더 카드 ── */
@@ -3882,13 +3882,13 @@ body.guest-mode .page .fetch-pill {
   display: grid;
   /* 이름 영역(가변) + 토글 네 칸 (루드라·침식·무스펠·비탄)
      행마다 독립 그리드라 auto 로 두면 칸 너비가 행마다 달라져 세로줄이 어긋난다.
-     토큰 고정 폭으로 잠가 모든 행의 토글이 같은 자리에 오게 한다. */
+     토큰 고정 폭으로 잠가 모든 행·모든 항목의 토글이 같은 크기·같은 자리에 오게 한다. */
   grid-template-columns:
     minmax(0, 1fr)
     var(--sanct-cell)
     var(--sanct-cell)
     var(--sanct-cell)
-    var(--sanct-cell-bitan);
+    var(--sanct-cell);
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
@@ -3972,12 +3972,19 @@ body.guest-mode .page .fetch-pill {
 .sanctuary-toggle {
   width: 100%;
   min-width: 0;
-  padding: 5px 10px;
+  height: var(--sanct-cell-h);
+  /* 상자 높이를 고정하고 flex 로 세로 가운데 — 글자 크기가 하나뿐이라
+     줄상자 중앙 = 글자 중앙이 된다. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.15;
+  padding: 0 4px;
   border-radius: 20px;
   border: 1px solid var(--border);
   background: var(--undone);
   color: var(--text-sub);
-  font-size: 0.78rem;
+  font-size: 0.84rem;
   font-family: 'Gowun Dodum', sans-serif;
   cursor: pointer;
   white-space: nowrap;
@@ -4010,7 +4017,12 @@ body.guest-mode .page .fetch-pill {
 .sanctuary-lock {
   width: 100%;
   min-width: 0;
-  padding: 5px 10px;
+  height: var(--sanct-cell-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.15;
+  padding: 0 4px;
   border-radius: 20px;
   border: 1px dashed var(--border);
   background: transparent;
@@ -16034,7 +16046,7 @@ function bitanDiffOf(charId) {
   const raw = (weeklyTasks[charId] || {}).bitan_diff;
   return BITAN_DIFFS.find(d => d.key === raw) || null;
 }
-// 토글 라벨 — 미완 "비탄", 완료 "비탄(보통)"
+// 토글 라벨 — 미완 "비탄", 완료 "비탄(보통)". 다른 항목과 같은 글자 크기 한 줄.
 function bitanLabel(charId) {
   const d = bitanDiffOf(charId);
   return d ? `비탄(${d.label})` : '비탄';
