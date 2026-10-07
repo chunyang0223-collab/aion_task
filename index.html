@@ -26,6 +26,7 @@
 <style>
 :root {
   /* ══ ORIGINAL 츄냥이 skin (default) ══ */
+  --scrim: rgba(90,82,75,0.4);   /* 모달 뒤 배경 (오드 캐릭 선택창) */
   --bg: #f9f6f0;
   --surface: #ffffff;
   --surface2: #faf8f5;
@@ -471,6 +472,20 @@ body.guest-mode .odd-batch-btn { display: none; }
 .mini-kina-val { font-size: 0.62rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; }
 .mini-kina.stale .mini-kina-val { color: var(--text-sub); }
 .char-wide-kina .char-wide-field-val.stale { color: var(--text-sub); }
+
+/* 계정 통합 상점/물질변환 → 받은 캐릭 선택창 (오드 자동연동) */
+.odd-pick-overlay { display: none; position: fixed; inset: 0; z-index: 400; background: var(--scrim); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px; }
+.odd-pick-overlay.open { display: flex; }
+.odd-pick-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; width: 100%; max-width: 320px; }
+.odd-pick-title { font-size: 0.95rem; color: var(--text); text-align: center; margin-bottom: 4px; }
+.odd-pick-sub { font-size: 0.75rem; color: var(--text-sub); text-align: center; margin-bottom: 14px; }
+.odd-pick-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.odd-pick-btn { display: flex; flex-direction: column; gap: 2px; text-align: left; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-xs); background: var(--surface); color: var(--text); font-size: 0.8rem; cursor: pointer; transition: background 0.15s; }
+.odd-pick-btn:hover { background: var(--hover); }
+.odd-pick-btn.last { border-color: var(--sage); background: var(--sage-light); }
+.odd-pick-btn-sub { font-size: 0.68rem; color: var(--text-sub); }
+.odd-pick-skip { display: block; width: 100%; margin-top: 12px; padding: 6px; border: none; background: none; color: var(--text-sub); font-size: 0.78rem; cursor: pointer; }
+.odd-pick-skip:hover { color: var(--text); }
 
 /* 어비스 회랑 접기 (오드 자동연동) */
 .abyss-collapse-btn { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; -webkit-user-select: none; user-select: none; }
@@ -1893,6 +1908,7 @@ body.guest-mode .page .tm-knob { display: none; }
 }
 .log-actor-냥이 { color: var(--color-actor-냥이); }
 .log-actor-츄츄 { color: var(--color-actor-츄츄); }
+.log-actor-미터기 { color: var(--text-sub); }
 .log-owner-설냥 { color: var(--color-owner-설냥); }
 .log-owner-츄츄 { color: var(--color-owner-츄츄); }
 .log-char { color: var(--lavender); }
@@ -13105,13 +13121,15 @@ async function setAccountTransmutVal(owner, val) {
   if (currentActor === 'guest') return;
   val = Math.max(0, Math.min(16, val));
   const acc = accountData[owner]; if (!acc) return;
-  if (Math.min(16, acc.transmutation_account_count || 0) === val) return;  // 변화 없으면 통과
+  const prevAccTm = Math.min(16, acc.transmutation_account_count || 0);
+  if (prevAccTm === val) return;  // 변화 없으면 통과
   markSelfChange('account_data', owner);
   const { error } = await sb.from('account_data').update({ transmutation_account_count: val }).eq('owner', owner);
   if (error) { showToast('저장 실패: ' + (error.message || error.code || '')); console.error('[물질변환/계정]', error); return; }
   acc.transmutation_account_count = val;
   openAccountModal(owner);
   renderOverview();
+  openOddPick(owner, val - prevAccTm, '물질변환(계정)');
 }
 async function setCharTransmutVal(owner, charId, val) {
   if (currentActor === 'guest') return;
@@ -13133,13 +13151,15 @@ async function setAccountShopVal(owner, val) {
   if (currentActor === 'guest') return;
   val = Math.max(0, Math.min(16, val));
   const acc = accountData[owner]; if (!acc) return;
-  if (Math.min(16, acc.shop_purchase_account_count || 0) === val) return;
+  const prevAccShop = Math.min(16, acc.shop_purchase_account_count || 0);
+  if (prevAccShop === val) return;
   markSelfChange('account_data', owner);
   const { error } = await sb.from('account_data').update({ shop_purchase_account_count: val }).eq('owner', owner);
   if (error) { showToast('저장 실패: ' + (error.message || error.code || '')); console.error('[오드구매/계정]', error); return; }
   acc.shop_purchase_account_count = val;
   openAccountModal(owner);
   renderOverview();
+  openOddPick(owner, val - prevAccShop, '상점(계정)');
 }
 async function setCharShopVal(owner, charId, val) {
   if (currentActor === 'guest') return;
@@ -15190,6 +15210,56 @@ async function _oddTickAdjust(charId, deltaTicks) {
   if (error) { showToast('충전 오드 반영 실패: ' + (error.message || error.code || '')); console.error('[오드틱]', error); return; }
   const char = allChars.find(c => c.id === charId);
   if (char && typeof data === 'number') char.odd_energy_charged = data;
+}
+
+// ── 계정 통합(16칸) 상점/물질변환 틱 → 받은(뺄) 캐릭을 골라서 1틱당 40 반영 ──
+let _oddPick = null;          // { owner, ticks, label }
+const _oddPickLast = {};      // owner → 직전에 고른 캐릭 id (강조 표시)
+function _oddPickEnsure() {
+  let ov = document.getElementById('odd-pick-overlay');
+  if (ov) return ov;
+  ov = document.createElement('div');
+  ov.id = 'odd-pick-overlay';
+  ov.className = 'odd-pick-overlay';
+  ov.addEventListener('click', e => { if (e.target === ov) closeOddPick(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && _oddPick) closeOddPick(); });
+  document.body.appendChild(ov);
+  return ov;
+}
+function openOddPick(owner, ticks, label) {
+  if (!ticks || currentActor === 'guest') return;
+  _oddPick = { owner, ticks, label };
+  const chars = allChars.filter(c => c.owner === owner).sort((a, b) => (a.slot || 0) - (b.slot || 0));
+  const last = _oddPickLast[owner];
+  const sign = ticks > 0 ? '+' : '−';
+  const n = Math.abs(ticks);
+  const ov = _oddPickEnsure();
+  ov.innerHTML = `<div class="odd-pick-box">
+    <div class="odd-pick-title">${label} ${sign}${n}틱 · 충전 오드 ${sign}${n * ODD_PER_TICK}</div>
+    <div class="odd-pick-sub">${ticks > 0 ? '받은 캐릭을 골라주세요' : '오드를 뺄 캐릭을 골라주세요'}</div>
+    <div class="odd-pick-list">${chars.map(c => `
+      <button type="button" class="odd-pick-btn ${c.id === last ? 'last' : ''}" onclick="pickOddTarget('${c.id}')">
+        <span>${escapeHtml(c.name || '(이름없음)')}</span>
+        <span class="odd-pick-btn-sub">충전 ${(c.odd_energy_charged || 0).toLocaleString()}</span>
+      </button>`).join('')}</div>
+    <button type="button" class="odd-pick-skip" onclick="closeOddPick()">반영 안 함</button>
+  </div>`;
+  ov.classList.add('open');
+}
+function closeOddPick() {
+  _oddPick = null;
+  const ov = document.getElementById('odd-pick-overlay');
+  if (ov) ov.classList.remove('open');
+}
+async function pickOddTarget(charId) {
+  if (!_oddPick) return;
+  const { owner, ticks } = _oddPick;
+  closeOddPick();
+  _oddPickLast[owner] = charId;
+  await _oddTickAdjust(charId, ticks);
+  const c = allChars.find(x => x.id === charId);
+  showToast(`${c ? c.name : ''} 충전 오드 ${ticks > 0 ? '+' : '−'}${Math.abs(ticks) * ODD_PER_TICK}`);
+  renderOverview();
 }
 
 function buildOddTimer(char) {
