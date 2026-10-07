@@ -465,6 +465,18 @@ body.guest-mode .odd-batch-btn { display: none; }
 .mini-timer.muted .mini-timer-val { color: var(--text-sub); }
 .mini-timer.full .mini-timer-label { color: var(--odd-full); }
 
+/* 각인 키나 줄 — 오드 여유 줄과 같은 형식. 관측 24시간 경과 시 값 흐리게 (오드 자동연동) */
+.mini-kina { display: flex; flex-direction: row; align-items: baseline; gap: 10px; min-width: 0; margin-top: 2px; white-space: nowrap; }
+.mini-kina-label { font-size: 0.56rem; color: var(--text-sub); letter-spacing: 0.01em; flex: none; }
+.mini-kina-val { font-size: 0.62rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; }
+.mini-kina.stale .mini-kina-val { color: var(--text-sub); }
+.char-wide-kina .char-wide-field-val.stale { color: var(--text-sub); }
+
+/* 어비스 회랑 접기 (오드 자동연동) */
+.abyss-collapse-btn { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; -webkit-user-select: none; user-select: none; }
+.abyss-collapse-btn .chev { font-size: 0.7rem; color: var(--text-sub); transition: transform 0.18s; }
+.abyss-section.collapsed .abyss-collapse-btn .chev { transform: rotate(-90deg); }
+
 /* ── 오드 owner 칩 (오드 일괄 적용 버튼 왼쪽) v1.6.5 ── */
 .odd-owner-chip {
   display: inline-flex;
@@ -10985,6 +10997,7 @@ function renderOverview() {
               <div class="char-mini-name"><span class="char-fav-heart" onclick="toggleFav(event,'${char.id}')">${char.is_favorite ? '🧡' : '🤍'}</span>${char.name || '(이름없음)'} <span style="color:var(--text-sub);font-size:0.72rem;font-weight:400">(${char.item_level||0} / ${formatCp(char.combat_power||0)})</span></div>
               <div class="char-mini-ilvl">${char.odd_energy_base||0} / 840 <span style="color:var(--text-sub)">+${char.odd_energy_charged||0}</span></div>
               ${timerHtml}
+              ${buildKinaRow(char)}
             </div>
             ${stackHtml}
           </div>
@@ -11115,6 +11128,7 @@ function renderRepCard(char, owner) {
     <span class="char-wide-sep"></span>
     <div class="char-wide-field"><div class="char-wide-field-label">오드에너지</div><div class="char-wide-field-val">${char.odd_energy_base || 0} / 840 <span style="color:var(--text-sub)">+${char.odd_energy_charged || 0}</span></div></div>
     ${timerHtml}
+    ${buildKinaWideField(char)}
     <span class="char-wide-spacer"></span>
     ${dotsHtml}
     ${barHtml}
@@ -11165,6 +11179,15 @@ function calcCompletionPct(char, dt, wt) {
 }
 
 let _abyssViewMode = 'zone';  // 'zone' | 'char'
+let _abyssCollapsed = (() => {   // 기본 접힘, 브라우저별 기억
+  try { const v = localStorage.getItem('abyssCollapsed'); return v === null ? true : v === '1'; }
+  catch (e) { return true; }
+})();
+function toggleAbyssCollapsed() {
+  _abyssCollapsed = !_abyssCollapsed;
+  try { localStorage.setItem('abyssCollapsed', _abyssCollapsed ? '1' : '0'); } catch (e) {}
+  lazyRenderOverview();
+}
 
 function toggleAbyssViewMode(mode) {
   _abyssViewMode = mode;
@@ -11180,21 +11203,23 @@ function renderAbyssSection() {
     return c?.acquired;
   });
 
-  let html = `<div class="abyss-section">
+  let html = `<div class="abyss-section ${_abyssCollapsed ? 'collapsed' : ''}">
     <div class="section-title">
       <span>
-        어비스 회랑
-        <span class="abyss-view-toggle">
+        <span class="abyss-collapse-btn" onclick="toggleAbyssCollapsed()"><span class="chev">▼</span>어비스 회랑</span>
+        ${_abyssCollapsed ? '' : `<span class="abyss-view-toggle">
           <button class="${_abyssViewMode==='zone'?'active':''}" onclick="toggleAbyssViewMode('zone')">회랑별</button>
           <button class="${_abyssViewMode==='char'?'active':''}" onclick="toggleAbyssViewMode('char')">캐릭별</button>
-        </span>
+        </span>`}
       </span>
       <span style="font-size:0.72rem;color:var(--text-sub)">${warLabel} 전쟁 결과 ·
         <span id="abyss-countdown" style="color:${cdUrgent?'#b85050':'var(--text-sub)'}">다음 전쟁까지 ${cdText}</span>
       </span>
     </div>`;
 
-  if (_abyssViewMode === 'char') {
+  if (_abyssCollapsed) {
+    // 접힘: 본문 생략
+  } else if (_abyssViewMode === 'char') {
     html += renderAbyssCharMatrix(acquiredZones, warDate);
   } else {
     html += renderAbyssZoneGrid(warDate);
@@ -11474,7 +11499,7 @@ function renderDetail(char) {
       <div class="stat-inputs">
         ${numInput(`odd_energy_base`, char.odd_energy_base||0, char.id, 0, 840)}
         <span style="color:var(--text-sub);font-size:0.8rem">+</span>
-        ${numInput(`odd_energy_charged`, char.odd_energy_charged||0, char.id, 0, 9999)}
+        ${numInput(`odd_energy_charged`, char.odd_energy_charged||0, char.id, 0, 99999)}
       </div>
     </div>
     <div class="stat-row" id="odd-estimate-row-${char.id}">
@@ -13092,11 +13117,13 @@ async function setCharTransmutVal(owner, charId, val) {
   if (currentActor === 'guest') return;
   val = Math.max(0, Math.min(4, val));
   const char = allChars.find(c => c.id === charId); if (!char) return;
-  if (Math.min(4, char.transmutation_count || 0) === val) return;
+  const prevTm = Math.min(4, char.transmutation_count || 0);
+  if (prevTm === val) return;
   markSelfChange('characters', charId);
   const { error } = await sb.from('characters').update({ transmutation_count: val }).eq('id', charId);
   if (error) { showToast('저장 실패: ' + (error.message || error.code || '')); console.error('[물질변환/캐릭]', error); return; }
   char.transmutation_count = val;
+  await _oddTickAdjust(charId, val - prevTm);
   openAccountModal(owner);
   renderOverview();
 }
@@ -13118,11 +13145,13 @@ async function setCharShopVal(owner, charId, val) {
   if (currentActor === 'guest') return;
   val = Math.max(0, Math.min(4, val));
   const char = allChars.find(c => c.id === charId); if (!char) return;
-  if (Math.min(4, char.shop_purchase_count || 0) === val) return;
+  const prevShop = Math.min(4, char.shop_purchase_count || 0);
+  if (prevShop === val) return;
   markSelfChange('characters', charId);
   const { error } = await sb.from('characters').update({ shop_purchase_count: val }).eq('id', charId);
   if (error) { showToast('저장 실패: ' + (error.message || error.code || '')); console.error('[오드구매/캐릭]', error); return; }
   char.shop_purchase_count = val;
+  await _oddTickAdjust(charId, val - prevShop);
   openAccountModal(owner);
   renderOverview();
 }
@@ -13271,11 +13300,13 @@ async function toggleAllTransmutation(owner, value) {
   if (ownerChars.length > 0) {
     const ids = ownerChars.map(c => c.id);
     ids.forEach(id => markSelfChange('characters', id));
+    const tmDeltas = ownerChars.map(c => [c.id, target - Math.min(4, c.transmutation_count || 0)]);
     const { error } = await sb.from('characters')
       .update({ transmutation_count: target })
       .in('id', ids);
     if (error) { showToast('저장 실패(캐릭): ' + (error.message || error.code || '')); console.error('[물질변환/전체-캐릭]', error); return; }
     ownerChars.forEach(c => { c.transmutation_count = target; });
+    await Promise.all(tmDeltas.map(([id, d]) => _oddTickAdjust(id, d)));
   }
 
   markSelfChange('account_data', owner);
@@ -13298,11 +13329,13 @@ async function toggleAllShopPurchase(owner, value) {
   if (ownerChars.length > 0) {
     const ids = ownerChars.map(c => c.id);
     ids.forEach(id => markSelfChange('characters', id));
+    const shopDeltas = ownerChars.map(c => [c.id, target - Math.min(4, c.shop_purchase_count || 0)]);
     const { error } = await sb.from('characters')
       .update({ shop_purchase_count: target })
       .in('id', ids);
     if (error) { showToast('저장 실패(캐릭): ' + (error.message || error.code || '')); console.error('[오드구매/전체-캐릭]', error); return; }
     ownerChars.forEach(c => { c.shop_purchase_count = target; });
+    await Promise.all(shopDeltas.map(([id, d]) => _oddTickAdjust(id, d)));
   }
 
   markSelfChange('account_data', owner);
@@ -15121,6 +15154,44 @@ function computeOddTimer(char) {
   const warn = ms < 6 * 3600000;                     // 6시간 미만이면 경고(빨강)
   return { full: false, ms, cls: warn ? 'warn' : '', label: warn ? '곧 손해!' : '오드 여유', val };
 }
+// ── 각인 키나 표시 (미터기 자동연동) — 관측 24시간 지나면 흐리게 ──
+const KINA_STALE_MS = 24 * 3600000;
+function _kinaInfo(char) {
+  if (char.engraved_kina === null || char.engraved_kina === undefined) {
+    return { text: '-', stale: true, title: '아직 미터기 관측 없음' };
+  }
+  const at = char.kina_observed_at ? new Date(char.kina_observed_at).getTime() : 0;
+  const stale = !at || (Date.now() - at) > KINA_STALE_MS;
+  return {
+    text: Number(char.engraved_kina).toLocaleString(),
+    stale,
+    title: at ? `관측 ${formatKST(char.kina_observed_at)}` : '관측 시각 없음'
+  };
+}
+function buildKinaRow(char) {
+  const k = _kinaInfo(char);
+  return `<div class="mini-kina ${k.stale ? 'stale' : ''}" title="${k.title}">
+    <span class="mini-kina-label">각인 키나</span>
+    <span class="mini-kina-val">${k.text}</span>
+  </div>`;
+}
+function buildKinaWideField(char) {
+  const k = _kinaInfo(char);
+  return `<div class="char-wide-field char-wide-kina" title="${k.title}"><div class="char-wide-field-label">각인 키나</div><div class="char-wide-field-val ${k.stale ? 'stale' : ''}">${k.text}</div></div>`;
+}
+
+// ── 상점/물질변환 1틱 = 오드 에너지 40 → 충전 오드 칸(충전+아이템 총량)에 더하기/빼기 ──
+//  DB 함수(add_odd_charged)로 한 번에 더해서 PC 스크립트의 차감과 동시에 일어나도 안 꼬임
+const ODD_PER_TICK = 40;
+async function _oddTickAdjust(charId, deltaTicks) {
+  if (!deltaTicks) return;
+  markSelfChange('characters', charId);
+  const { data, error } = await sb.rpc('add_odd_charged', { p_id: charId, p_delta: deltaTicks * ODD_PER_TICK });
+  if (error) { showToast('충전 오드 반영 실패: ' + (error.message || error.code || '')); console.error('[오드틱]', error); return; }
+  const char = allChars.find(c => c.id === charId);
+  if (char && typeof data === 'number') char.odd_energy_charged = data;
+}
+
 function buildOddTimer(char) {
   const t = computeOddTimer(char);
   const cls = t.full ? 'full' : t.cls;
