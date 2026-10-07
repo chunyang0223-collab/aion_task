@@ -375,6 +375,12 @@ body.guest-mode .odd-batch-btn { display: none; }
 .char-wide-timer .mini-timer-label { font-size: 0.6rem; }
 .char-wide-timer .mini-timer-val { font-size: 0.82rem; }
 .char-wide-spacer { flex: 1 1 20px; }
+/* 오드에너지 · 오드 여유 · 각인 키나 묶음 — 칸마다 여백 + 얇은 구분선 (오드 자동연동) */
+.char-wide-stats { display: flex; align-items: stretch; flex-wrap: wrap; row-gap: 8px; flex: 0 1 auto; min-width: 0; }
+.char-wide-stats > .char-wide-field { display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 0 20px; }
+.char-wide-stats > .char-wide-field:first-child { padding-left: 0; }
+.char-wide-stats > .char-wide-field + .char-wide-field { border-left: 1px solid var(--border); }
+.char-wide-stats .char-wide-timer .mini-timer { gap: 2px; margin-top: 0; }
 .char-wide-dots { display: flex; align-items: center; gap: 16px; flex: none; }
 .char-wide-dots .cw-group { display: flex; align-items: center; gap: 5px; }
 .char-wide-dots .cw-lbl { font-size: 0.58rem; color: var(--text-sub); }
@@ -1962,6 +1968,11 @@ body.guest-mode .page .tm-knob { display: none; }
 }
 
 /* ── 리셋 정보 접기 (v1.5.9) ── */
+/* ── 냥봇 마지막 갱신 표시 (알람 왼쪽, 오드 자동연동) ── */
+.nyangbot-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); font-size: 0.7rem; white-space: nowrap; cursor: default; }
+.nyangbot-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); flex: none; transition: background 0.2s; }
+.nyangbot-status.fresh .nyangbot-dot { background: var(--sage); }
+
 /* ── 알람 버튼 (블러시) v1.6.91 ── */
 .alarm-btn {
   display: inline-flex;
@@ -6578,6 +6589,7 @@ select.ctodo-select {
   <div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;gap:2px;position:relative">
     <div id="actor-indicator" style="display:flex;align-items:center;gap:6px">
       <span id="actor-label" style="font-size:0.75rem;color:var(--text-sub)"></span>
+      <span id="nyangbot-status" class="nyangbot-status" title="냥봇(미터기 자동연동) 마지막 갱신"><span class="nyangbot-dot"></span><span id="nyangbot-text">냥봇 -</span></span>
       <button id="alarm-btn" class="alarm-btn" onclick="openAlarm(event)" title="알람">알람<span id="alarm-count" class="alarm-count"></span></button>
       <button id="reset-trigger" class="reset-trigger" aria-expanded="false" aria-controls="reset-popover" onclick="toggleResetInfo(event)" title="리셋 시각">
         리셋 정보 <span class="chev">▾</span>
@@ -7551,6 +7563,7 @@ const TOPBAR_DEFS = [
   { key: 'logo',  el: 'topbar-title-area', label: '로고' },
   { key: 'calc',  el: 'calc-btn',          label: '계산기' },
   { key: 'skin',  el: 'skin-toggle-btn',   label: '스킨테마' },
+  { key: 'nyangbot', el: 'nyangbot-status', label: '냥봇 갱신' },
   { key: 'alarm', el: 'alarm-btn',         label: '알람' },
   { key: 'reset', el: 'reset-trigger',     label: '리셋 정보' },
 ];
@@ -10949,6 +10962,7 @@ function openAccountModalAt(owner, sec) {
 function renderOverview() {
   const el = document.getElementById('overview-content');
   let html = '';
+  try { updateNyangbotStatus(); } catch (e) {}   // 냥봇 마지막 갱신 표시
 
   // Each owner section
   for (const owner of OWNERS) {
@@ -11142,9 +11156,11 @@ function renderRepCard(char, owner) {
     <span class="char-wide-badge"> Main </span>
     <div class="char-wide-name"><span class="char-fav-heart" onclick="toggleFav(event,'${char.id}')">${char.is_favorite ? '🧡' : '🤍'}</span>${char.name || '(이름없음)'} <span class="cw-meta">(${ilvl} / ${formatCp(char.combat_power || 0)})</span></div>
     <span class="char-wide-sep"></span>
-    <div class="char-wide-field"><div class="char-wide-field-label">오드에너지</div><div class="char-wide-field-val">${char.odd_energy_base || 0} / 840 <span style="color:var(--text-sub)">+${char.odd_energy_charged || 0}</span></div></div>
-    ${timerHtml}
-    ${buildKinaWideField(char)}
+    <div class="char-wide-stats">
+      <div class="char-wide-field"><div class="char-wide-field-label">오드에너지</div><div class="char-wide-field-val">${char.odd_energy_base || 0} / 840 <span style="color:var(--text-sub)">+${char.odd_energy_charged || 0}</span></div></div>
+      ${timerHtml}
+      ${buildKinaWideField(char)}
+    </div>
     <span class="char-wide-spacer"></span>
     ${dotsHtml}
     ${barHtml}
@@ -15200,6 +15216,39 @@ function buildKinaWideField(char) {
   const k = _kinaInfo(char);
   return `<div class="char-wide-field char-wide-kina" title="${k.title}"><div class="char-wide-field-label">각인 키나</div><div class="char-wide-field-val ${k.stale ? 'stale' : ''}">${k.text}</div></div>`;
 }
+
+// ── 냥봇 마지막 갱신 표시 — 이미 불러온 캐릭 데이터만 보고 계산 (DB 호출 없음) ──
+//  30분 이내 갱신이면 초록 점. 30초마다 다시 계산.
+const NYANGBOT_FRESH_MS = 30 * 60000;
+function _nyangbotAgo(ms) {
+  if (ms < 60000) return '방금';
+  if (ms < 3600000) return Math.floor(ms / 60000) + '분 전';
+  if (ms < 86400000) return Math.floor(ms / 3600000) + '시간 전';
+  return Math.floor(ms / 86400000) + '일 전';
+}
+function updateNyangbotStatus() {
+  const wrap = document.getElementById('nyangbot-status');
+  const txt = document.getElementById('nyangbot-text');
+  if (!wrap || !txt || typeof allChars === 'undefined') return;
+  let latest = 0, latestName = '';
+  allChars.forEach(c => {
+    [c.meter_observed_at, c.kina_observed_at].forEach(v => {
+      const t = v ? new Date(v).getTime() : 0;
+      if (t > latest) { latest = t; latestName = c.name || ''; }
+    });
+  });
+  if (!latest) {
+    txt.textContent = '냥봇 기록 없음';
+    wrap.classList.remove('fresh');
+    wrap.title = '냥봇(미터기 자동연동) 기록이 아직 없어요';
+    return;
+  }
+  const ago = Date.now() - latest;
+  txt.textContent = '냥봇 ' + _nyangbotAgo(ago);
+  wrap.classList.toggle('fresh', ago < NYANGBOT_FRESH_MS);
+  wrap.title = `냥봇 마지막 갱신: ${formatKST(new Date(latest).toISOString())} (${latestName})`;
+}
+setInterval(updateNyangbotStatus, 30000);
 
 // ── 상점/물질변환 1틱 = 오드 에너지 40 → 충전 오드 칸(충전+아이템 총량)에 더하기/빼기 ──
 //  DB 함수(add_odd_charged)로 한 번에 더해서 PC 스크립트의 차감과 동시에 일어나도 안 꼬임
